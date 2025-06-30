@@ -1,0 +1,319 @@
+{
+    "entry": {
+        "assemblies": [
+            {
+                "rcsb_id": "6JUP-1",
+                "nonpolymer_entity_instances": [
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "auth_seq_id": "401",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "auth_seq_id": "402",
+                            "entity_id": "5"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "auth_seq_id": "403",
+                            "entity_id": "5"
+                        }
+                    }
+                ],
+                "polymer_entity_instances": [
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "G",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "H",
+                            "entity_id": "3"
+                        }
+                    }
+                ]
+            },
+            {
+                "rcsb_id": "6JUP-2",
+                "nonpolymer_entity_instances": [
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "auth_seq_id": "401",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "auth_seq_id": "402",
+                            "entity_id": "5"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "auth_seq_id": "403",
+                            "entity_id": "5"
+                        }
+                    }
+                ],
+                "polymer_entity_instances": [
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "entity_id": "3"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "C",
+                            "entity_id": "3"
+                        }
+                    }
+                ]
+            }
+        ],
+        "rcsb_id": "6JUP",
+        "rcsb_accession_info": {
+            "deposit_date": "2019-04-15T00:00:00Z"
+        },
+        "struct_keywords": {
+            "pdbx_keywords": "REPLICATION/DNA",
+            "text": "DNA polymerase, REPLICATION, REPLICATION-DNA complex"
+        },
+        "rcsb_entry_info": {
+            "resolution_combined": [
+                2.44
+            ]
+        },
+        "rcsb_external_references": [
+            {
+                "link": "https://nakb.org/atlas=6JUP",
+                "type": "NAKB",
+                "id": "6JUP"
+            }
+        ],
+        "exptl": [
+            {
+                "method": "X-RAY DIFFRACTION"
+            }
+        ],
+        "citation": [
+            {
+                "rcsb_authors": [
+                    "Johnson, M.K.",
+                    "Kottur, J.",
+                    "Nair, D.T."
+                ],
+                "year": 2019,
+                "title": "A polar filter in DNA polymerases prevents ribonucleotide incorporation.",
+                "pdbx_database_id_DOI": "10.1093/nar/gkz792"
+            }
+        ],
+        "polymer_entities": [
+            {
+                "entry": {
+                    "rcsb_id": "6JUP"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "A",
+                        "D"
+                    ],
+                    "auth_asym_ids": [
+                        "A",
+                        "F"
+                    ],
+                    "entry_id": "6JUP",
+                    "entity_id": "1"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF00817",
+                        "rcsb_pfam_comment": "These proteins are involved in UV protection (Swiss). ",
+                        "rcsb_pfam_description": "impB/mucB/samB family"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF21999",
+                        "rcsb_pfam_comment": "This is the thumb domain found in DNA polymerase iota and related proteins. This domain makes contacts with the minor groove of DNA. ",
+                        "rcsb_pfam_description": "DNA polymerase-iota, thumb domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF11799",
+                        "rcsb_pfam_comment": "These proteins are involved in UV protection (Swiss). ",
+                        "rcsb_pfam_description": "impB/mucB/samB family C-terminal domain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q47155"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "DNA polymerase IV"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "GSRKIIHVDMDCFAAAVEMRDNPALRDIPIAIGGSRERRGVISCANYPARKFGVRSAMPTGMALKLCPHLTLLPGRFDAYKEASNHIREIFSRYTSRIEPLSLDEAYLDVTDSVHCHGSATLIAQEIRQTIFNELQLTASAGVAPVKFLAKIASDMNKPNGQFVITPAEVPAFLQTLPLAKIPGVGKVSAAKLEAMGLRTCGDVQKCDLVMLLKRFGKFGRILWERSQGIDERDVNSERLRKSVGVERTMAEDIHHWSECEAIIERLYPELERRLAKVKPDLLIARQGVKLKFDDFQQTTQEHVWPRLNKADLIATARKTWDERRGGRGVRLVGLHVTLLDP",
+                    "pdbx_seq_one_letter_code_can": "GSRKIIHVDMDCFAAAVEMRDNPALRDIPIAIGGSRERRGVISCANYPARKFGVRSAMPTGMALKLCPHLTLLPGRFDAYKEASNHIREIFSRYTSRIEPLSLDEAYLDVTDSVHCHGSATLIAQEIRQTIFNELQLTASAGVAPVKFLAKIASDMNKPNGQFVITPAEVPAFLQTLPLAKIPGVGKVSAAKLEAMGLRTCGDVQKCDLVMLLKRFGKFGRILWERSQGIDERDVNSERLRKSVGVERTMAEDIHHWSECEAIIERLYPELERRLAKVKPDLLIARQGVKLKFDDFQQTTQEHVWPRLNKADLIATARKTWDERRGGRGVRLVGLHVTLLDP",
+                    "pdbx_strand_id": "F,A",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 342,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6JUP"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "B"
+                    ],
+                    "auth_asym_ids": [
+                        "G"
+                    ],
+                    "entry_id": "6JUP",
+                    "entity_id": "2"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "rcsb_entity_host_organism": null,
+                "uniprots": null,
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "DNA (5'-D(P*CP*TP*GP*GP*GP*GP*TP*CP*CP*TP*AP*GP*GP*AP*CP*CP*CP*C)-3')"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "(DC)(DT)(DG)(DG)(DG)(DG)(DT)(DC)(DC)(DT)(DA)(DG)(DG)(DA)(DC)(DC)(DC)(DC)",
+                    "pdbx_seq_one_letter_code_can": "CTGGGGTCCTAGGACCCC",
+                    "pdbx_strand_id": "G",
+                    "rcsb_entity_polymer_type": "DNA",
+                    "rcsb_sample_sequence_length": 18,
+                    "type": "polydeoxyribonucleotide"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6JUP"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "C",
+                        "E",
+                        "F"
+                    ],
+                    "auth_asym_ids": [
+                        "B",
+                        "C",
+                        "H"
+                    ],
+                    "entry_id": "6JUP",
+                    "entity_id": "3"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "rcsb_entity_host_organism": null,
+                "uniprots": null,
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "DNA (5'-D(P*GP*GP*GP*TP*CP*CP*TP*AP*GP*GP*AP*CP*CP*C)-3')"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "(DT)(DC)(DT)(DG)(DG)(DG)(DG)(DT)(DC)(DC)(DT)(DA)(DG)(DG)(DA)(DC)(DC)(DC)",
+                    "pdbx_seq_one_letter_code_can": "TCTGGGGTCCTAGGACCC",
+                    "pdbx_strand_id": "H,B,C",
+                    "rcsb_entity_polymer_type": "DNA",
+                    "rcsb_sample_sequence_length": 18,
+                    "type": "polydeoxyribonucleotide"
+                }
+            }
+        ],
+        "nonpolymer_entities": [
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "0KX",
+                    "name": "2'-deoxy-5'-O-[(R)-hydroxy{[(R)-hydroxy(phosphonooxy)phosphoryl]amino}phosphoryl]cytidine",
+                    "entity_id": "4"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.466,
+                    "pdbx_description": "2'-deoxy-5'-O-[(R)-hydroxy{[(R)-hydroxy(phosphonooxy)phosphoryl]amino}phosphoryl]cytidine",
+                    "pdbx_number_of_molecules": 2
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "0KX",
+                        "name": "2'-deoxy-5'-O-[(R)-hydroxy{[(R)-hydroxy(phosphonooxy)phosphoryl]amino}phosphoryl]cytidine",
+                        "three_letter_code": "0KX"
+                    },
+                    "rcsb_chem_comp_target": null,
+                    "drugbank": null
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "MG",
+                    "name": "MAGNESIUM ION",
+                    "entity_id": "5"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.024,
+                    "pdbx_description": "MAGNESIUM ION",
+                    "pdbx_number_of_molecules": 4
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "MG",
+                        "name": "MAGNESIUM ION",
+                        "three_letter_code": "MG"
+                    },
+                    "rcsb_chem_comp_target": null,
+                    "drugbank": null
+                }
+            }
+        ]
+    }
+}
