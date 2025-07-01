@@ -1,0 +1,59 @@
+{
+  "subunits": [
+    {
+      "id": "pf0-A",
+      "auth_asym_id": "A",
+      "protofilament": 0,
+      "subunitIndex": 1,
+      "monomerType": "\u03b2"
+    },
+    {
+      "id": "pf1-B",
+      "auth_asym_id": "B",
+      "protofilament": 1,
+      "subunitIndex": 1,
+      "monomerType": "\u03b1"
+    },
+    {
+      "id": "pf2-C",
+      "auth_asym_id": "C",
+      "protofilament": 2,
+      "subunitIndex": 0,
+      "monomerType": "\u03b1"
+    },
+    {
+      "id": "pf3-D",
+      "auth_asym_id": "D",
+      "protofilament": 3,
+      "subunitIndex": 0,
+      "monomerType": "\u03b2"
+    },
+    {
+      "id": "pf0-E",
+      "auth_asym_id": "E",
+      "protofilament": 0,
+      "subunitIndex": 0,
+      "monomerType": "\u03b1"
+    },
+    {
+      "id": "pf1-F",
+      "auth_asym_id": "F",
+      "protofilament": 1,
+      "subunitIndex": 0,
+      "monomerType": "\u03b2"
+    }
+  ],
+  "structure_type": "sheet",
+  "metadata": {
+    "pdb_id": "4o2b",
+    "num_chains": 6,
+    "chain_ids": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F"
+    ]
+  }
+}
