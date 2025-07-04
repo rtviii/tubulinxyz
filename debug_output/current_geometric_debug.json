@@ -1,0 +1,410 @@
+{
+  "pdb_id": "current",
+  "num_protofilaments": 13,
+  "structure_type": "cylindrical",
+  "protofilament_details": [
+    {
+      "index": 0,
+      "chain_count": 8,
+      "chains": [
+        "3X",
+        "3L",
+        "2X",
+        "2L",
+        "1X",
+        "1L",
+        "4X",
+        "4L"
+      ],
+      "centroid": [
+        193.8842007140911,
+        174.491431553634,
+        457.7217658729467
+      ],
+      "angle_rad": 0.7328027086238851,
+      "angle_deg": 41.98650241990363,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 1,
+      "chain_count": 8,
+      "chains": [
+        "3Y",
+        "3M",
+        "2Y",
+        "2M",
+        "1Y",
+        "1M",
+        "4Y",
+        "4M"
+      ],
+      "centroid": [
+        153.96401111109478,
+        141.42947671232875,
+        446.76517987921324
+      ],
+      "angle_rad": 0.7429902571603608,
+      "angle_deg": 42.57020595462837,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 2,
+      "chain_count": 8,
+      "chains": [
+        "3Z",
+        "3N",
+        "2Z",
+        "2N",
+        "1Z",
+        "1N",
+        "4Z",
+        "4N"
+      ],
+      "centroid": [
+        151.2658773622593,
+        141.0695708523408,
+        323.1875428366778
+      ],
+      "angle_rad": 0.7505335074568981,
+      "angle_deg": 43.00240236043076,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 3,
+      "chain_count": 8,
+      "chains": [
+        "3W",
+        "3K",
+        "2W",
+        "2K",
+        "1W",
+        "1K",
+        "4W",
+        "4K"
+      ],
+      "centroid": [
+        215.3723131733618,
+        222.75236160088548,
+        461.7080270310654
+      ],
+      "angle_rad": 0.8022412013780043,
+      "angle_deg": 45.9650349904644,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 4,
+      "chain_count": 8,
+      "chains": [
+        "3V",
+        "3J",
+        "2V",
+        "2J",
+        "1V",
+        "1J",
+        "4V",
+        "4J"
+      ],
+      "centroid": [
+        214.40507747932605,
+        275.40379100386,
+        455.90595091708474
+      ],
+      "angle_rad": 0.9092960216132444,
+      "angle_deg": 52.09882436647539,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 5,
+      "chain_count": 8,
+      "chains": [
+        "3H",
+        "3A",
+        "2H",
+        "2A",
+        "1H",
+        "1A",
+        "4H",
+        "4A"
+      ],
+      "centroid": [
+        101.72407005796745,
+        156.36079047285762,
+        312.30035541665535
+      ],
+      "angle_rad": 0.994018572637862,
+      "angle_deg": 56.95306896976774,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 6,
+      "chain_count": 8,
+      "chains": [
+        "3U",
+        "3I",
+        "2U",
+        "2I",
+        "1U",
+        "1I",
+        "4U",
+        "4I"
+      ],
+      "centroid": [
+        192.06976425805638,
+        320.6375071016573,
+        439.7260578999227
+      ],
+      "angle_rad": 1.0310943185046941,
+      "angle_deg": 59.07735273023683,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 7,
+      "chain_count": 8,
+      "chains": [
+        "3T",
+        "3G",
+        "2T",
+        "2G",
+        "1T",
+        "1G",
+        "4T",
+        "4G"
+      ],
+      "centroid": [
+        154.31672681447202,
+        348.33429910188727,
+        414.9404261207352
+      ],
+      "angle_rad": 1.1537677124078152,
+      "angle_deg": 66.10602045943155,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 8,
+      "chain_count": 8,
+      "chains": [
+        "3O",
+        "3B",
+        "2O",
+        "2B",
+        "1O",
+        "1B",
+        "4O",
+        "4B"
+      ],
+      "centroid": [
+        63.39505889323246,
+        192.7298823393821,
+        308.43574754019573
+      ],
+      "angle_rad": 1.2530120332714412,
+      "angle_deg": 71.79230118555947,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 9,
+      "chain_count": 8,
+      "chains": [
+        "3S",
+        "3F",
+        "2S",
+        "2F",
+        "1S",
+        "1F",
+        "4S",
+        "4F"
+      ],
+      "centroid": [
+        110.60467997120054,
+        352.3655464760646,
+        385.2794475693483
+      ],
+      "angle_rad": 1.2666439240928538,
+      "angle_deg": 72.57335099640953,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 10,
+      "chain_count": 8,
+      "chains": [
+        "3R",
+        "3E",
+        "2R",
+        "2E",
+        "1R",
+        "1E",
+        "4R",
+        "4E"
+      ],
+      "centroid": [
+        71.74974683753041,
+        331.9892269885281,
+        355.58313685778234
+      ],
+      "angle_rad": 1.3579492215358648,
+      "angle_deg": 77.80475918708069,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 11,
+      "chain_count": 8,
+      "chains": [
+        "3P",
+        "3C",
+        "2P",
+        "2C",
+        "1P",
+        "1C",
+        "4P",
+        "4C"
+      ],
+      "centroid": [
+        44.13545455688555,
+        241.7243801976565,
+        314.38372207960106
+      ],
+      "angle_rad": 1.3901998121839176,
+      "angle_deg": 79.6525819180182,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    },
+    {
+      "index": 12,
+      "chain_count": 8,
+      "chains": [
+        "3Q",
+        "3D",
+        "2Q",
+        "2D",
+        "1Q",
+        "1D",
+        "4Q",
+        "4D"
+      ],
+      "centroid": [
+        47.46182215675901,
+        292.0181616390364,
+        330.7004812692587
+      ],
+      "angle_rad": 1.409674826055846,
+      "angle_deg": 80.76841801883843,
+      "chain_types": [
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha",
+        "beta",
+        "alpha"
+      ]
+    }
+  ]
+}

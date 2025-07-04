@@ -3,6 +3,8 @@ import matplotlib.patches as patches
 import numpy as np
 from typing import Dict, List, Any
 from mpl_toolkits.mplot3d import Axes3D
+import json
+from pathlib import Path
 
 
 class VisualizationUtils:
@@ -14,6 +16,87 @@ class VisualizationUtils:
         self.INTERFACE_ALPHA_COLOR = "lightblue"
         self.INTERFACE_BETA_COLOR = "lightcoral"
         self.N_TERMINUS_COLOR = "green"
+        self.debug_dir = Path("debug_output")
+        self.debug_dir.mkdir(exist_ok=True)
+
+    def create_pymol_script(self, pdb_id: str):
+        """Create PyMOL script to visualize N-terminus analysis"""
+        # Load the debug data
+        nterm_file = self.debug_dir / "nterm_debug.json"
+        if not nterm_file.exists():
+            print(f"❌ No N-terminus debug data found")
+            return
+
+        with open(nterm_file) as f:
+            data = json.load(f)
+
+        script_content = f"""# PyMOL script for {pdb_id.upper()} N-terminus analysis
+# Load structure (download first: wget https://files.rcsb.org/download/{pdb_id.upper()}.cif)
+load {pdb_id.upper()}.cif
+hide everything
+show cartoon
+color grey, all
+
+# Color tubulin chains
+select alpha_chains, ("""
+
+        # Add alpha/beta selections based on debug data (we'd need chain type info)
+        script_content += f"""
+# Color N-terminus residues in green
+"""
+
+        # Add N-terminus residues
+        for chain_id, chain_data in data["n_terminus_data"].items():
+            resnum = chain_data["n_terminus_resnum"]
+            script_content += (
+                f"select nterm_{chain_id}, chain {chain_id} and resi {resnum}\n"
+            )
+            script_content += f"color green, nterm_{chain_id}\n"
+            script_content += f"show spheres, nterm_{chain_id}\n"
+
+        script_content += f"\n# Show connections as distances\n"
+        for source, target in data["connections"].items():
+            script_content += (
+                f"distance conn_{source}_{target}, nterm_{source}, nterm_{target}\n"
+            )
+
+        script_content += f"""
+# Color by connection strength
+# Green = N-terminus residues
+# Red = connected pairs
+"""
+
+        for source, target in data["connections"].items():
+            script_content += f"color red, chain {source} or chain {target}\n"
+
+        script_content += f"""
+# Summary: {len(data['connections'])} connections from {data['total_chains']} chains
+# Success rate: {len(data['connections'])/data['total_chains']*100:.1f}%
+
+zoom all
+"""
+
+        script_file = self.debug_dir / f"{pdb_id}_visualize.pml"
+        with open(script_file, "w") as f:
+            f.write(script_content)
+
+        print(f"🎨 Created PyMOL script: {script_file}")
+
+        # Also create a simple batch script
+        batch_script = f"""#!/bin/bash
+# Download and visualize {pdb_id.upper()}
+echo "Downloading {pdb_id.upper()}.cif..."
+wget -O {pdb_id.upper()}.cif https://files.rcsb.org/download/{pdb_id.upper()}.cif
+echo "Starting PyMOL..."
+pymol {pdb_id.upper()}.cif -d "@{pdb_id}_visualize.pml"
+"""
+
+        batch_file = self.debug_dir / f"view_{pdb_id}.sh"
+        with open(batch_file, "w") as f:
+            f.write(batch_script)
+        batch_file.chmod(0o755)
+
+        print(f"📋 Created batch script: {batch_file}")
 
     def create_interface_visualization(
         self,
@@ -410,7 +493,7 @@ class VisualizationUtils:
 
         # Plot each protofilament
         for pf_idx, pf_chains in enumerate(protofilaments):
-            pf_color = colors[pf_idx]
+            pf_color = colors[pf_idx] if pf_idx < len(colors) else "gray"
 
             # Get positions for this protofilament
             pf_positions = []
@@ -429,7 +512,7 @@ class VisualizationUtils:
                     color=pf_color,
                     linewidth=3,
                     alpha=0.7,
-                    label=f"PF{pf_idx}",
+                    label=f"PF{pf_idx} ({len(pf_chains)})",
                 )
 
                 # Plot individual chains
@@ -457,7 +540,7 @@ class VisualizationUtils:
         ax.set_title(f"Protofilament Tracing - {pdb_id.upper()}")
 
         # Add legend
-        if len(protofilaments) <= 10:  # Only show legend if not too many protofilaments
+        if len(protofilaments) <= 15:  # Only show legend if not too many protofilaments
             ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
         plt.tight_layout()
@@ -465,6 +548,9 @@ class VisualizationUtils:
         plt.savefig(pf_viz_filename, dpi=150, bbox_inches="tight")
         plt.close()
         print(f"🎨 Saved protofilament tracing visualization: {pf_viz_filename}")
+
+        # Create PyMOL script after creating the plot
+        self.create_pymol_script(pdb_id)
 
     def create_debug_visualization(self, data: Dict[str, Any], pdb_id: str, title: str):
         """Create generic debug visualization"""

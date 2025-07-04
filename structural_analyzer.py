@@ -12,12 +12,15 @@ from Bio.PDB.Residue import Residue
 from fastapi import HTTPException
 from geometric_operations import GeometricAnalyzer
 from visualization_utils import VisualizationUtils
+from collections import defaultdict
 
 
 class InterfaceAnalyzer:
     """Analyzes interfaces between protein chains"""
 
-    def __init__(self, interface_cutoff: float = 10.0):  # Increased to 10Å
+    def __init__(
+        self, interface_cutoff: float = 7.0
+    ):  # Increased to 7Å for better N-terminus detection
         self.INTERFACE_CUTOFF = interface_cutoff
 
     def find_chain_neighbors(
@@ -44,20 +47,16 @@ class InterfaceAnalyzer:
     ) -> Dict[str, str]:
         """Find protofilament connections using N-terminus to next-monomer interfaces"""
         connections = {}  # chain_id -> next_chain_id in protofilament
+        debug_data = {}
 
         # Get all atoms for neighbor search
         all_atoms = []
-        chain_to_atoms = {}
-
         for model in structure:
             for chain in model:
                 if chain.id in tubulin_chains:
-                    chain_atoms = []
                     for residue in chain:
                         for atom in residue:
                             all_atoms.append(atom)
-                            chain_atoms.append(atom)
-                    chain_to_atoms[chain.id] = chain_atoms
 
         # Create neighbor search object
         neighbor_search = NeighborSearch(all_atoms)
@@ -76,14 +75,18 @@ class InterfaceAnalyzer:
                 residues.sort(key=lambda r: r.get_id()[1])
                 n_terminus = residues[0]
 
-                # Find atoms from OTHER chains within 5Å of N-terminus
+                # Find atoms from OTHER chains within cutoff of N-terminus
                 nearby_chains = {}  # chain_id -> count of close atoms
+                nearby_residues = defaultdict(set)  # chain_id -> set of residues
 
                 for atom in n_terminus:
-                    nearby_atoms = neighbor_search.search(atom.coord, 5.0)
+                    nearby_atoms = neighbor_search.search(
+                        atom.coord, self.INTERFACE_CUTOFF
+                    )
 
                     for nearby_atom in nearby_atoms:
-                        nearby_chain_id = nearby_atom.get_parent().get_parent().id
+                        nearby_residue = nearby_atom.get_parent()
+                        nearby_chain_id = nearby_residue.get_parent().id
 
                         # Skip same chain and non-tubulin chains
                         if (
@@ -94,6 +97,16 @@ class InterfaceAnalyzer:
                             if nearby_chain_id not in nearby_chains:
                                 nearby_chains[nearby_chain_id] = 0
                             nearby_chains[nearby_chain_id] += 1
+                            nearby_residues[nearby_chain_id].add(nearby_residue)
+
+                # Store debug data
+                debug_data[chain.id] = {
+                    "n_terminus_resnum": n_terminus.get_id()[1],
+                    "neighbor_counts": dict(nearby_chains),
+                    "neighbor_residues": {
+                        k: len(v) for k, v in nearby_residues.items()
+                    },
+                }
 
                 # The chain with the most contacts to our N-terminus is the "next" one
                 if nearby_chains:
@@ -107,7 +120,28 @@ class InterfaceAnalyzer:
                         )
 
         print(f"🔗 Found {len(connections)} N-terminus connections")
+
+        # Save debug data
+        self._save_nterm_debug(debug_data, connections)
+
         return connections
+
+    def _save_nterm_debug(self, debug_data: Dict, connections: Dict):
+        """Save N-terminus debug data for PyMOL visualization"""
+        debug_dir = Path("debug_output")
+        debug_dir.mkdir(exist_ok=True)
+
+        pymol_data = {
+            "n_terminus_data": debug_data,
+            "connections": connections,
+            "total_chains": len(debug_data),
+            "successful_connections": len(connections),
+        }
+
+        with open(debug_dir / "nterm_debug.json", "w") as f:
+            json.dump(pymol_data, f, indent=2)
+
+        print(f"🔍 Saved N-terminus debug data to debug_output/nterm_debug.json")
 
     def get_n_terminus_residue(self, structure, chain_id: str) -> Residue:
         """Get the N-terminus residue of a chain"""
@@ -205,226 +239,158 @@ class SpatialGridGenerator:
         print(f"📍 Extracted positions for {len(positions)} chains")
         return positions
 
-    def determine_chain_directionality(
-        self,
-        structure,
-        interfaces: Dict[str, Dict[str, List[Residue]]],
-        tubulin_chains: Dict[str, str],
-    ) -> Dict[str, str]:
-        """Determine directionality using N-terminus interface analysis"""
-        chain_directions = {}
-
-        for chain_id in tubulin_chains.keys():
-            if chain_id not in interfaces:
-                continue
-
-            # Get N-terminus residue
-            n_terminus = self.interface_analyzer.get_n_terminus_residue(
-                structure, chain_id
-            )
-            if not n_terminus:
-                continue
-
-            # Check which neighbor chains have the N-terminus in their interface
-            n_terminus_neighbors = []
-            for neighbor_id, interface_residues in interfaces[chain_id].items():
-                if n_terminus in interface_residues:
-                    n_terminus_neighbors.append(neighbor_id)
-
-            # Store directionality information
-            chain_directions[chain_id] = {
-                "n_terminus_residue": n_terminus,
-                "n_terminus_neighbors": n_terminus_neighbors,
-            }
-
-        print(f"🧭 Determined directionality for {len(chain_directions)} chains")
-        return chain_directions
-
-    def build_dimer_pairs(
-        self,
-        interfaces: Dict[str, Dict[str, List[Residue]]],
-        tubulin_chains: Dict[str, str],
-        positions: Dict[str, np.ndarray],
-    ) -> Dict[str, str]:
-        """Build dimer pairs using interface analysis"""
-        dimer_pairs = {}
-
-        # For each alpha chain, find the best beta partner
-        alpha_chains = [
-            cid for cid, mtype in tubulin_chains.items() if mtype == "alpha"
-        ]
-
-        print(
-            f"🔍 Debug: Processing {len(alpha_chains)} alpha chains for dimer pairing"
-        )
-
-        for alpha_id in alpha_chains:
-            if alpha_id not in interfaces:
-                print(f"⚠️ Alpha {alpha_id} has no interfaces")
-                continue
-
-            best_beta = None
-            max_interface_size = 0
-
-            print(
-                f"🔍 Alpha {alpha_id} has interfaces with: {list(interfaces[alpha_id].keys())}"
-            )
-
-            # Check all beta neighbors
-            for neighbor_id, interface_residues in interfaces[alpha_id].items():
-                neighbor_type = tubulin_chains.get(neighbor_id, "unknown")
-                interface_size = len(interface_residues)
-
-                print(
-                    f"  - Neighbor {neighbor_id} ({neighbor_type}): {interface_size} interface residues"
-                )
-
-                if neighbor_type == "beta":
-                    if interface_size > max_interface_size:
-                        max_interface_size = interface_size
-                        best_beta = neighbor_id
-                        print(
-                            f"    ✓ New best beta partner: {best_beta} with {interface_size} residues"
-                        )
-
-            if best_beta and max_interface_size > 5:  # Minimum interface size threshold
-                dimer_pairs[alpha_id] = best_beta
-                dimer_pairs[best_beta] = alpha_id
-                print(
-                    f"✅ Paired α{alpha_id} ↔ β{best_beta} ({max_interface_size} interface residues)"
-                )
-            else:
-                print(
-                    f"❌ No suitable beta partner for α{alpha_id} (best had {max_interface_size} residues)"
-                )
-
-        print(f"🤝 Built {len(dimer_pairs)//2} dimer pairs")
-        return dimer_pairs
-
-    def build_dimer_pairs_simple(
-        self, positions: Dict[str, np.ndarray], tubulin_chains: Dict[str, str]
-    ) -> Dict[str, str]:
-        """Build dimer pairs using simple distance-based approach"""
-        dimer_pairs = {}
-
-        alpha_chains = [
-            cid
-            for cid, mtype in tubulin_chains.items()
-            if mtype == "alpha" and cid in positions
-        ]
-        beta_chains = [
-            cid
-            for cid, mtype in tubulin_chains.items()
-            if mtype == "beta" and cid in positions
-        ]
-
-        print(
-            f"🔍 Simple pairing: {len(alpha_chains)} alphas, {len(beta_chains)} betas"
-        )
-
-        for alpha_id in alpha_chains:
-            alpha_pos = positions[alpha_id]
-
-            # Find closest beta
-            min_dist = float("inf")
-            closest_beta = None
-
-            for beta_id in beta_chains:
-                if beta_id in dimer_pairs:  # Already paired
-                    continue
-
-                beta_pos = positions[beta_id]
-                dist = np.linalg.norm(alpha_pos - beta_pos)
-
-                if dist < min_dist:
-                    min_dist = dist
-                    closest_beta = beta_id
-
-            # Pair if distance is reasonable (< 50Å for dimers in this large structure)
-            if closest_beta and min_dist < 50.0:
-                dimer_pairs[alpha_id] = closest_beta
-                dimer_pairs[closest_beta] = alpha_id
-                print(
-                    f"✅ Simple pair: α{alpha_id} ↔ β{closest_beta} ({min_dist:.1f}Å)"
-                )
-
-        print(f"🤝 Built {len(dimer_pairs)//2} simple dimer pairs")
-        return dimer_pairs
-
-    def trace_protofilaments_simple(
+    def trace_protofilaments_from_connections(
         self, nterm_connections: Dict[str, str], tubulin_chains: Dict[str, str]
     ) -> List[List[str]]:
-        """Trace protofilaments using simple linked list approach"""
+        """Build full protofilaments by following N-terminus connections"""
 
-        # Build linked lists for each protofilament
-        protofilaments = []  # List of chain lists
-        chain_to_pf = {}  # chain_id -> protofilament_index
+        if not nterm_connections:
+            print("❌ No N-term connections to trace")
+            return []
 
         print(f"🔍 Building protofilaments from {len(nterm_connections)} connections")
 
-        # Process each N-term connection
-        for source_chain, target_chain in nterm_connections.items():
-            print(f"🔗 Processing connection: {source_chain} → {target_chain}")
+        # Build reverse mapping: target -> source
+        incoming = {target: source for source, target in nterm_connections.items()}
 
-            source_pf = chain_to_pf.get(source_chain)
-            target_pf = chain_to_pf.get(target_chain)
+        visited = set()
+        protofilaments = []
 
-            if source_pf is None and target_pf is None:
-                # Create new protofilament
-                new_pf_idx = len(protofilaments)
-                protofilaments.append([source_chain, target_chain])
-                chain_to_pf[source_chain] = new_pf_idx
-                chain_to_pf[target_chain] = new_pf_idx
+        # Find TRUE start chains (chains that are not targets of any connection)
+        all_chains_in_connections = set(nterm_connections.keys()) | set(
+            nterm_connections.values()
+        )
+        true_start_chains = []
+
+        # A true start is a chain that:
+        # 1. Has outgoing connections (is a source) AND
+        # 2. Is NOT a target of any connection
+        for chain in nterm_connections.keys():  # All sources
+            if chain not in incoming:  # Not a target of anyone
+                true_start_chains.append(chain)
+
+        print(
+            f"🎯 Found {len(true_start_chains)} TRUE protofilament starts: {true_start_chains[:10]}..."
+        )
+
+        # If we have very few true starts, we might have cycles or missing connections
+        # In that case, also consider high-numbered chains as starts (like 3A, 4A, etc.)
+        if len(true_start_chains) < 10:  # Expected ~13 for microtubule
+            print(f"⚠️ Too few true starts, looking for high-numbered chain starts...")
+            backup_starts = []
+            for chain in all_chains_in_connections:
+                if chain.startswith("3") or chain.startswith(
+                    "4"
+                ):  # Higher numbered layers
+                    if chain not in visited:
+                        backup_starts.append(chain)
+
+            print(
+                f"🔄 Adding {len(backup_starts)} backup starts: {backup_starts[:10]}..."
+            )
+            true_start_chains.extend(backup_starts)
+
+        # Trace each protofilament from its start
+        for start_chain in true_start_chains:
+            if start_chain in visited:
+                continue
+
+            # Follow the chain of connections
+            protofilament = []
+            current = start_chain
+            pf_visited = set()  # Local visited set to detect cycles
+
+            while current and current not in visited:
+                if current in pf_visited:  # Cycle detection
+                    print(f"  ⚠️ Cycle detected at {current}, breaking")
+                    break
+
+                protofilament.append(current)
+                visited.add(current)
+                pf_visited.add(current)
+                print(f"  → Adding {current} to PF{len(protofilaments)}")
+
+                # Move to next chain via N-terminus connection
+                current = nterm_connections.get(current)
+
+            if len(protofilament) >= 2:  # Only keep substantial protofilaments
+                protofilaments.append(protofilament)
                 print(
-                    f"  ✨ Created new protofilament {new_pf_idx}: [{source_chain}, {target_chain}]"
+                    f"✅ Completed PF{len(protofilaments)-1}: {len(protofilament)} chains"
                 )
+            elif len(protofilament) == 1:
+                # Single chains still count as protofilaments
+                protofilaments.append(protofilament)
+                print(f"⚠️ Single-chain PF{len(protofilaments)-1}: {protofilament}")
 
-            elif source_pf is None:
-                # Add source to existing target protofilament
-                protofilaments[target_pf].insert(0, source_chain)  # Add to front
-                chain_to_pf[source_chain] = target_pf
-                print(
-                    f"  ➕ Added {source_chain} to front of protofilament {target_pf}"
-                )
+        # Handle remaining connected chains (might be in cycles)
+        remaining_chains = all_chains_in_connections - visited
+        if remaining_chains:
+            print(f"🔍 Processing {len(remaining_chains)} remaining chains...")
 
-            elif target_pf is None:
-                # Add target to existing source protofilament
-                protofilaments[source_pf].append(target_chain)  # Add to end
-                chain_to_pf[target_chain] = source_pf
-                print(f"  ➕ Added {target_chain} to end of protofilament {source_pf}")
+            for chain in remaining_chains:
+                if chain in visited:
+                    continue
 
-            elif source_pf != target_pf:
-                # Merge two protofilaments
-                source_pf_chains = protofilaments[source_pf]
-                target_pf_chains = protofilaments[target_pf]
+                # Try to build a protofilament from this chain
+                protofilament = []
+                current = chain
+                seen_in_this_pf = set()
 
-                # Merge target into source
-                merged_chains = source_pf_chains + target_pf_chains
-                protofilaments[source_pf] = merged_chains
+                while (
+                    current
+                    and current not in visited
+                    and current not in seen_in_this_pf
+                ):
+                    protofilament.append(current)
+                    visited.add(current)
+                    seen_in_this_pf.add(current)
+                    current = nterm_connections.get(current)
 
-                # Update chain mappings
-                for chain in target_pf_chains:
-                    chain_to_pf[chain] = source_pf
+                if len(protofilament) >= 1:
+                    protofilaments.append(protofilament)
+                    print(f"✅ Found remaining PF: {len(protofilament)} chains")
 
-                # Remove the target protofilament (mark as empty)
-                protofilaments[target_pf] = []
-                print(f"  🔗 Merged protofilament {target_pf} into {source_pf}")
+        # Add isolated chains (chains not in any connections) - but group them smarter
+        all_tubulin_chains = set(tubulin_chains.keys())
+        isolated_chains = all_tubulin_chains - all_chains_in_connections
 
-            # else: both already in same protofilament, nothing to do
+        if isolated_chains:
+            print(
+                f"🏝️ Found {len(isolated_chains)} isolated chains - grouping by layer/position..."
+            )
 
-        # Filter out empty protofilaments
-        final_protofilaments = []
-        for pf_chains in protofilaments:
-            if len(pf_chains) >= 2:  # At least 2 chains
-                final_protofilaments.append(pf_chains)
-                print(
-                    f"✅ Final protofilament with {len(pf_chains)} chains: {pf_chains[:10]}..."
-                )
+            # Group isolated chains by their layer number (1A, 1B, 1C vs 2A, 2B, 2C, etc.)
+            isolated_by_layer = {}
+            for chain in isolated_chains:
+                layer = chain[0] if chain else "unknown"  # First character (1,2,3,4)
+                if layer not in isolated_by_layer:
+                    isolated_by_layer[layer] = []
+                isolated_by_layer[layer].append(chain)
 
-        print(f"🧵 Built {len(final_protofilaments)} protofilaments")
-        return final_protofilaments
+            # Add each layer as separate protofilaments, but don't create too many tiny ones
+            for layer, chains in isolated_by_layer.items():
+                if len(chains) <= 3:  # Small groups get individual protofilaments
+                    for chain in chains:
+                        protofilaments.append([chain])
+                else:  # Large groups get chunked
+                    chunk_size = max(
+                        2, len(chains) // 3
+                    )  # Try to make ~3 protofilaments per layer
+                    for i in range(0, len(chains), chunk_size):
+                        chunk = chains[i : i + chunk_size]
+                        protofilaments.append(chunk)
+                        print(f"✅ Isolated layer {layer} PF: {len(chunk)} chains")
 
-    def finalize_grid_from_interfaces(
+        print(f"🧵 Built {len(protofilaments)} protofilaments:")
+        for i, pf in enumerate(protofilaments):
+            alpha_count = sum(1 for c in pf if tubulin_chains.get(c) == "alpha")
+            beta_count = sum(1 for c in pf if tubulin_chains.get(c) == "beta")
+            print(f"  PF{i}: {len(pf)} chains ({alpha_count}α, {beta_count}β)")
+
+        return protofilaments
+
+    def finalize_grid_from_protofilaments(
         self,
         protofilaments: List[List[str]],
         positions: Dict[str, np.ndarray],
@@ -463,23 +429,18 @@ class SpatialGridGenerator:
         if not positions:
             raise HTTPException(400, "Could not extract chain positions")
 
-        # Find chain neighbors
-        chain_neighbors = self.interface_analyzer.find_chain_neighbors(
-            positions, self.NEIGHBOR_CUTOFF_Å
-        )
-
-        # Find N-terminus connections (simpler approach)
+        # Find N-terminus connections
         nterm_connections = self.interface_analyzer.find_nterm_connections(
             structure, tubulin_chains
         )
 
-        # Trace protofilaments using N-terminus connections
-        protofilaments = self.trace_protofilaments_simple(
+        # Trace complete protofilaments by following connections
+        protofilaments = self.trace_protofilaments_from_connections(
             nterm_connections, tubulin_chains
         )
 
         # Create final grid
-        subunits, structure_type = self.finalize_grid_from_interfaces(
+        subunits, structure_type = self.finalize_grid_from_protofilaments(
             protofilaments, positions, tubulin_chains
         )
 
@@ -487,7 +448,7 @@ class SpatialGridGenerator:
         alpha_count = sum(1 for subunit in subunits if subunit.monomerType == "alpha")
         beta_count = sum(1 for subunit in subunits if subunit.monomerType == "beta")
         print(
-            f"🔍 Debug: {alpha_count} alpha subunits, {beta_count} beta subunits in final grid"
+            f"🔍 Final grid: {alpha_count} alpha subunits, {beta_count} beta subunits"
         )
 
         # Create visualization
@@ -505,15 +466,6 @@ class SpatialGridGenerator:
         )
 
         # Generate visualizations
-        # Create simple debug data for visualization
-        debug_data = {
-            "nterm_connections": nterm_connections,
-            "protofilaments": protofilaments,
-        }
-
-        self.visualizer.create_debug_visualization(
-            debug_data, pdb_id, "N-term Connections"
-        )
         self.visualizer.create_protofilament_tracing_plot(
             positions, protofilaments, tubulin_chains, pdb_id
         )

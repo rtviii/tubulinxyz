@@ -3,6 +3,8 @@ from typing import List, Dict, Tuple
 from sklearn.decomposition import PCA
 from sklearn.cluster import DBSCAN
 from scipy.spatial.transform import Rotation as R
+import json
+from pathlib import Path
 
 
 class GeometricAnalyzer:
@@ -135,6 +137,67 @@ class GeometricAnalyzer:
         else:
             return "sheet"
 
+    def save_geometric_debug(
+        self,
+        pdb_id: str,
+        protofilaments: List[List[str]],
+        positions: Dict[str, np.ndarray],
+        tubulin_chains: Dict[str, str],
+    ):
+        """Save geometric analysis debug data"""
+        debug_dir = Path("debug_output")
+        debug_dir.mkdir(exist_ok=True)
+
+        geometric_data = {
+            "pdb_id": pdb_id,
+            "num_protofilaments": len(protofilaments),
+            "structure_type": self.determine_structure_type(len(protofilaments)),
+            "protofilament_details": [],
+        }
+
+        # Align structure for analysis
+        aligned_positions = self.align_structure_to_z_axis(positions, protofilaments)
+        ordered_pfs = self.order_protofilaments_by_angle(
+            protofilaments, aligned_positions
+        )
+
+        for i, pf_chains in enumerate(ordered_pfs):
+            if not pf_chains:
+                continue
+
+            # Calculate protofilament centroid
+            pf_coords = [
+                aligned_positions[cid] for cid in pf_chains if cid in aligned_positions
+            ]
+            if pf_coords:
+                centroid = np.mean(pf_coords, axis=0)
+                angle = np.arctan2(centroid[1], centroid[0])
+
+                pf_info = {
+                    "index": i,
+                    "chain_count": len(pf_chains),
+                    "chains": pf_chains,
+                    "centroid": [
+                        float(centroid[0]),
+                        float(centroid[1]),
+                        float(centroid[2]),
+                    ],
+                    "angle_rad": float(angle),
+                    "angle_deg": float(np.degrees(angle)),
+                    "chain_types": [
+                        tubulin_chains.get(c, "unknown") for c in pf_chains
+                    ],
+                }
+
+                geometric_data["protofilament_details"].append(pf_info)
+
+        with open(debug_dir / f"{pdb_id}_geometric_debug.json", "w") as f:
+            json.dump(geometric_data, f, indent=2)
+
+        print(
+            f"🔍 Saved geometric debug data to debug_output/{pdb_id}_geometric_debug.json"
+        )
+
     def process_protofilaments(
         self,
         protofilaments: List[List[str]],
@@ -147,6 +210,12 @@ class GeometricAnalyzer:
 
         # Import here to avoid circular imports
         from main import SubunitData
+
+        # Save debug data first
+        pdb_id = (
+            "current"  # This should be passed from caller, but keeping simple for now
+        )
+        self.save_geometric_debug(pdb_id, protofilaments, positions, tubulin_chains)
 
         # Align structure
         aligned_positions = self.align_structure_to_z_axis(positions, protofilaments)

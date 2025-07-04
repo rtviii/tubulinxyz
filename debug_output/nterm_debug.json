@@ -1,0 +1,983 @@
+{
+  "n_terminus_data": {
+    "1A": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4H": 57
+      },
+      "neighbor_residues": {
+        "4H": 4
+      }
+    },
+    "1B": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4O": 64
+      },
+      "neighbor_residues": {
+        "4O": 5
+      }
+    },
+    "1C": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4P": 66
+      },
+      "neighbor_residues": {
+        "4P": 5
+      }
+    },
+    "1D": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4Q": 67
+      },
+      "neighbor_residues": {
+        "4Q": 6
+      }
+    },
+    "1E": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4R": 64
+      },
+      "neighbor_residues": {
+        "4R": 5
+      }
+    },
+    "1F": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4S": 57
+      },
+      "neighbor_residues": {
+        "4S": 4
+      }
+    },
+    "1G": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4T": 54
+      },
+      "neighbor_residues": {
+        "4T": 4
+      }
+    },
+    "1I": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4U": 50
+      },
+      "neighbor_residues": {
+        "4U": 3
+      }
+    },
+    "1J": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4V": 45
+      },
+      "neighbor_residues": {
+        "4V": 3
+      }
+    },
+    "1K": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4W": 45
+      },
+      "neighbor_residues": {
+        "4W": 3
+      }
+    },
+    "1L": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4X": 45
+      },
+      "neighbor_residues": {
+        "4X": 3
+      }
+    },
+    "1M": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4Y": 46
+      },
+      "neighbor_residues": {
+        "4Y": 3
+      }
+    },
+    "1N": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4Z": 51
+      },
+      "neighbor_residues": {
+        "4Z": 4
+      }
+    },
+    "1H": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1A": 19
+      },
+      "neighbor_residues": {
+        "1A": 4
+      }
+    },
+    "1O": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1B": 19
+      },
+      "neighbor_residues": {
+        "1B": 4
+      }
+    },
+    "1P": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1C": 19
+      },
+      "neighbor_residues": {
+        "1C": 4
+      }
+    },
+    "1Q": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1D": 20
+      },
+      "neighbor_residues": {
+        "1D": 4
+      }
+    },
+    "1R": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1E": 19
+      },
+      "neighbor_residues": {
+        "1E": 4
+      }
+    },
+    "1S": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1F": 19
+      },
+      "neighbor_residues": {
+        "1F": 4
+      }
+    },
+    "1T": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1G": 19
+      },
+      "neighbor_residues": {
+        "1G": 4
+      }
+    },
+    "1U": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1I": 19
+      },
+      "neighbor_residues": {
+        "1I": 4
+      }
+    },
+    "1V": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1J": 19
+      },
+      "neighbor_residues": {
+        "1J": 4
+      }
+    },
+    "1W": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1K": 19
+      },
+      "neighbor_residues": {
+        "1K": 4
+      }
+    },
+    "1X": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1L": 19
+      },
+      "neighbor_residues": {
+        "1L": 4
+      }
+    },
+    "1Y": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1M": 19
+      },
+      "neighbor_residues": {
+        "1M": 4
+      }
+    },
+    "1Z": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1N": 19
+      },
+      "neighbor_residues": {
+        "1N": 4
+      }
+    },
+    "2A": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1H": 62
+      },
+      "neighbor_residues": {
+        "1H": 5
+      }
+    },
+    "2B": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1O": 55
+      },
+      "neighbor_residues": {
+        "1O": 3
+      }
+    },
+    "2C": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1P": 46
+      },
+      "neighbor_residues": {
+        "1P": 3
+      }
+    },
+    "2D": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1Q": 45
+      },
+      "neighbor_residues": {
+        "1Q": 4
+      }
+    },
+    "2E": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1R": 45
+      },
+      "neighbor_residues": {
+        "1R": 4
+      }
+    },
+    "2F": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1S": 48
+      },
+      "neighbor_residues": {
+        "1S": 5
+      }
+    },
+    "2G": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1T": 54
+      },
+      "neighbor_residues": {
+        "1T": 5
+      }
+    },
+    "2I": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1U": 57
+      },
+      "neighbor_residues": {
+        "1U": 5
+      }
+    },
+    "2J": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1V": 66
+      },
+      "neighbor_residues": {
+        "1V": 6
+      }
+    },
+    "2K": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1W": 70
+      },
+      "neighbor_residues": {
+        "1W": 6
+      }
+    },
+    "2L": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1X": 75
+      },
+      "neighbor_residues": {
+        "1X": 8
+      }
+    },
+    "2M": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1Y": 72
+      },
+      "neighbor_residues": {
+        "1Y": 8
+      }
+    },
+    "2N": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "1Z": 71
+      },
+      "neighbor_residues": {
+        "1Z": 7
+      }
+    },
+    "2H": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2A": 19
+      },
+      "neighbor_residues": {
+        "2A": 4
+      }
+    },
+    "2O": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2B": 19
+      },
+      "neighbor_residues": {
+        "2B": 4
+      }
+    },
+    "2P": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2C": 19
+      },
+      "neighbor_residues": {
+        "2C": 4
+      }
+    },
+    "2Q": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2D": 19
+      },
+      "neighbor_residues": {
+        "2D": 4
+      }
+    },
+    "2R": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2E": 20
+      },
+      "neighbor_residues": {
+        "2E": 4
+      }
+    },
+    "2S": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2F": 19
+      },
+      "neighbor_residues": {
+        "2F": 4
+      }
+    },
+    "2T": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2G": 19
+      },
+      "neighbor_residues": {
+        "2G": 4
+      }
+    },
+    "2U": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2I": 19
+      },
+      "neighbor_residues": {
+        "2I": 4
+      }
+    },
+    "2V": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2J": 19
+      },
+      "neighbor_residues": {
+        "2J": 4
+      }
+    },
+    "2W": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2K": 19
+      },
+      "neighbor_residues": {
+        "2K": 4
+      }
+    },
+    "2X": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2L": 19
+      },
+      "neighbor_residues": {
+        "2L": 4
+      }
+    },
+    "2Y": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2M": 19
+      },
+      "neighbor_residues": {
+        "2M": 4
+      }
+    },
+    "2Z": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2N": 19
+      },
+      "neighbor_residues": {
+        "2N": 4
+      }
+    },
+    "3A": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2H": 67
+      },
+      "neighbor_residues": {
+        "2H": 6
+      }
+    },
+    "3B": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2O": 65
+      },
+      "neighbor_residues": {
+        "2O": 5
+      }
+    },
+    "3C": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2P": 65
+      },
+      "neighbor_residues": {
+        "2P": 5
+      }
+    },
+    "3D": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2Q": 65
+      },
+      "neighbor_residues": {
+        "2Q": 5
+      }
+    },
+    "3E": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2R": 64
+      },
+      "neighbor_residues": {
+        "2R": 5
+      }
+    },
+    "3F": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2S": 64
+      },
+      "neighbor_residues": {
+        "2S": 5
+      }
+    },
+    "3G": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2T": 62
+      },
+      "neighbor_residues": {
+        "2T": 5
+      }
+    },
+    "3I": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2U": 60
+      },
+      "neighbor_residues": {
+        "2U": 4
+      }
+    },
+    "3J": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2V": 60
+      },
+      "neighbor_residues": {
+        "2V": 4
+      }
+    },
+    "3K": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2W": 61
+      },
+      "neighbor_residues": {
+        "2W": 4
+      }
+    },
+    "3L": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2X": 61
+      },
+      "neighbor_residues": {
+        "2X": 4
+      }
+    },
+    "3M": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2Y": 66
+      },
+      "neighbor_residues": {
+        "2Y": 6
+      }
+    },
+    "3N": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "2Z": 68
+      },
+      "neighbor_residues": {
+        "2Z": 6
+      }
+    },
+    "3H": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3A": 19
+      },
+      "neighbor_residues": {
+        "3A": 4
+      }
+    },
+    "3O": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3B": 19
+      },
+      "neighbor_residues": {
+        "3B": 4
+      }
+    },
+    "3P": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3C": 19
+      },
+      "neighbor_residues": {
+        "3C": 4
+      }
+    },
+    "3Q": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3D": 19
+      },
+      "neighbor_residues": {
+        "3D": 4
+      }
+    },
+    "3R": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3E": 20
+      },
+      "neighbor_residues": {
+        "3E": 4
+      }
+    },
+    "3S": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3F": 19
+      },
+      "neighbor_residues": {
+        "3F": 4
+      }
+    },
+    "3T": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3G": 19
+      },
+      "neighbor_residues": {
+        "3G": 4
+      }
+    },
+    "3U": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3I": 19
+      },
+      "neighbor_residues": {
+        "3I": 4
+      }
+    },
+    "3V": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3J": 19
+      },
+      "neighbor_residues": {
+        "3J": 4
+      }
+    },
+    "3W": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3K": 19
+      },
+      "neighbor_residues": {
+        "3K": 4
+      }
+    },
+    "3X": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3L": 19
+      },
+      "neighbor_residues": {
+        "3L": 4
+      }
+    },
+    "3Y": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3M": 19
+      },
+      "neighbor_residues": {
+        "3M": 4
+      }
+    },
+    "3Z": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "3N": 19
+      },
+      "neighbor_residues": {
+        "3N": 4
+      }
+    },
+    "4A": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4B": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4C": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4D": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4E": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4F": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4G": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4I": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4J": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4K": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4L": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4M": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4N": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "4H": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4A": 19
+      },
+      "neighbor_residues": {
+        "4A": 4
+      }
+    },
+    "4O": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4B": 19
+      },
+      "neighbor_residues": {
+        "4B": 4
+      }
+    },
+    "4P": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4C": 19
+      },
+      "neighbor_residues": {
+        "4C": 4
+      }
+    },
+    "4Q": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4D": 19
+      },
+      "neighbor_residues": {
+        "4D": 4
+      }
+    },
+    "4R": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4E": 19
+      },
+      "neighbor_residues": {
+        "4E": 4
+      }
+    },
+    "4S": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4F": 19
+      },
+      "neighbor_residues": {
+        "4F": 4
+      }
+    },
+    "4T": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4G": 19
+      },
+      "neighbor_residues": {
+        "4G": 4
+      }
+    },
+    "4U": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4I": 19
+      },
+      "neighbor_residues": {
+        "4I": 4
+      }
+    },
+    "4V": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4J": 19
+      },
+      "neighbor_residues": {
+        "4J": 4
+      }
+    },
+    "4W": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4K": 19
+      },
+      "neighbor_residues": {
+        "4K": 4
+      }
+    },
+    "4X": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4L": 19
+      },
+      "neighbor_residues": {
+        "4L": 4
+      }
+    },
+    "4Y": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4M": 19
+      },
+      "neighbor_residues": {
+        "4M": 4
+      }
+    },
+    "4Z": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "4N": 19
+      },
+      "neighbor_residues": {
+        "4N": 4
+      }
+    }
+  },
+  "connections": {
+    "1A": "4H",
+    "1B": "4O",
+    "1C": "4P",
+    "1D": "4Q",
+    "1E": "4R",
+    "1F": "4S",
+    "1G": "4T",
+    "1I": "4U",
+    "1J": "4V",
+    "1K": "4W",
+    "1L": "4X",
+    "1M": "4Y",
+    "1N": "4Z",
+    "1H": "1A",
+    "1O": "1B",
+    "1P": "1C",
+    "1Q": "1D",
+    "1R": "1E",
+    "1S": "1F",
+    "1T": "1G",
+    "1U": "1I",
+    "1V": "1J",
+    "1W": "1K",
+    "1X": "1L",
+    "1Y": "1M",
+    "1Z": "1N",
+    "2A": "1H",
+    "2B": "1O",
+    "2C": "1P",
+    "2D": "1Q",
+    "2E": "1R",
+    "2F": "1S",
+    "2G": "1T",
+    "2I": "1U",
+    "2J": "1V",
+    "2K": "1W",
+    "2L": "1X",
+    "2M": "1Y",
+    "2N": "1Z",
+    "2H": "2A",
+    "2O": "2B",
+    "2P": "2C",
+    "2Q": "2D",
+    "2R": "2E",
+    "2S": "2F",
+    "2T": "2G",
+    "2U": "2I",
+    "2V": "2J",
+    "2W": "2K",
+    "2X": "2L",
+    "2Y": "2M",
+    "2Z": "2N",
+    "3A": "2H",
+    "3B": "2O",
+    "3C": "2P",
+    "3D": "2Q",
+    "3E": "2R",
+    "3F": "2S",
+    "3G": "2T",
+    "3I": "2U",
+    "3J": "2V",
+    "3K": "2W",
+    "3L": "2X",
+    "3M": "2Y",
+    "3N": "2Z",
+    "3H": "3A",
+    "3O": "3B",
+    "3P": "3C",
+    "3Q": "3D",
+    "3R": "3E",
+    "3S": "3F",
+    "3T": "3G",
+    "3U": "3I",
+    "3V": "3J",
+    "3W": "3K",
+    "3X": "3L",
+    "3Y": "3M",
+    "3Z": "3N",
+    "4H": "4A",
+    "4O": "4B",
+    "4P": "4C",
+    "4Q": "4D",
+    "4R": "4E",
+    "4S": "4F",
+    "4T": "4G",
+    "4U": "4I",
+    "4V": "4J",
+    "4W": "4K",
+    "4X": "4L",
+    "4Y": "4M",
+    "4Z": "4N"
+  },
+  "total_chains": 104,
+  "successful_connections": 91
+}
