@@ -3,10 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import sys
 import traceback
+import os
 
-# Add the project root to Python path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+# Add the parent directory to the path to import tubulin_analyzer
+current_dir = Path(__file__).parent
+parent_dir = current_dir.parent
+sys.path.insert(0, str(parent_dir))
 
 from tubulin_analyzer import SpatialGridGenerator, GridData, DebugData
 
@@ -190,8 +192,7 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     
-    # Ensure debug output directory exists (relative to project root)
-    debug_dir = project_root / "debug_output"
-    debug_dir.mkdir(exist_ok=True)
+    # Ensure debug output directory exists
+    Path("debug_output").mkdir(exist_ok=True)
     
-    uvicorn.run("api.main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

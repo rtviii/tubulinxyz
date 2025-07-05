@@ -1,5 +1,6 @@
 {
   "n_terminus_data": {
+<<<<<<< HEAD
     "E": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {
@@ -7,22 +8,102 @@
       },
       "neighbor_residues": {
         "F": 2
+=======
+    "A": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "B": 42
+      },
+      "neighbor_residues": {
+        "B": 3
+      }
+    },
+    "B": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "K": 43
+      },
+      "neighbor_residues": {
+        "K": 4
+      }
+    },
+    "C": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "D": 46
+      },
+      "neighbor_residues": {
+        "D": 3
+      }
+    },
+    "D": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "L": 43
+      },
+      "neighbor_residues": {
+        "L": 4
+      }
+    },
+    "E": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "F": 52
+      },
+      "neighbor_residues": {
+        "F": 4
+>>>>>>> origin/main
       }
     },
     "F": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {
+<<<<<<< HEAD
         "J": 47
+=======
+        "J": 40
+>>>>>>> origin/main
       },
       "neighbor_residues": {
         "J": 4
       }
     },
+<<<<<<< HEAD
+=======
+    "G": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "E": 39
+      },
+      "neighbor_residues": {
+        "E": 4
+      }
+    },
+    "H": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "A": 44
+      },
+      "neighbor_residues": {
+        "A": 4
+      }
+    },
+    "I": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "C": 40
+      },
+      "neighbor_residues": {
+        "C": 4
+      }
+    },
+>>>>>>> origin/main
     "J": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {},
       "neighbor_residues": {}
     },
+<<<<<<< HEAD
     "G": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {
@@ -82,11 +163,14 @@
         "K": 4
       }
     },
+=======
+>>>>>>> origin/main
     "K": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {},
       "neighbor_residues": {}
     },
+<<<<<<< HEAD
     "H": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {
@@ -107,6 +191,24 @@
     "A": "B",
     "B": "K",
     "H": "A"
+=======
+    "L": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    }
+  },
+  "connections": {
+    "A": "B",
+    "B": "K",
+    "C": "D",
+    "D": "L",
+    "E": "F",
+    "F": "J",
+    "G": "E",
+    "H": "A",
+    "I": "C"
+>>>>>>> origin/main
   },
   "total_chains": 12,
   "successful_connections": 9

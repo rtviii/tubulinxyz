@@ -1,6 +1,12 @@
+<<<<<<<< HEAD:debug_output/3jat_visualize.pml
 # PyMOL script for 3JAT N-terminus analysis
 # Load structure (download first: wget https://files.rcsb.org/download/3JAT.cif)
 load 3JAT.cif
+========
+# PyMOL script for 6O2R N-terminus analysis
+# Load structure (download first: wget https://files.rcsb.org/download/6O2R.cif)
+load 6O2R.cif
+>>>>>>>> origin/main:debug_output/6o2r_visualize.pml
 hide everything
 show cartoon
 color grey, all
@@ -55,6 +61,13 @@ distance conn_B_K, nterm_B, nterm_K
 distance conn_H_A, nterm_H, nterm_A
 
 # Color connected pairs in red
+<<<<<<<< HEAD:debug_output/3jat_visualize.pml
+========
+color red, chain A or chain B
+color red, chain B or chain K
+color red, chain C or chain D
+color red, chain D or chain L
+>>>>>>>> origin/main:debug_output/6o2r_visualize.pml
 color red, chain E or chain F
 color red, chain F or chain J
 color red, chain G or chain E
