@@ -78,61 +78,89 @@ class GeometricAnalyzer:
         print(f"📐 Ordered {len(ordered_pfs)} protofilaments by angular position")
         return ordered_pfs
 
-    def cluster_z_coordinates(
-        self, positions: Dict[str, np.ndarray], chain_list: List[str]
+    def cluster_z_coordinates_per_protofilament(
+        self, positions: Dict[str, np.ndarray], protofilaments: List[List[str]]
     ) -> Dict[str, int]:
-        """Cluster chains by their Z-coordinate to create subunit indices"""
-        if not chain_list:
-            return {}
-
-        # Get Z-coordinates
-        z_coords = []
-        valid_chains = []
-
-        for chain_id in chain_list:
-            if chain_id in positions:
-                z_coords.append(positions[chain_id][2])
-                valid_chains.append(chain_id)
-
-        if not z_coords:
-            return {}
-
-        # Cluster Z-coordinates
-        z_array = np.array(z_coords).reshape(-1, 1)
-        clustering = DBSCAN(
-            eps=self.Z_CLUSTERING_EPS, min_samples=self.MIN_SAMPLES
-        ).fit(z_array)
-
-        # Map cluster labels to subunit indices
-        unique_labels = sorted(list(set(clustering.labels_)))
-        if -1 in unique_labels:  # Remove noise label
-            unique_labels.remove(-1)
-
-        # Sort labels by average Z-coordinate
-        label_to_avg_z = {}
-        for label in unique_labels:
-            mask = clustering.labels_ == label
-            avg_z = np.mean(z_array[mask])
-            label_to_avg_z[label] = avg_z
-
-        sorted_labels = sorted(unique_labels, key=lambda l: label_to_avg_z[l])
-        label_to_subunit_idx = {label: i for i, label in enumerate(sorted_labels)}
-
-        # Create chain to subunit index mapping
+        """Cluster chains by Z-coordinate WITHIN each protofilament to create subunit indices"""
         chain_to_subunit_idx = {}
-        for i, chain_id in enumerate(valid_chains):
-            label = clustering.labels_[i]
-            if label in label_to_subunit_idx:
-                chain_to_subunit_idx[chain_id] = label_to_subunit_idx[label]
-            else:
-                chain_to_subunit_idx[chain_id] = -1  # Noise
 
-        print(f"🎯 Clustered chains into {len(unique_labels)} Z-levels")
+        print(f"🎯 Processing {len(protofilaments)} protofilaments for Z-sorting...")
+
+        for pf_idx, pf_chains in enumerate(protofilaments):
+            if not pf_chains:
+                continue
+
+            # Get Z-coordinates for this protofilament
+            chain_z_data = []
+            for chain_id in pf_chains:
+                if chain_id in positions:
+                    z = positions[chain_id][2]
+                    chain_z_data.append((chain_id, z))
+
+            if len(chain_z_data) < 2:
+                # Single chain or no chains
+                for chain_id, _ in chain_z_data:
+                    chain_to_subunit_idx[chain_id] = 0
+                print(f"   PF{pf_idx}: {len(chain_z_data)} chain(s), all at level 0")
+                continue
+
+            # Sort chains by Z-coordinate
+            chain_z_data.sort(key=lambda x: x[1])  # Sort by Z-coordinate
+
+            # Group chains by similar Z-coordinates (same layer)
+            # Chains within 5Å of each other are considered same layer
+            Z_LAYER_TOLERANCE = 5.0
+            layers = []  # List of [chain_ids] at each layer
+            current_layer = [chain_z_data[0]]
+
+            for i in range(1, len(chain_z_data)):
+                chain_id, z = chain_z_data[i]
+                prev_z = current_layer[-1][1]
+
+                if abs(z - prev_z) <= Z_LAYER_TOLERANCE:
+                    # Same layer
+                    current_layer.append((chain_id, z))
+                else:
+                    # New layer
+                    layers.append(current_layer)
+                    current_layer = [(chain_id, z)]
+
+            # Don't forget the last layer
+            layers.append(current_layer)
+
+            # Assign subunit indices based on layer
+            for layer_idx, layer_chains in enumerate(layers):
+                for chain_id, z in layer_chains:
+                    chain_to_subunit_idx[chain_id] = layer_idx
+
+            # Debug output
+            z_range = chain_z_data[-1][1] - chain_z_data[0][1]
+            layer_info = [f"L{i}({len(layer)})" for i, layer in enumerate(layers)]
+            print(
+                f"   PF{pf_idx}: {len(chain_z_data)} chains, {len(layers)} layers, Z-range: {z_range:.1f}Å"
+            )
+            print(f"     Layers: {', '.join(layer_info)}")
+
+            # Show first few assignments for debugging
+            if len(layers) > 1:
+                for layer_idx, layer_chains in enumerate(
+                    layers[:3]
+                ):  # Show first 3 layers
+                    chain_names = [c[0] for c in layer_chains]
+                    print(f"     Level {layer_idx}: {chain_names}")
+
+        total_levels = (
+            max(chain_to_subunit_idx.values()) + 1 if chain_to_subunit_idx else 0
+        )
+        print(
+            f"🎯 Created {len(protofilaments)} protofilaments with up to {total_levels} subunit levels"
+        )
+
         return chain_to_subunit_idx
 
     def determine_structure_type(self, num_protofilaments: int) -> str:
         """Determine if structure is cylindrical or sheet-like"""
-        if num_protofilaments > 4:
+        if num_protofilaments > 6:  # More general threshold
             return "cylindrical"
         else:
             return "sheet"
@@ -204,7 +232,7 @@ class GeometricAnalyzer:
         positions: Dict[str, np.ndarray],
         tubulin_chains: Dict[str, str],
     ) -> Tuple[List, str]:
-        """Process protofilaments into final grid"""
+        """Process protofilaments into final grid by unrolling cylinder"""
         if not protofilaments:
             return [], "unknown"
 
@@ -217,10 +245,10 @@ class GeometricAnalyzer:
         )
         self.save_geometric_debug(pdb_id, protofilaments, positions, tubulin_chains)
 
-        # Align structure
+        # Align structure to Z-axis for consistent orientation
         aligned_positions = self.align_structure_to_z_axis(positions, protofilaments)
 
-        # Order protofilaments
+        # Order protofilaments by angular position around Z-axis
         ordered_pfs = self.order_protofilaments_by_angle(
             protofilaments, aligned_positions
         )
@@ -228,11 +256,12 @@ class GeometricAnalyzer:
         # Determine structure type
         structure_type = self.determine_structure_type(len(ordered_pfs))
 
-        # Cluster all chains by Z-coordinate
-        all_chains = [cid for pf in ordered_pfs for cid in pf]
-        chain_to_subunit_idx = self.cluster_z_coordinates(aligned_positions, all_chains)
+        # Create subunit indices by clustering Z-coordinates within each protofilament
+        chain_to_subunit_idx = self.cluster_z_coordinates_per_protofilament(
+            aligned_positions, ordered_pfs
+        )
 
-        # Create subunit data
+        # Create subunit data for the unrolled grid
         subunits = []
         seen_chains = set()  # Track to avoid duplicates
 
@@ -245,20 +274,39 @@ class GeometricAnalyzer:
                 ):  # Avoid duplicates
 
                     subunit_idx = chain_to_subunit_idx[chain_id]
-                    if subunit_idx >= 0:  # Skip noise points
-                        subunit = SubunitData(
-                            id=f"pf{pf_idx}-{chain_id}",
-                            auth_asym_id=chain_id,
-                            protofilament=pf_idx,
-                            subunitIndex=subunit_idx,
-                            monomerType=tubulin_chains[chain_id],
-                        )
-                        subunits.append(subunit)
-                        seen_chains.add(chain_id)
+                    subunit = SubunitData(
+                        id=f"pf{pf_idx}-su{subunit_idx}-{chain_id}",
+                        auth_asym_id=chain_id,
+                        protofilament=pf_idx,
+                        subunitIndex=subunit_idx,
+                        monomerType=tubulin_chains[chain_id],
+                    )
+                    subunits.append(subunit)
+                    seen_chains.add(chain_id)
 
+        # Validate the grid
+        max_pf = max(s.protofilament for s in subunits) + 1 if subunits else 0
+        max_su = max(s.subunitIndex for s in subunits) + 1 if subunits else 0
+
+        print(
+            f"📊 Unrolled cylinder grid: {max_pf} × {max_su} ({max_pf} protofilaments, {max_su} subunit levels)"
+        )
         print(
             f"📊 Created {len(subunits)} unique subunits from {len(seen_chains)} chains"
         )
+
+        # Print grid summary
+        grid_summary = {}
+        for s in subunits:
+            key = (s.protofilament, s.subunitIndex)
+            if key not in grid_summary:
+                grid_summary[key] = {"alpha": 0, "beta": 0}
+            grid_summary[key][s.monomerType] += 1
+
+        print(
+            f"📋 Grid occupancy: {len(grid_summary)} positions filled out of {max_pf * max_su} possible"
+        )
+
         return subunits, structure_type
 
     def calculate_interface_center(self, residues: List) -> np.ndarray:

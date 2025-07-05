@@ -3,7 +3,7 @@
 import asyncio
 import requests
 
-from gql_querystrings import AssemblyIdentificationString, EntryInfoString, NonpolymerEntitiesString, PolymerEntitiesString, WholeStructureTemplate
+from etl.gql_querystrings import AssemblyIdentificationString, EntryInfoString, NonpolymerEntitiesString, PolymerEntitiesString, WholeStructureTemplate
 
 
 gql_string = """

@@ -1,0 +1,1062 @@
+{
+    "entry": {
+        "assemblies": [
+            {
+                "rcsb_id": "8VRK-1",
+                "nonpolymer_entity_instances": null,
+                "polymer_entity_instances": [
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "1",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "2",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "3",
+                            "entity_id": "3"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "5",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "6",
+                            "entity_id": "3"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "7",
+                            "entity_id": "5"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "8",
+                            "entity_id": "5"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "9",
+                            "entity_id": "6"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "C",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "D",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "E",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "G",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "H",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "I",
+                            "entity_id": "8"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "J",
+                            "entity_id": "9"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "K",
+                            "entity_id": "8"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "L",
+                            "entity_id": "3"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "M",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "N",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "O",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "P",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "Q",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "R",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "S",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "T",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "U",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "V",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "W",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "X",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "Y",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "Z",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "o",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "p",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "q",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "r",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "s",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "t",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "u",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "v",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "w",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "x",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "y",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "z",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "a",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "b",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "c",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "d",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "e",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "f",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "g",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "h",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "i",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "j",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "k",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "l",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "m",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "n",
+                            "entity_id": "10"
+                        }
+                    }
+                ]
+            }
+        ],
+        "rcsb_id": "8VRK",
+        "rcsb_accession_info": {
+            "deposit_date": "2024-01-22T00:00:00Z"
+        },
+        "struct_keywords": {
+            "pdbx_keywords": "CELL CYCLE",
+            "text": "Microtubule nucleation complex bound to a microtubule, CELL CYCLE"
+        },
+        "rcsb_entry_info": {
+            "resolution_combined": [
+                8.5
+            ]
+        },
+        "rcsb_external_references": [
+            {
+                "link": "https://www.emdataresource.org/EMD-43483",
+                "type": "EM DATA RESOURCE",
+                "id": "EMD-43483"
+            }
+        ],
+        "exptl": [
+            {
+                "method": "ELECTRON MICROSCOPY"
+            }
+        ],
+        "citation": [
+            {
+                "rcsb_authors": [
+                    "Aher, A.",
+                    "Urnavicius, L.",
+                    "Xue, A.",
+                    "Neselu, K.",
+                    "Kapoor, T.M."
+                ],
+                "year": 2024,
+                "title": "Structure of the gamma-tubulin ring complex-capped microtubule.",
+                "pdbx_database_id_DOI": "10.1038/s41594-024-01264-z"
+            }
+        ],
+        "polymer_entities": [
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "A",
+                        "AA",
+                        "BA",
+                        "CA",
+                        "DA",
+                        "EA",
+                        "FA",
+                        "GA",
+                        "HA",
+                        "W",
+                        "X",
+                        "Y",
+                        "Z"
+                    ],
+                    "auth_asym_ids": [
+                        "1",
+                        "O",
+                        "P",
+                        "Q",
+                        "R",
+                        "S",
+                        "T",
+                        "U",
+                        "V",
+                        "W",
+                        "X",
+                        "Y",
+                        "Z"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "1"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF03953",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains. Members of this family are involved in polymer formation. Tubulins are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. (The FtsZ GTPases have been split into their won family). ",
+                        "rcsb_pfam_description": "Tubulin C-terminal domain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P68363"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Tubulin alpha-1B chain"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MRECISIHVGQAGVQIGNACWELYCLEHGIQPDGQMPSDKTIHHHHHHGGGDDSFNTFFSETGAGKHVPRAVFVDLEPTVIDEVRTGTYRQLFHPEQLITGKEDAANNYARGHYTIGKEIIDLVLDRIRKLADQCTGLQGFLVFHSFGGGTGSGFTSLLMERLSVDYGKKSKLEFSIYPAPQVSTAVVEPYNSILTTHTTLEHSDCAFMVDNEAIYDICRRNLDIERPTYTNLNRLISQIVSSITASLRFDGALNVDLTDFQTNLVPYPRIHFPLATYAPVISAEKAYHEQLSVAEITNACFEPANQMVKCDPRHGKYMACCLLYRGDVVPKDVNAAIATIKTKRSIQFVDWCPTGFKVGINYQPPTVVPGGDLAKVQRAVCMLSNTTAIAEAWARLDHKFDLMYAKRAFVHWYVGEGMEEGEFSEAREDMAALEKDYEEVGVDSVEGEGEEEGEEY",
+                    "pdbx_seq_one_letter_code_can": "MRECISIHVGQAGVQIGNACWELYCLEHGIQPDGQMPSDKTIHHHHHHGGGDDSFNTFFSETGAGKHVPRAVFVDLEPTVIDEVRTGTYRQLFHPEQLITGKEDAANNYARGHYTIGKEIIDLVLDRIRKLADQCTGLQGFLVFHSFGGGTGSGFTSLLMERLSVDYGKKSKLEFSIYPAPQVSTAVVEPYNSILTTHTTLEHSDCAFMVDNEAIYDICRRNLDIERPTYTNLNRLISQIVSSITASLRFDGALNVDLTDFQTNLVPYPRIHFPLATYAPVISAEKAYHEQLSVAEITNACFEPANQMVKCDPRHGKYMACCLLYRGDVVPKDVNAAIATIKTKRSIQFVDWCPTGFKVGINYQPPTVVPGGDLAKVQRAVCMLSNTTAIAEAWARLDHKFDLMYAKRAFVHWYVGEGMEEGEFSEAREDMAALEKDYEEVGVDSVEGEGEEEGEEY",
+                    "pdbx_strand_id": "1,O,P,Q,R,S,T,U,V,W,X,Y,Z",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 457,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "B",
+                        "IA",
+                        "JA",
+                        "KA",
+                        "LA",
+                        "MA",
+                        "NA",
+                        "OA",
+                        "PA",
+                        "QA",
+                        "RA",
+                        "SA",
+                        "TA"
+                    ],
+                    "auth_asym_ids": [
+                        "2",
+                        "o",
+                        "p",
+                        "q",
+                        "r",
+                        "s",
+                        "t",
+                        "u",
+                        "v",
+                        "w",
+                        "x",
+                        "y",
+                        "z"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "2"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF03953",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains. Members of this family are involved in polymer formation. Tubulins are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. (The FtsZ GTPases have been split into their won family). ",
+                        "rcsb_pfam_description": "Tubulin C-terminal domain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q13509"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Tubulin beta-3 chain"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MREIVHIQAGQCGNQIGAKFWEVISDEHGIDPSGNYVGDSDLQLERISVYYNEASSHKYVPRAILVDLEPGTMDSVRSGAFGHLFRPDNFIFGQSGAGNNWAKGHYTEGAELVDSVLDVVRKECENCDCLQGFQLTHSLGGGTGSGMGTLLISKVREEYPDRIMNTFSVVPSPKVSDTVVEPYNATLSIHQLVENTDETYCIDNEALYDICFRTLKLATPTYGDLNHLVSATMSGVTTSLRFPGQLNADLRKLAVNMVPFPRLHFFMPGFAPLTARGSQQYRALTVPELTQQMFDAKNMMAACDPRHGRYLTVATVFRGRMSMKEVDEQMLAIQSKNSSYFVEWIPNNVKVAVCDIPPRGLKMSSTFIGNSTAIQELFKRISEQFTAMFRRKAFLHWYTGEGMDEMEFTEAESNMNDLVSEYQQYQDATAEEEGEMYEDDEEESEAQGPKENLYFQ",
+                    "pdbx_seq_one_letter_code_can": "MREIVHIQAGQCGNQIGAKFWEVISDEHGIDPSGNYVGDSDLQLERISVYYNEASSHKYVPRAILVDLEPGTMDSVRSGAFGHLFRPDNFIFGQSGAGNNWAKGHYTEGAELVDSVLDVVRKECENCDCLQGFQLTHSLGGGTGSGMGTLLISKVREEYPDRIMNTFSVVPSPKVSDTVVEPYNATLSIHQLVENTDETYCIDNEALYDICFRTLKLATPTYGDLNHLVSATMSGVTTSLRFPGQLNADLRKLAVNMVPFPRLHFFMPGFAPLTARGSQQYRALTVPELTQQMFDAKNMMAACDPRHGRYLTVATVFRGRMSMKEVDEQMLAIQSKNSSYFVEWIPNNVKVAVCDIPPRGLKMSSTFIGNSTAIQELFKRISEQFTAMFRRKAFLHWYTGEGMDEMEFTEAESNMNDLVSEYQQYQDATAEEEGEMYEDDEEESEAQGPKENLYFQ",
+                    "pdbx_strand_id": "2,o,p,q,r,s,t,u,v,w,x,y,z",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 456,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "C",
+                        "E",
+                        "T"
+                    ],
+                    "auth_asym_ids": [
+                        "3",
+                        "6",
+                        "L"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "3"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF17681",
+                        "rcsb_pfam_comment": "This is the N-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 [2]. Functional studies have shown that the N-terminal domain defines the functional identity of GCPs, suggesting that all GCPs are incorporated into the helix of gamma-tubulin small complexes (gTURCs) via lateral interactions between their N-terminal domains. Thereby, they define the direct neighbors and position the GCPs within the helical wall of gTuRC [3]. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. In addition to the conserved sequences, the N-terminal domains carry specific insertions of various sizes depending on the GCP, i.e. internal insertions or N-terminal extensions. These insertions may equally contribute to the function of individual GCPs as they have been implied in specific interactions with regulatory or structural proteins. For instance, GCP6 carries a large internal insertion phosphorylated by Plk4 and containing a domain of interaction with keratins, whereas the N-terminal extension of GCP3 interacts with the recruitment protein MOZART1[3]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component N-terminal"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF04130",
+                        "rcsb_pfam_comment": "This is the C-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 . Structure-based sequence analysis revealed the existence of an exposed surface area conserved in all human GCPs and in GCP4 orthologs. This area is located in the C-terminal domain of GCP4, which was confirmed in vitro to bind directly to gamma-tubulin. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component C-terminal"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q96RT7"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "TUBGCP6 protein"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MASITQLFDDLCEALLPAAKTHLGQRSVNRKRAKRSLKKVAYNALFTNLFQDETQQLQPDMSKLPARNKILMLSFDLRVGGLGPKADRLEELVEELEAAPCCPLLEVGSVLDLLVQLAGSGPPQVLPRKRDYFLNNKHVGRNVPYSGYDCDDLSVFEMDVQSLISREECLCHSMIQETLQVMEAAPGTGLPTVGLFSFGDPCGDRFERDTRVSLFGALVHSRTYDMDVRLGLPPVPDNADLSGLAIKVPPSVDQWEDEGFQSASNLTPDSQSEPSVTPDVDLWEAALTYEASKRRCWERVGCPPGHREEPYLTEAGRDAFDKFCRLHQGELQLLAGGVLQAPQPVLVKECELVKDVLNVLIGVVSATFSLCQPAQAFVVKRGVHVSGASPESISSLLSEVAEYGTCYTRLSHFSLQPVLDSLYSKGLVFQAFTSGLRRYLQYYRACVLSTPPTLSLLTIGFLFKKLGRQLRYLAELCGVGAVLPGTCGGGPRAAFPTGVKLLSYLYQEALHNCSNEHYPVLLSLLKTSCEPYTRFIHDWVYSGVFRDAYGEFMIQVNHEYLSFRDKLYWTHGYVLISKEVEDCVPVFLKHIAHDIYVCGKTINLLKLCCPRHYLCWSDVPVPRISVIFSLEELKEIEKDCAVYVGRMERVARHSSVSKEEKELRMEIAKQELIAHAREAASRVLSALSDRQMSERMALDARKREQFQRLKEQFVKDQERRQAARQEELDDDFSYARELRDRERRLKSLEEELERKASKLSAEAARREQKALWRIQRHRLESARLRFLLEDEKHIQEMLKAVSEAHQPQEPPDVLLSVHPQVTSPGPEHPEGGQGCDSGSAEQHSPAWDGWNRPGLLTPQPLKPLAVGAGGRGLQQAEGARPFSDSLSIGDFLPVGPGAEPSVQTGMVPLLEVALQTINLDLPPSAPGEAPAAASTQPSRPQEYDFSTVLRPAVATSPAPGPLQAAECSLGSSGLQLWEDSCGKMDACGSASRETLLPSHPPRRAALEEGSSQPTERLFGQVSGGGLPTGDYASEIAPTRPRWNTHGHVSDASIRVGENVSDVAPTQPRWNTHGHVSNASISLGESVSDVAPTRPRWNIHGHVSNASIRVGENVSDVAPTRPRWNTHGHVSNASIRVGENVSDVAPTRPRWNTHGHVSDASISLGESVSDMAPARPRWNTHGHVSDASISLGESVSDMAPTRPRWNTHGHVSDTSIRVGENVSDVAPIRSRCNTHGHVSDASISLGEPVSDVVSTRPRWNTHVPIPPPHMVLGALSPEAEPNTPRPQQSPPGHTSQSALSLGAQSAVLDCGPRLPVEVGPSLSSPSSGCGEGSISVGENVSDVAPTQPWWPNTPGDSVSEELGPGRSGDTEDLSPNWPLNSQEDTAAQSSPGRGEEAEASAAEAQGGEQAYLAGLAGQYHLERYPDSYESMSEPPIAHLLRPVLPRAFAFPVDPQVQSAADETAVQLSELLTLPVLMKRSITAPLAAHISLVNKAAVDYFFVELHLEAHYEALRHFLLMEDGEFAQSLSDLLFEKLGAGQTPGELLNPLVLNSVLSKALQCSLHGDTPHASNLSLALKYLPEVFAPNAPDVLSCLELRYKVDWPLNIVITEGCLSKYSGVFSFLLQLKLMMWALKDVCFHLKRTALLSHMAGSVQFRQLQLFKHEMQHFVKVIQGYIANQILHVTWCEFRARLATVGDLEEIQRAHAEYLHEAVFRGLLTEKAAPVMNVIHSIFSLVLKFRSQLISQAWGPPGGPRGAEHPNFALMQQSYNTFKYYSHFLFKVVTKLVNRGYQPHLEDFLLRINFNNYYQDA",
+                    "pdbx_seq_one_letter_code_can": "MASITQLFDDLCEALLPAAKTHLGQRSVNRKRAKRSLKKVAYNALFTNLFQDETQQLQPDMSKLPARNKILMLSFDLRVGGLGPKADRLEELVEELEAAPCCPLLEVGSVLDLLVQLAGSGPPQVLPRKRDYFLNNKHVGRNVPYSGYDCDDLSVFEMDVQSLISREECLCHSMIQETLQVMEAAPGTGLPTVGLFSFGDPCGDRFERDTRVSLFGALVHSRTYDMDVRLGLPPVPDNADLSGLAIKVPPSVDQWEDEGFQSASNLTPDSQSEPSVTPDVDLWEAALTYEASKRRCWERVGCPPGHREEPYLTEAGRDAFDKFCRLHQGELQLLAGGVLQAPQPVLVKECELVKDVLNVLIGVVSATFSLCQPAQAFVVKRGVHVSGASPESISSLLSEVAEYGTCYTRLSHFSLQPVLDSLYSKGLVFQAFTSGLRRYLQYYRACVLSTPPTLSLLTIGFLFKKLGRQLRYLAELCGVGAVLPGTCGGGPRAAFPTGVKLLSYLYQEALHNCSNEHYPVLLSLLKTSCEPYTRFIHDWVYSGVFRDAYGEFMIQVNHEYLSFRDKLYWTHGYVLISKEVEDCVPVFLKHIAHDIYVCGKTINLLKLCCPRHYLCWSDVPVPRISVIFSLEELKEIEKDCAVYVGRMERVARHSSVSKEEKELRMEIAKQELIAHAREAASRVLSALSDRQMSERMALDARKREQFQRLKEQFVKDQERRQAARQEELDDDFSYARELRDRERRLKSLEEELERKASKLSAEAARREQKALWRIQRHRLESARLRFLLEDEKHIQEMLKAVSEAHQPQEPPDVLLSVHPQVTSPGPEHPEGGQGCDSGSAEQHSPAWDGWNRPGLLTPQPLKPLAVGAGGRGLQQAEGARPFSDSLSIGDFLPVGPGAEPSVQTGMVPLLEVALQTINLDLPPSAPGEAPAAASTQPSRPQEYDFSTVLRPAVATSPAPGPLQAAECSLGSSGLQLWEDSCGKMDACGSASRETLLPSHPPRRAALEEGSSQPTERLFGQVSGGGLPTGDYASEIAPTRPRWNTHGHVSDASIRVGENVSDVAPTQPRWNTHGHVSNASISLGESVSDVAPTRPRWNIHGHVSNASIRVGENVSDVAPTRPRWNTHGHVSNASIRVGENVSDVAPTRPRWNTHGHVSDASISLGESVSDMAPARPRWNTHGHVSDASISLGESVSDMAPTRPRWNTHGHVSDTSIRVGENVSDVAPIRSRCNTHGHVSDASISLGEPVSDVVSTRPRWNTHVPIPPPHMVLGALSPEAEPNTPRPQQSPPGHTSQSALSLGAQSAVLDCGPRLPVEVGPSLSSPSSGCGEGSISVGENVSDVAPTQPWWPNTPGDSVSEELGPGRSGDTEDLSPNWPLNSQEDTAAQSSPGRGEEAEASAAEAQGGEQAYLAGLAGQYHLERYPDSYESMSEPPIAHLLRPVLPRAFAFPVDPQVQSAADETAVQLSELLTLPVLMKRSITAPLAAHISLVNKAAVDYFFVELHLEAHYEALRHFLLMEDGEFAQSLSDLLFEKLGAGQTPGELLNPLVLNSVLSKALQCSLHGDTPHASNLSLALKYLPEVFAPNAPDVLSCLELRYKVDWPLNIVITEGCLSKYSGVFSFLLQLKLMMWALKDVCFHLKRTALLSHMAGSVQFRQLQLFKHEMQHFVKVIQGYIANQILHVTWCEFRARLATVGDLEEIQRAHAEYLHEAVFRGLLTEKAAPVMNVIHSIFSLVLKFRSQLISQAWGPPGGPRGAEHPNFALMQQSYNTFKYYSHFLFKVVTKLVNRGYQPHLEDFLLRINFNNYYQDA",
+                    "pdbx_strand_id": "3,6,L",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 1811,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "D",
+                        "J",
+                        "L",
+                        "N",
+                        "P",
+                        "V"
+                    ],
+                    "auth_asym_ids": [
+                        "5",
+                        "B",
+                        "D",
+                        "F",
+                        "H",
+                        "N"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "4"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF17681",
+                        "rcsb_pfam_comment": "This is the N-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 [2]. Functional studies have shown that the N-terminal domain defines the functional identity of GCPs, suggesting that all GCPs are incorporated into the helix of gamma-tubulin small complexes (gTURCs) via lateral interactions between their N-terminal domains. Thereby, they define the direct neighbors and position the GCPs within the helical wall of gTuRC [3]. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. In addition to the conserved sequences, the N-terminal domains carry specific insertions of various sizes depending on the GCP, i.e. internal insertions or N-terminal extensions. These insertions may equally contribute to the function of individual GCPs as they have been implied in specific interactions with regulatory or structural proteins. For instance, GCP6 carries a large internal insertion phosphorylated by Plk4 and containing a domain of interaction with keratins, whereas the N-terminal extension of GCP3 interacts with the recruitment protein MOZART1[3]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component N-terminal"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF04130",
+                        "rcsb_pfam_comment": "This is the C-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 . Structure-based sequence analysis revealed the existence of an exposed surface area conserved in all human GCPs and in GCP4 orthologs. This area is located in the C-terminal domain of GCP4, which was confirmed in vitro to bind directly to gamma-tubulin. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component C-terminal"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q96CW5"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Gamma-tubulin complex component 3"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MATPDQKSPNVLLQNLCCRILGRSEADVAQQFQYAVRVIGSNFAPTVERDEFLVAEKIKKELIRQRREADAALFSELHRKLHSQGVLKNKWSILYLLLSLSEDPRRQPSKVSSYATLFAQALPRDAHSTPYYYARPQTLPLSYQDRSAQSAQSSGSVGSSGISSIGLCALSGPAPAPQSLLPGQSNQAPGVGDCLRQQLGSRLAWTLTANQPSSQATTSKGVPSAVSRNMTRSRREGDTGGTMEITEAALVRDILYVFQGIDGKNIKMNNTENCYKVEGKANLSRSLRDTAVRLSELGWLHNKIRRYTDQRSLDRSFGLVGQSFCAALHQELREYYRLLSVLHSQLQLEDDQGVNLGLESSLTLRRLLVWTYDPKIRLKTLAALVDHCQGRKGGELASAVHAYTKTGDPYMRSLVQHILSLVSHPVLSFLYRWIYDGELEDTYHEFFVASDPTVKTDRLWHDKYTLRKSMIPSFMTMDQSRKVLLIGKSINFLHQVCHDQTPTTKMIAVTKSAESPQDAADLFTDLENAFQGKIDAAYFETSKYLLDVLNKKYSLLDHMQAMRRYLLLGQGDFIRHLMDLLKPELVRPATTLYQHNLTGILETAVRATNAQFDSPEILRRLDVRLLEVSPGDTGWDVFSLDYHVDGPIATVFTRECMSHYLRVFNFLWRAKRMEYILTDIRKGHMCNAKLLRNMPEFSGVLHQCHILASEMVHFIHQMQYYITFEVLECSWDELWNKVQQAQDLDHIIAAHEVFLDTIISRCLLDSDSRALLNQLRAVFDQIIELQNAQDAIYRAALEELQRRLQFEEKKKQREIEGQWGVTAAEEEEENKRIGEFKESIPKMCSQLRILTHFYQGIVQQFLVLLTTSSDESLRFLSFRLDFNEHYKAREPRLRVSLGTRGRRSSHT",
+                    "pdbx_seq_one_letter_code_can": "MATPDQKSPNVLLQNLCCRILGRSEADVAQQFQYAVRVIGSNFAPTVERDEFLVAEKIKKELIRQRREADAALFSELHRKLHSQGVLKNKWSILYLLLSLSEDPRRQPSKVSSYATLFAQALPRDAHSTPYYYARPQTLPLSYQDRSAQSAQSSGSVGSSGISSIGLCALSGPAPAPQSLLPGQSNQAPGVGDCLRQQLGSRLAWTLTANQPSSQATTSKGVPSAVSRNMTRSRREGDTGGTMEITEAALVRDILYVFQGIDGKNIKMNNTENCYKVEGKANLSRSLRDTAVRLSELGWLHNKIRRYTDQRSLDRSFGLVGQSFCAALHQELREYYRLLSVLHSQLQLEDDQGVNLGLESSLTLRRLLVWTYDPKIRLKTLAALVDHCQGRKGGELASAVHAYTKTGDPYMRSLVQHILSLVSHPVLSFLYRWIYDGELEDTYHEFFVASDPTVKTDRLWHDKYTLRKSMIPSFMTMDQSRKVLLIGKSINFLHQVCHDQTPTTKMIAVTKSAESPQDAADLFTDLENAFQGKIDAAYFETSKYLLDVLNKKYSLLDHMQAMRRYLLLGQGDFIRHLMDLLKPELVRPATTLYQHNLTGILETAVRATNAQFDSPEILRRLDVRLLEVSPGDTGWDVFSLDYHVDGPIATVFTRECMSHYLRVFNFLWRAKRMEYILTDIRKGHMCNAKLLRNMPEFSGVLHQCHILASEMVHFIHQMQYYITFEVLECSWDELWNKVQQAQDLDHIIAAHEVFLDTIISRCLLDSDSRALLNQLRAVFDQIIELQNAQDAIYRAALEELQRRLQFEEKKKQREIEGQWGVTAAEEEEENKRIGEFKESIPKMCSQLRILTHFYQGIVQQFLVLLTTSSDESLRFLSFRLDFNEHYKAREPRLRVSLGTRGRRSSHT",
+                    "pdbx_strand_id": "5,B,D,F,H,N",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 907,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "F",
+                        "G"
+                    ],
+                    "auth_asym_ids": [
+                        "7",
+                        "8"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "5"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF12554",
+                        "rcsb_pfam_comment": "The name MOZART is derived from letters of 'mitotic-spindle organizing proteins associated with a ring of gamma-tubulin'. This family operates as part of the gamma-tubulin ring complex, gamma-TuRC, one of the complexes necessary for chromosome segregation. This complex is located at centrosomes and mediates the formation of bipolar spindles in mitosis; it consists of six subunits. However, unlike the other four known subunits, this family does not carry the conserved 'Spc97-Spc98' GCP domain, so the TUBCGP nomenclature cannot be used for it. MOZART1 is required for gamma-TuRC recruitment to centrosomes [1]. ",
+                        "rcsb_pfam_description": "Mitotic-spindle organizing gamma-tubulin ring associated"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q08AG7"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Mitotic-spindle organizing protein 1"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MASSSGAGAAAAAAAANLNAVRETMDVLLEISRILNTGLDMETLSICVRLCEQGINPEALSSVIKELRKATEALKAAENMTS",
+                    "pdbx_seq_one_letter_code_can": "MASSSGAGAAAAAAAANLNAVRETMDVLLEISRILNTGLDMETLSICVRLCEQGINPEALSSVIKELRKATEALKAAENMTS",
+                    "pdbx_strand_id": "7,8",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 82,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "H"
+                    ],
+                    "auth_asym_ids": [
+                        "9"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "6"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P60709"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Actin, cytoplasmic 1"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MDDDIAALVVDNGSGMCKAGFAGDDAPRAVFPSIVGRPRHQGVMVGMGQKDSYVGDEAQSKRGILTLKYPIEHGIVTNWDDMEKIWHHTFYNELRVAPEEHPVLLTEAPLNPKANREKMTQIMFETFNTPAMYVAIQAVLSLYASGRTTGIVMDSGDGVTHTVPIYEGYALPHAILRLDLAGRDLTDYLMKILTERGYSFTTTAEREIVRDIKEKLCYVALDFEQEMATAASSSSLEKSYELPDGQVITIGNERFRCPEALFQPSFLGMESCGIHETTFNSIMKCDVDIRKDLYANTVLSGGTTMYPGIADRMQKEITALAPSTMKIKIIAPPERKYSVWIGGSILASLSTFQQMWISKQEYDESGPSIVHRKCF",
+                    "pdbx_seq_one_letter_code_can": "MDDDIAALVVDNGSGMCKAGFAGDDAPRAVFPSIVGRPRHQGVMVGMGQKDSYVGDEAQSKRGILTLKYPIEHGIVTNWDDMEKIWHHTFYNELRVAPEEHPVLLTEAPLNPKANREKMTQIMFETFNTPAMYVAIQAVLSLYASGRTTGIVMDSGDGVTHTVPIYEGYALPHAILRLDLAGRDLTDYLMKILTERGYSFTTTAEREIVRDIKEKLCYVALDFEQEMATAASSSSLEKSYELPDGQVITIGNERFRCPEALFQPSFLGMESCGIHETTFNSIMKCDVDIRKDLYANTVLSGGTTMYPGIADRMQKEITALAPSTMKIKIIAPPERKYSVWIGGSILASLSTFQQMWISKQEYDESGPSIVHRKCF",
+                    "pdbx_strand_id": "9",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 375,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "I",
+                        "K",
+                        "M",
+                        "O",
+                        "U"
+                    ],
+                    "auth_asym_ids": [
+                        "A",
+                        "C",
+                        "E",
+                        "G",
+                        "M"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "7"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF17681",
+                        "rcsb_pfam_comment": "This is the N-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 [2]. Functional studies have shown that the N-terminal domain defines the functional identity of GCPs, suggesting that all GCPs are incorporated into the helix of gamma-tubulin small complexes (gTURCs) via lateral interactions between their N-terminal domains. Thereby, they define the direct neighbors and position the GCPs within the helical wall of gTuRC [3]. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. In addition to the conserved sequences, the N-terminal domains carry specific insertions of various sizes depending on the GCP, i.e. internal insertions or N-terminal extensions. These insertions may equally contribute to the function of individual GCPs as they have been implied in specific interactions with regulatory or structural proteins. For instance, GCP6 carries a large internal insertion phosphorylated by Plk4 and containing a domain of interaction with keratins, whereas the N-terminal extension of GCP3 interacts with the recruitment protein MOZART1[3]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component N-terminal"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF04130",
+                        "rcsb_pfam_comment": "This is the C-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 . Structure-based sequence analysis revealed the existence of an exposed surface area conserved in all human GCPs and in GCP4 orthologs. This area is located in the C-terminal domain of GCP4, which was confirmed in vitro to bind directly to gamma-tubulin. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component C-terminal"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q9BSJ2"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Isoform 3 of Gamma-tubulin complex component 2"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MSEFRIHHDVNELLSLLRVHGGDGAEVYIDLLQKNRTPYVTTTVSAHSAKVKIAEFSRTPEDFLKKYDELKSKNTRNLDPLVYLLSKLTEDKETLQYLQQNAKERAELAAAAVGSSTTSINVPAAASKISMQELEELRKQLGSVATGSTLQQSLELKRKMLRDKQNKKNSGQHLPIFPAWVYERPALIGDFLIGAGISTDTALPIVLLGWSLALSPRLKCSGVISAHCGLHLPGTLPLASQESAVVEDLLYVLVGVDGRYVSAQPLAGRQSRTFLVDPNLDLSIRELVHRILPVAASYSAVTRFIEEKSSFEYGQVNHALAAAMRTLVKEHLILVSQLEQLHRQGLLSLQKLWFYIQPAMRTMDILASLATSVDKGECLGGSTLSLLHDRSFSYTGDSQAQELCLYLTKAASAPYFEVLEKWIYRGIIHDPYSEFMVEEHELRKERIQEDYNDKYWDQRYTIVQQQIPSFLQKMADKILSTGKYLNVVRECGHDVTCPVAKEIIYTLKERAYVEQIEKAFNYASKVLLDFLMEEKELVAHLRSIKRYFLMDQGDFFVHFMDLAEEELRKPVEDITPPRLEALLELALRMSTANTDPFKDDLKIDLMPHDLITQLLRVLAIETKQEKAMAHADPTELALSGLEAFSFDYIVKWPLSLIINRKALTRYQMLFRHMFYCKHVERQLCSVWISNKTAKQHSLHSAQWFAGAFTLRQRMLNFVQNIQYYMMFEVMEPTWHILEKNLKSASNIDDVLGHHTGFLDTCLKDCMLTNPELLKVFSKLMSVCVMFTNCMQKFTQSMKLDGELGGQTLEHSTVLGLPAGAEERARKELARKHLAEHADTVQLVSGFEATINKFDKNFSAHLLDLLARLSIYSTSDCEHGMASVISRLDFNGFYTERLERLSAERSQKATPQVPVLRGPPAPAPRVAVTAQ",
+                    "pdbx_seq_one_letter_code_can": "MSEFRIHHDVNELLSLLRVHGGDGAEVYIDLLQKNRTPYVTTTVSAHSAKVKIAEFSRTPEDFLKKYDELKSKNTRNLDPLVYLLSKLTEDKETLQYLQQNAKERAELAAAAVGSSTTSINVPAAASKISMQELEELRKQLGSVATGSTLQQSLELKRKMLRDKQNKKNSGQHLPIFPAWVYERPALIGDFLIGAGISTDTALPIVLLGWSLALSPRLKCSGVISAHCGLHLPGTLPLASQESAVVEDLLYVLVGVDGRYVSAQPLAGRQSRTFLVDPNLDLSIRELVHRILPVAASYSAVTRFIEEKSSFEYGQVNHALAAAMRTLVKEHLILVSQLEQLHRQGLLSLQKLWFYIQPAMRTMDILASLATSVDKGECLGGSTLSLLHDRSFSYTGDSQAQELCLYLTKAASAPYFEVLEKWIYRGIIHDPYSEFMVEEHELRKERIQEDYNDKYWDQRYTIVQQQIPSFLQKMADKILSTGKYLNVVRECGHDVTCPVAKEIIYTLKERAYVEQIEKAFNYASKVLLDFLMEEKELVAHLRSIKRYFLMDQGDFFVHFMDLAEEELRKPVEDITPPRLEALLELALRMSTANTDPFKDDLKIDLMPHDLITQLLRVLAIETKQEKAMAHADPTELALSGLEAFSFDYIVKWPLSLIINRKALTRYQMLFRHMFYCKHVERQLCSVWISNKTAKQHSLHSAQWFAGAFTLRQRMLNFVQNIQYYMMFEVMEPTWHILEKNLKSASNIDDVLGHHTGFLDTCLKDCMLTNPELLKVFSKLMSVCVMFTNCMQKFTQSMKLDGELGGQTLEHSTVLGLPAGAEERARKELARKHLAEHADTVQLVSGFEATINKFDKNFSAHLLDLLARLSIYSTSDCEHGMASVISRLDFNGFYTERLERLSAERSQKATPQVPVLRGPPAPAPRVAVTAQ",
+                    "pdbx_strand_id": "A,C,E,G,M",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 930,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "Q",
+                        "S"
+                    ],
+                    "auth_asym_ids": [
+                        "I",
+                        "K"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "8"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF17681",
+                        "rcsb_pfam_comment": "This is the N-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 [2]. Functional studies have shown that the N-terminal domain defines the functional identity of GCPs, suggesting that all GCPs are incorporated into the helix of gamma-tubulin small complexes (gTURCs) via lateral interactions between their N-terminal domains. Thereby, they define the direct neighbors and position the GCPs within the helical wall of gTuRC [3]. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. In addition to the conserved sequences, the N-terminal domains carry specific insertions of various sizes depending on the GCP, i.e. internal insertions or N-terminal extensions. These insertions may equally contribute to the function of individual GCPs as they have been implied in specific interactions with regulatory or structural proteins. For instance, GCP6 carries a large internal insertion phosphorylated by Plk4 and containing a domain of interaction with keratins, whereas the N-terminal extension of GCP3 interacts with the recruitment protein MOZART1[3]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component N-terminal"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF04130",
+                        "rcsb_pfam_comment": "This is the C-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 . Structure-based sequence analysis revealed the existence of an exposed surface area conserved in all human GCPs and in GCP4 orthologs. This area is located in the C-terminal domain of GCP4, which was confirmed in vitro to bind directly to gamma-tubulin. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component C-terminal"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q9UGJ1"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Isoform 2 of Gamma-tubulin complex component 4"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MIHELLLALSGYPGSIFTWNKRSGLQVSQDFPFLHPSETSVLNRLCRLGTDYIRFTEFIEQYTGHVQQQDHHPSQQGQGGLHGIYLRAFCTGLDSVLQPYRQALLDLEQEFLGDPHLSISHVNYFLDQFQLLFPSVMVVVEQIKSQKIHGCQILETVYKHSCGGLPPVRSALEKILAVCHGVMYKQLSAWMLHGLLLDQHEEFFIKQGPSSGNVSAQPEEDEEDLGIGGLTGKQLRELQDLRLIEEENMLAPSLKQFSLRVEILPSYIPVRVAEKILFVGESVQMFENQNVNLTRKGSILKNQEDTFAAELHRLKQQPLFSLVDFEQVVDRIRSTVAEHLWKLMVEESDLLGQLKIIKDFYLLGRGELFQAFIDTAQHMLKTPPTAVTEHDVNVAFQQSAHKVLLDDDNLLPLLHLTIEYHGKEHKDATQAREGPSRETSPREAPASGWAALGLSYKVQWPLHILFTPAVLEKYNVVFKYLLSVRRVQAELQHCWALQMQRKHLKSNQTDAIKWRLRNHMAFLVDNLQYYLQVDVLESQFSQLLHQINSTRDFESIRLAHDHFLSNLLAQSFILLKPVFHCLNEILDLCHSFCSLVSQNLGPLDERGAAQLSILVKGFSRQSSLLFKILSSVRNHQINSDLAQLLLRLDYNKYYTQAGGTLGSFGM",
+                    "pdbx_seq_one_letter_code_can": "MIHELLLALSGYPGSIFTWNKRSGLQVSQDFPFLHPSETSVLNRLCRLGTDYIRFTEFIEQYTGHVQQQDHHPSQQGQGGLHGIYLRAFCTGLDSVLQPYRQALLDLEQEFLGDPHLSISHVNYFLDQFQLLFPSVMVVVEQIKSQKIHGCQILETVYKHSCGGLPPVRSALEKILAVCHGVMYKQLSAWMLHGLLLDQHEEFFIKQGPSSGNVSAQPEEDEEDLGIGGLTGKQLRELQDLRLIEEENMLAPSLKQFSLRVEILPSYIPVRVAEKILFVGESVQMFENQNVNLTRKGSILKNQEDTFAAELHRLKQQPLFSLVDFEQVVDRIRSTVAEHLWKLMVEESDLLGQLKIIKDFYLLGRGELFQAFIDTAQHMLKTPPTAVTEHDVNVAFQQSAHKVLLDDDNLLPLLHLTIEYHGKEHKDATQAREGPSRETSPREAPASGWAALGLSYKVQWPLHILFTPAVLEKYNVVFKYLLSVRRVQAELQHCWALQMQRKHLKSNQTDAIKWRLRNHMAFLVDNLQYYLQVDVLESQFSQLLHQINSTRDFESIRLAHDHFLSNLLAQSFILLKPVFHCLNEILDLCHSFCSLVSQNLGPLDERGAAQLSILVKGFSRQSSLLFKILSSVRNHQINSDLAQLLLRLDYNKYYTQAGGTLGSFGM",
+                    "pdbx_strand_id": "I,K",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 666,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "R"
+                    ],
+                    "auth_asym_ids": [
+                        "J"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "9"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF17681",
+                        "rcsb_pfam_comment": "This is the N-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 [2]. Functional studies have shown that the N-terminal domain defines the functional identity of GCPs, suggesting that all GCPs are incorporated into the helix of gamma-tubulin small complexes (gTURCs) via lateral interactions between their N-terminal domains. Thereby, they define the direct neighbors and position the GCPs within the helical wall of gTuRC [3]. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. In addition to the conserved sequences, the N-terminal domains carry specific insertions of various sizes depending on the GCP, i.e. internal insertions or N-terminal extensions. These insertions may equally contribute to the function of individual GCPs as they have been implied in specific interactions with regulatory or structural proteins. For instance, GCP6 carries a large internal insertion phosphorylated by Plk4 and containing a domain of interaction with keratins, whereas the N-terminal extension of GCP3 interacts with the recruitment protein MOZART1[3]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component N-terminal"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF04130",
+                        "rcsb_pfam_comment": "This is the C-terminal domain found in components of the gamma-tubulin complex proteins (GCPs). Family members include spindle pole body (SBP) components such as Spc97 and Spc98 which function as the microtubule-organizing center in yeast [1]. Furthermore, family members such as human GCP4 (Gamma-tubulin complex component 4) have been structurally elucidated Swiss:Q9UGJ1 . Structure-based sequence analysis revealed the existence of an exposed surface area conserved in all human GCPs and in GCP4 orthologs. This area is located in the C-terminal domain of GCP4, which was confirmed in vitro to bind directly to gamma-tubulin. Sequence alignment of human GCPs based on the GCP4 structure helped delineate conserved regions in the N- and C-terminal domains [2]. ",
+                        "rcsb_pfam_description": "Gamma tubulin complex component C-terminal"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q96RT8"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Gamma-tubulin complex component 5"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MARHGPPWSRLDAQQERDVRELVRGVAGLQDEADPNFQLALNFAWSNFRFHRFLDVNSHKIEKTIEGIYEKFVIHSDLSKAASWKRLTEEFLNAPLPSIKEIKTDAHYSILSLLLCLSDSPSNSSYVETPRNKEVEKKDDFDWGKYLMEDEEMDIGPYMDTPNWSEESEEENDQQPLSREDSGIQVDRTPLEEQDQNGKLDPCISWKDEPDDRSWLEHHVVHQYWTARPSQFPHSLHLHSNLAAVWDQHLYSSDPLYVPDDRVLVTETQVIRETLWLLSGVKKLFIFQLIDGKVTVRNNIIVTHLTHSCLRSVLEQIAAYGQVVFRLQEFIDEVMGHSSESMLPGSGSVPKKSTEAPFRTYQAFMWALYKYFISFKEELAEIEKCIINNDTTITLAIVVDKLAPRLSQLKVLHKVFSTGVAEVPPDTRNVVRASHLLNTLYKAILEYDNVGEASEQTVSLLFSLWVETVRPYLQTVDEWIVHGHLWDGAREFIIQRNKNVPVNHRDFWYATYTLYSVSEKTENEEKMSDNASASSGSDQGPSSRQHTMVSFLKPVLKQIIMAGKSMQLLKNLQCAESTTCQAGARDAERKSLYTLFLESVQSRLRHGEDSTPQVLTEQQATKENLMKMQSIAESHLELDDVHDPLLAINFARMYLEQSDFHEKFAGGDVCVDRSSESVTCQTFELTLRSCLYPHIDKQYLDCCGNLMQTLKKDYRLVEYLQAMRNFFLMEGGDTMYDFYTSIFDKIREKETWQNVSFLNVQLQEAVGQRYPEDSSRLSISFENVDTAKKKLPVHILDGLTLSYKVPWPVDIVISLECQKIYNQVFLLLLQIKWAKYSLDVLLFGELVSTAEKPRLKEGLIHEQDTVAQFGPQKEPVRQQIHRMFLLRVKLMHFVNSLHNYIMTRILHSTGLEFQHQVEEAKDLDQLIKIHYRYLSTIHDRCLLREKVSFVKEAIMKVLNLALMFADGWQAGLGTWRMESIEKMESDFKNCHMFLVTILNKAVCRGSFPHLESLALSLMAGMEQS",
+                    "pdbx_seq_one_letter_code_can": "MARHGPPWSRLDAQQERDVRELVRGVAGLQDEADPNFQLALNFAWSNFRFHRFLDVNSHKIEKTIEGIYEKFVIHSDLSKAASWKRLTEEFLNAPLPSIKEIKTDAHYSILSLLLCLSDSPSNSSYVETPRNKEVEKKDDFDWGKYLMEDEEMDIGPYMDTPNWSEESEEENDQQPLSREDSGIQVDRTPLEEQDQNGKLDPCISWKDEPDDRSWLEHHVVHQYWTARPSQFPHSLHLHSNLAAVWDQHLYSSDPLYVPDDRVLVTETQVIRETLWLLSGVKKLFIFQLIDGKVTVRNNIIVTHLTHSCLRSVLEQIAAYGQVVFRLQEFIDEVMGHSSESMLPGSGSVPKKSTEAPFRTYQAFMWALYKYFISFKEELAEIEKCIINNDTTITLAIVVDKLAPRLSQLKVLHKVFSTGVAEVPPDTRNVVRASHLLNTLYKAILEYDNVGEASEQTVSLLFSLWVETVRPYLQTVDEWIVHGHLWDGAREFIIQRNKNVPVNHRDFWYATYTLYSVSEKTENEEKMSDNASASSGSDQGPSSRQHTMVSFLKPVLKQIIMAGKSMQLLKNLQCAESTTCQAGARDAERKSLYTLFLESVQSRLRHGEDSTPQVLTEQQATKENLMKMQSIAESHLELDDVHDPLLAINFARMYLEQSDFHEKFAGGDVCVDRSSESVTCQTFELTLRSCLYPHIDKQYLDCCGNLMQTLKKDYRLVEYLQAMRNFFLMEGGDTMYDFYTSIFDKIREKETWQNVSFLNVQLQEAVGQRYPEDSSRLSISFENVDTAKKKLPVHILDGLTLSYKVPWPVDIVISLECQKIYNQVFLLLLQIKWAKYSLDVLLFGELVSTAEKPRLKEGLIHEQDTVAQFGPQKEPVRQQIHRMFLLRVKLMHFVNSLHNYIMTRILHSTGLEFQHQVEEAKDLDQLIKIHYRYLSTIHDRCLLREKVSFVKEAIMKVLNLALMFADGWQAGLGTWRMESIEKMESDFKNCHMFLVTILNKAVCRGSFPHLESLALSLMAGMEQS",
+                    "pdbx_strand_id": "J",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 1024,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "8VRK"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "AB",
+                        "BB",
+                        "CB",
+                        "DB",
+                        "EB",
+                        "FB",
+                        "GB",
+                        "HB",
+                        "UA",
+                        "VA",
+                        "WA",
+                        "XA",
+                        "YA",
+                        "ZA"
+                    ],
+                    "auth_asym_ids": [
+                        "a",
+                        "b",
+                        "c",
+                        "d",
+                        "e",
+                        "f",
+                        "g",
+                        "h",
+                        "i",
+                        "j",
+                        "k",
+                        "l",
+                        "m",
+                        "n"
+                    ],
+                    "entry_id": "8VRK",
+                    "entity_id": "10"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9606,
+                        "scientific_name": "Homo sapiens"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7111,
+                        "scientific_name": "Trichoplusia ni"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P23258"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Tubulin gamma-1 chain"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MPREIITLQLGQCGNQIGFEFWKQLCAEHGISPEGIVEEFATEGTDRKDVFFYQADDEHYIPRAVLLDLEPRVIHSILNSPYAKLYNPENIYLSEHGGGAGNNWASGFSQGEKIHEDIFDIIDREADGSDSLEGFVLCHSIAGGTGSGLGSYLLERLNDRYPKKLVQTYSVFPNQDEMSDVVVQPYNSLLTLKRLTQNADCVVVLDNTALNRIATDRLHIQNPSFSQINQLVSTIMSASTTTLRYPGYMNNDLIGLIASLIPTPRLHFLMTGYTPLTTDQSVASVRKTTVLDVMRRLLQPKNVMVSTGRDRQTNHCYIAILNIIQGEVDPTQVHKSLQRIRERKLANFIPWGPASIQVALSRKSPYLPSAHRVSGLMMANHTSISSLFERTCRQYDKLRKREAFLEQFRKEDMFKDNFDEMDTSREIVQQLIDEYHAATRPDYISWGTQEQENLYFQ",
+                    "pdbx_seq_one_letter_code_can": "MPREIITLQLGQCGNQIGFEFWKQLCAEHGISPEGIVEEFATEGTDRKDVFFYQADDEHYIPRAVLLDLEPRVIHSILNSPYAKLYNPENIYLSEHGGGAGNNWASGFSQGEKIHEDIFDIIDREADGSDSLEGFVLCHSIAGGTGSGLGSYLLERLNDRYPKKLVQTYSVFPNQDEMSDVVVQPYNSLLTLKRLTQNADCVVVLDNTALNRIATDRLHIQNPSFSQINQLVSTIMSASTTTLRYPGYMNNDLIGLIASLIPTPRLHFLMTGYTPLTTDQSVASVRKTTVLDVMRRLLQPKNVMVSTGRDRQTNHCYIAILNIIQGEVDPTQVHKSLQRIRERKLANFIPWGPASIQVALSRKSPYLPSAHRVSGLMMANHTSISSLFERTCRQYDKLRKREAFLEQFRKEDMFKDNFDEMDTSREIVQQLIDEYHAATRPDYISWGTQEQENLYFQ",
+                    "pdbx_strand_id": "a,b,c,d,e,f,g,h,i,j,k,l,m,n",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 457,
+                    "type": "polypeptide(L)"
+                }
+            }
+        ],
+        "nonpolymer_entities": null
+    }
+}
