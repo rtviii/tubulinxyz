@@ -5,8 +5,6 @@ hide everything
 show cartoon
 color grey, all
 
-# Color tubulin chains
-select alpha_chains, (
 # Color N-terminus residues in green
 select nterm_1A, chain 1A and resi 1
 color green, nterm_1A
@@ -414,9 +412,7 @@ distance conn_4X_4L, nterm_4X, nterm_4L
 distance conn_4Y_4M, nterm_4Y, nterm_4M
 distance conn_4Z_4N, nterm_4Z, nterm_4N
 
-# Color by connection strength
-# Green = N-terminus residues
-# Red = connected pairs
+# Color connected pairs in red
 color red, chain 1A or chain 4H
 color red, chain 1B or chain 4O
 color red, chain 1C or chain 4P
