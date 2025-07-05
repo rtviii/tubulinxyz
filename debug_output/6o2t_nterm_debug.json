@@ -1,0 +1,1556 @@
+{
+  "pdb_id": "6o2t",
+  "n_terminus_residues": {
+    "1A": {
+      "chain_id": "1A",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1B": {
+      "chain_id": "1B",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1C": {
+      "chain_id": "1C",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1D": {
+      "chain_id": "1D",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1E": {
+      "chain_id": "1E",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1F": {
+      "chain_id": "1F",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1G": {
+      "chain_id": "1G",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1I": {
+      "chain_id": "1I",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1J": {
+      "chain_id": "1J",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1K": {
+      "chain_id": "1K",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1L": {
+      "chain_id": "1L",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1M": {
+      "chain_id": "1M",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1N": {
+      "chain_id": "1N",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1H": {
+      "chain_id": "1H",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1O": {
+      "chain_id": "1O",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1P": {
+      "chain_id": "1P",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1Q": {
+      "chain_id": "1Q",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1R": {
+      "chain_id": "1R",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1S": {
+      "chain_id": "1S",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1T": {
+      "chain_id": "1T",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1U": {
+      "chain_id": "1U",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1V": {
+      "chain_id": "1V",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1W": {
+      "chain_id": "1W",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1X": {
+      "chain_id": "1X",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1Y": {
+      "chain_id": "1Y",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "1Z": {
+      "chain_id": "1Z",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2A": {
+      "chain_id": "2A",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2B": {
+      "chain_id": "2B",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2C": {
+      "chain_id": "2C",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2D": {
+      "chain_id": "2D",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2E": {
+      "chain_id": "2E",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2F": {
+      "chain_id": "2F",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2G": {
+      "chain_id": "2G",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2I": {
+      "chain_id": "2I",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2J": {
+      "chain_id": "2J",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2K": {
+      "chain_id": "2K",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2L": {
+      "chain_id": "2L",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2M": {
+      "chain_id": "2M",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2N": {
+      "chain_id": "2N",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2H": {
+      "chain_id": "2H",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2O": {
+      "chain_id": "2O",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2P": {
+      "chain_id": "2P",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2Q": {
+      "chain_id": "2Q",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2R": {
+      "chain_id": "2R",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2S": {
+      "chain_id": "2S",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2T": {
+      "chain_id": "2T",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2U": {
+      "chain_id": "2U",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2V": {
+      "chain_id": "2V",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2W": {
+      "chain_id": "2W",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2X": {
+      "chain_id": "2X",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2Y": {
+      "chain_id": "2Y",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "2Z": {
+      "chain_id": "2Z",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3A": {
+      "chain_id": "3A",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3B": {
+      "chain_id": "3B",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3C": {
+      "chain_id": "3C",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3D": {
+      "chain_id": "3D",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3E": {
+      "chain_id": "3E",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3F": {
+      "chain_id": "3F",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3G": {
+      "chain_id": "3G",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3I": {
+      "chain_id": "3I",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3J": {
+      "chain_id": "3J",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3K": {
+      "chain_id": "3K",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3L": {
+      "chain_id": "3L",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3M": {
+      "chain_id": "3M",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3N": {
+      "chain_id": "3N",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3H": {
+      "chain_id": "3H",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3O": {
+      "chain_id": "3O",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3P": {
+      "chain_id": "3P",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3Q": {
+      "chain_id": "3Q",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3R": {
+      "chain_id": "3R",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3S": {
+      "chain_id": "3S",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3T": {
+      "chain_id": "3T",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3U": {
+      "chain_id": "3U",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3V": {
+      "chain_id": "3V",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3W": {
+      "chain_id": "3W",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3X": {
+      "chain_id": "3X",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3Y": {
+      "chain_id": "3Y",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "3Z": {
+      "chain_id": "3Z",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4A": {
+      "chain_id": "4A",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4B": {
+      "chain_id": "4B",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4C": {
+      "chain_id": "4C",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4D": {
+      "chain_id": "4D",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4E": {
+      "chain_id": "4E",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4F": {
+      "chain_id": "4F",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4G": {
+      "chain_id": "4G",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4I": {
+      "chain_id": "4I",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4J": {
+      "chain_id": "4J",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4K": {
+      "chain_id": "4K",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4L": {
+      "chain_id": "4L",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4M": {
+      "chain_id": "4M",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4N": {
+      "chain_id": "4N",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4H": {
+      "chain_id": "4H",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4O": {
+      "chain_id": "4O",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4P": {
+      "chain_id": "4P",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4Q": {
+      "chain_id": "4Q",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4R": {
+      "chain_id": "4R",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4S": {
+      "chain_id": "4S",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4T": {
+      "chain_id": "4T",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4U": {
+      "chain_id": "4U",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4V": {
+      "chain_id": "4V",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4W": {
+      "chain_id": "4W",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4X": {
+      "chain_id": "4X",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4Y": {
+      "chain_id": "4Y",
+      "resnum": 1,
+      "resname": "MET"
+    },
+    "4Z": {
+      "chain_id": "4Z",
+      "resnum": 1,
+      "resname": "MET"
+    }
+  },
+  "neighbor_residues": {
+    "1A": [
+      {
+        "chain_id": "4H",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4H",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1B": [
+      {
+        "chain_id": "4O",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4O",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1C": [
+      {
+        "chain_id": "4P",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "4P",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "1D": [
+      {
+        "chain_id": "4Q",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4Q",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1E": [
+      {
+        "chain_id": "4R",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4R",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1F": [
+      {
+        "chain_id": "4S",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4S",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1G": [
+      {
+        "chain_id": "4T",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4T",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1I": [
+      {
+        "chain_id": "4U",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4U",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1J": [
+      {
+        "chain_id": "4V",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4V",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1K": [
+      {
+        "chain_id": "4W",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4W",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1L": [
+      {
+        "chain_id": "4X",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "4X",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "1M": [
+      {
+        "chain_id": "4Y",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "4Y",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "1N": [
+      {
+        "chain_id": "4Z",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "4Z",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "1H": [
+      {
+        "chain_id": "1A",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1O": [
+      {
+        "chain_id": "1B",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1P": [
+      {
+        "chain_id": "1C",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1Q": [
+      {
+        "chain_id": "1D",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1R": [
+      {
+        "chain_id": "1E",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1S": [
+      {
+        "chain_id": "1F",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1T": [
+      {
+        "chain_id": "1G",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1U": [
+      {
+        "chain_id": "1I",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1V": [
+      {
+        "chain_id": "1J",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1W": [
+      {
+        "chain_id": "1K",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1X": [
+      {
+        "chain_id": "1L",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1Y": [
+      {
+        "chain_id": "1M",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "1Z": [
+      {
+        "chain_id": "1N",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2A": [
+      {
+        "chain_id": "1H",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1H",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2B": [
+      {
+        "chain_id": "1O",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1O",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2C": [
+      {
+        "chain_id": "1P",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1P",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2D": [
+      {
+        "chain_id": "1Q",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1Q",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2E": [
+      {
+        "chain_id": "1R",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1R",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2F": [
+      {
+        "chain_id": "1S",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1S",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2G": [
+      {
+        "chain_id": "1T",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1T",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2I": [
+      {
+        "chain_id": "1U",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "1U",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "2J": [
+      {
+        "chain_id": "1V",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1V",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2K": [
+      {
+        "chain_id": "1W",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "1W",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "2L": [
+      {
+        "chain_id": "1X",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1X",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2M": [
+      {
+        "chain_id": "1Y",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1Y",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2N": [
+      {
+        "chain_id": "1Z",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "1Z",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "2H": [
+      {
+        "chain_id": "2A",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2O": [
+      {
+        "chain_id": "2B",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2P": [
+      {
+        "chain_id": "2C",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2Q": [
+      {
+        "chain_id": "2D",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2R": [
+      {
+        "chain_id": "2E",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2S": [
+      {
+        "chain_id": "2F",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2T": [
+      {
+        "chain_id": "2G",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2U": [
+      {
+        "chain_id": "2I",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2V": [
+      {
+        "chain_id": "2J",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2W": [
+      {
+        "chain_id": "2K",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2X": [
+      {
+        "chain_id": "2L",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2Y": [
+      {
+        "chain_id": "2M",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "2Z": [
+      {
+        "chain_id": "2N",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3A": [
+      {
+        "chain_id": "2H",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "2H",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "3B": [
+      {
+        "chain_id": "2O",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "2O",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "3C": [
+      {
+        "chain_id": "2P",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "2P",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "3D": [
+      {
+        "chain_id": "2Q",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "2Q",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "3E": [
+      {
+        "chain_id": "2R",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "2R",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "3F": [
+      {
+        "chain_id": "2S",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "2S",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "3G": [
+      {
+        "chain_id": "2T",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "2T",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "3I": [
+      {
+        "chain_id": "2U",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "2U",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "3J": [
+      {
+        "chain_id": "2V",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "2V",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "3K": [
+      {
+        "chain_id": "2W",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "2W",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "3L": [
+      {
+        "chain_id": "2X",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "2X",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "3M": [
+      {
+        "chain_id": "2Y",
+        "resnum": 96,
+        "resname": "GLN"
+      },
+      {
+        "chain_id": "2Y",
+        "resnum": 72,
+        "resname": "PRO"
+      }
+    ],
+    "3N": [
+      {
+        "chain_id": "2Z",
+        "resnum": 72,
+        "resname": "PRO"
+      },
+      {
+        "chain_id": "2Z",
+        "resnum": 96,
+        "resname": "GLN"
+      }
+    ],
+    "3H": [
+      {
+        "chain_id": "3A",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3O": [
+      {
+        "chain_id": "3B",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3P": [
+      {
+        "chain_id": "3C",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3Q": [
+      {
+        "chain_id": "3D",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3R": [
+      {
+        "chain_id": "3E",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3S": [
+      {
+        "chain_id": "3F",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3T": [
+      {
+        "chain_id": "3G",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3U": [
+      {
+        "chain_id": "3I",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3V": [
+      {
+        "chain_id": "3J",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3W": [
+      {
+        "chain_id": "3K",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3X": [
+      {
+        "chain_id": "3L",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3Y": [
+      {
+        "chain_id": "3M",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "3Z": [
+      {
+        "chain_id": "3N",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4A": [],
+    "4B": [],
+    "4C": [],
+    "4D": [],
+    "4E": [],
+    "4F": [],
+    "4G": [],
+    "4I": [],
+    "4J": [],
+    "4K": [],
+    "4L": [],
+    "4M": [],
+    "4N": [],
+    "4H": [
+      {
+        "chain_id": "4A",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4O": [
+      {
+        "chain_id": "4B",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4P": [
+      {
+        "chain_id": "4C",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4Q": [
+      {
+        "chain_id": "4D",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4R": [
+      {
+        "chain_id": "4E",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4S": [
+      {
+        "chain_id": "4F",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4T": [
+      {
+        "chain_id": "4G",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4U": [
+      {
+        "chain_id": "4I",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4V": [
+      {
+        "chain_id": "4J",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4W": [
+      {
+        "chain_id": "4K",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4X": [
+      {
+        "chain_id": "4L",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4Y": [
+      {
+        "chain_id": "4M",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ],
+    "4Z": [
+      {
+        "chain_id": "4N",
+        "resnum": 96,
+        "resname": "LYS"
+      }
+    ]
+  },
+  "connections": {
+    "1A": [
+      "4H"
+    ],
+    "1B": [
+      "4O"
+    ],
+    "1C": [
+      "4P"
+    ],
+    "1D": [
+      "4Q"
+    ],
+    "1E": [
+      "4R"
+    ],
+    "1F": [
+      "4S"
+    ],
+    "1G": [
+      "4T"
+    ],
+    "1I": [
+      "4U"
+    ],
+    "1J": [
+      "4V"
+    ],
+    "1K": [
+      "4W"
+    ],
+    "1L": [
+      "4X"
+    ],
+    "1M": [
+      "4Y"
+    ],
+    "1N": [
+      "4Z"
+    ],
+    "1H": [],
+    "1O": [],
+    "1P": [],
+    "1Q": [],
+    "1R": [],
+    "1S": [],
+    "1T": [],
+    "1U": [],
+    "1V": [],
+    "1W": [],
+    "1X": [],
+    "1Y": [],
+    "1Z": [],
+    "2A": [
+      "1H"
+    ],
+    "2B": [
+      "1O"
+    ],
+    "2C": [
+      "1P"
+    ],
+    "2D": [
+      "1Q"
+    ],
+    "2E": [
+      "1R"
+    ],
+    "2F": [
+      "1S"
+    ],
+    "2G": [
+      "1T"
+    ],
+    "2I": [
+      "1U"
+    ],
+    "2J": [
+      "1V"
+    ],
+    "2K": [
+      "1W"
+    ],
+    "2L": [
+      "1X"
+    ],
+    "2M": [
+      "1Y"
+    ],
+    "2N": [
+      "1Z"
+    ],
+    "2H": [],
+    "2O": [],
+    "2P": [],
+    "2Q": [],
+    "2R": [],
+    "2S": [],
+    "2T": [],
+    "2U": [],
+    "2V": [],
+    "2W": [],
+    "2X": [],
+    "2Y": [],
+    "2Z": [],
+    "3A": [
+      "2H"
+    ],
+    "3B": [
+      "2O"
+    ],
+    "3C": [
+      "2P"
+    ],
+    "3D": [
+      "2Q"
+    ],
+    "3E": [
+      "2R"
+    ],
+    "3F": [
+      "2S"
+    ],
+    "3G": [
+      "2T"
+    ],
+    "3I": [
+      "2U"
+    ],
+    "3J": [
+      "2V"
+    ],
+    "3K": [
+      "2W"
+    ],
+    "3L": [
+      "2X"
+    ],
+    "3M": [
+      "2Y"
+    ],
+    "3N": [
+      "2Z"
+    ],
+    "3H": [],
+    "3O": [],
+    "3P": [],
+    "3Q": [],
+    "3R": [],
+    "3S": [],
+    "3T": [],
+    "3U": [],
+    "3V": [],
+    "3W": [],
+    "3X": [],
+    "3Y": [],
+    "3Z": [],
+    "4A": [],
+    "4B": [],
+    "4C": [],
+    "4D": [],
+    "4E": [],
+    "4F": [],
+    "4G": [],
+    "4I": [],
+    "4J": [],
+    "4K": [],
+    "4L": [],
+    "4M": [],
+    "4N": [],
+    "4H": [],
+    "4O": [],
+    "4P": [],
+    "4Q": [],
+    "4R": [],
+    "4S": [],
+    "4T": [],
+    "4U": [],
+    "4V": [],
+    "4W": [],
+    "4X": [],
+    "4Y": [],
+    "4Z": []
+  }
+}

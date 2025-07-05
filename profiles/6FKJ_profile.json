@@ -1,0 +1,1721 @@
+{
+    "entry": {
+        "assemblies": [
+            {
+                "rcsb_id": "6FKJ-1",
+                "nonpolymer_entity_instances": [
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "auth_seq_id": "501",
+                            "entity_id": "5"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "auth_seq_id": "502",
+                            "entity_id": "6"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "auth_seq_id": "503",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "auth_seq_id": "504",
+                            "entity_id": "8"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "501",
+                            "entity_id": "9"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "502",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "504",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "505",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "507",
+                            "entity_id": "11"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "508",
+                            "entity_id": "12"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "C",
+                            "auth_seq_id": "501",
+                            "entity_id": "5"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "C",
+                            "auth_seq_id": "502",
+                            "entity_id": "6"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "C",
+                            "auth_seq_id": "503",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "D",
+                            "auth_seq_id": "500",
+                            "entity_id": "9"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "D",
+                            "auth_seq_id": "501",
+                            "entity_id": "10"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "D",
+                            "auth_seq_id": "502",
+                            "entity_id": "6"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "E",
+                            "auth_seq_id": "201",
+                            "entity_id": "7"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "auth_seq_id": "401",
+                            "entity_id": "6"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "auth_seq_id": "402",
+                            "entity_id": "13"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "503",
+                            "entity_id": "6"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "506",
+                            "entity_id": "8"
+                        }
+                    }
+                ],
+                "polymer_entity_instances": [
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "C",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "D",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "E",
+                            "entity_id": "3"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "F",
+                            "entity_id": "4"
+                        }
+                    }
+                ]
+            }
+        ],
+        "rcsb_id": "6FKJ",
+        "rcsb_accession_info": {
+            "deposit_date": "2018-01-24T00:00:00Z"
+        },
+        "struct_keywords": {
+            "pdbx_keywords": "CELL CYCLE",
+            "text": "CELL CYCLE, TUBULIN FOLD, CYTOSKELETON, MICROTUBULE"
+        },
+        "rcsb_entry_info": {
+            "resolution_combined": [
+                2.148
+            ]
+        },
+        "rcsb_external_references": null,
+        "exptl": [
+            {
+                "method": "X-RAY DIFFRACTION"
+            }
+        ],
+        "citation": [
+            {
+                "rcsb_authors": [
+                    "Bueno, O.",
+                    "Estevez Gallego, J.",
+                    "Martins, S.",
+                    "Prota, A.E.",
+                    "Gago, F.",
+                    "Gomez-SanJuan, A.",
+                    "Camarasa, M.J.",
+                    "Barasoain, I.",
+                    "Steinmetz, M.O.",
+                    "Diaz, J.F.",
+                    "Perez-Perez, M.J.",
+                    "Liekens, S.",
+                    "Priego, E.M."
+                ],
+                "year": 2018,
+                "title": "High-affinity ligands of the colchicine domain in tubulin based on a structure-guided design.",
+                "pdbx_database_id_DOI": "10.1038/s41598-018-22382-x"
+            }
+        ],
+        "polymer_entities": [
+            {
+                "entry": {
+                    "rcsb_id": "6FKJ"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "A",
+                        "C"
+                    ],
+                    "auth_asym_ids": [
+                        "A",
+                        "C"
+                    ],
+                    "entry_id": "6FKJ",
+                    "entity_id": "1"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF03953",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains. Members of this family are involved in polymer formation. Tubulins are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. (The FtsZ GTPases have been split into their won family). ",
+                        "rcsb_pfam_description": "Tubulin C-terminal domain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9913,
+                        "scientific_name": "Bos taurus"
+                    }
+                ],
+                "rcsb_entity_host_organism": null,
+                "uniprots": [
+                    {
+                        "rcsb_id": "P81947"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Tubulin alpha-1B chain"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MRECISIHVGQAGVQIGNACWELYCLEHGIQPDGQMPSDKTIGGGDDSFNTFFSETGAGKHVPRAVFVDLEPTVIDEVRTGTYRQLFHPEQLITGKEDAANNYARGHYTIGKEIIDLVLDRIRKLADQCTGLQGFLVFHSFGGGTGSGFTSLLMERLSVDYGKKSKLEFSIYPAPQVSTAVVEPYNSILTTHTTLEHSDCAFMVDNEAIYDICRRNLDIERPTYTNLNRLISQIVSSITASLRFDGALNVDLTEFQTNLVPYPRIHFPLATYAPVISAEKAYHEQLSVAEITNACFEPANQMVKCDPRHGKYMACCLLYRGDVVPKDVNAAIATIKTKRSIQFVDWCPTGFKVGINYQPPTVVPGGDLAKVQRAVCMLSNTTAIAEAWARLDHKFDLMYAKRAFVHWYVGEGMEEGEFSEAREDMAALEKDYEEVGVDSVEGEGEEEGEEY",
+                    "pdbx_seq_one_letter_code_can": "MRECISIHVGQAGVQIGNACWELYCLEHGIQPDGQMPSDKTIGGGDDSFNTFFSETGAGKHVPRAVFVDLEPTVIDEVRTGTYRQLFHPEQLITGKEDAANNYARGHYTIGKEIIDLVLDRIRKLADQCTGLQGFLVFHSFGGGTGSGFTSLLMERLSVDYGKKSKLEFSIYPAPQVSTAVVEPYNSILTTHTTLEHSDCAFMVDNEAIYDICRRNLDIERPTYTNLNRLISQIVSSITASLRFDGALNVDLTEFQTNLVPYPRIHFPLATYAPVISAEKAYHEQLSVAEITNACFEPANQMVKCDPRHGKYMACCLLYRGDVVPKDVNAAIATIKTKRSIQFVDWCPTGFKVGINYQPPTVVPGGDLAKVQRAVCMLSNTTAIAEAWARLDHKFDLMYAKRAFVHWYVGEGMEEGEFSEAREDMAALEKDYEEVGVDSVEGEGEEEGEEY",
+                    "pdbx_strand_id": "A,C",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 451,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6FKJ"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "B",
+                        "D"
+                    ],
+                    "auth_asym_ids": [
+                        "B",
+                        "D"
+                    ],
+                    "entry_id": "6FKJ",
+                    "entity_id": "2"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF00091",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains, as well as the bacterial FtsZ family of proteins. Members of this family are involved in polymer formation. FtsZ is the polymer-forming protein of bacterial cell division. It is part of a ring in the middle of the dividing cell that is required for constriction of cell membrane and cell envelope to yield two daughter cells. FtsZ and tubulin are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. ",
+                        "rcsb_pfam_description": "Tubulin/FtsZ family, GTPase domain"
+                    },
+                    {
+                        "rcsb_pfam_accession": "PF03953",
+                        "rcsb_pfam_comment": "This family includes the tubulin alpha, beta and gamma chains. Members of this family are involved in polymer formation. Tubulins are GTPases. FtsZ can polymerise into tubes, sheets, and rings in vitro and is ubiquitous in eubacteria and archaea. Tubulin is the major component of microtubules. (The FtsZ GTPases have been split into their won family). ",
+                        "rcsb_pfam_description": "Tubulin C-terminal domain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9913,
+                        "scientific_name": "Bos taurus"
+                    }
+                ],
+                "rcsb_entity_host_organism": null,
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q6B856"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Tubulin beta-2B chain"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MREIVHIQAGQCGNQIGAKFWEVISDEHGIDPTGSYHGDSDLQLERINVYYNEATGNKYVPRAILVDLEPGTMDSVRSGPFGQIFRPDNFVFGQSGAGNNWAKGHYTEGAELVDSVLDVVRKESESCDCLQGFQLTHSLGGGTGSGMGTLLISKIREEYPDRIMNTFSVMPSPKVSDTVVEPYNATLSVHQLVENTDETYCIDNEALYDICFRTLKLTTPTYGDLNHLVSATMSGVTTCLRFPGQLNADLRKLAVNMVPFPRLHFFMPGFAPLTSRGSQQYRALTVPELTQQMFDSKNMMAACDPRHGRYLTVAAIFRGRMSMKEVDEQMLNVQNKNSSYFVEWIPNNVKTAVCDIPPRGLKMSATFIGNSTAIQELFKRISEQFTAMFRRKAFLHWYTGEGMDEMEFTEAESNMNDLVSEYQQYQDATADEQGEFEEEEGEDEA",
+                    "pdbx_seq_one_letter_code_can": "MREIVHIQAGQCGNQIGAKFWEVISDEHGIDPTGSYHGDSDLQLERINVYYNEATGNKYVPRAILVDLEPGTMDSVRSGPFGQIFRPDNFVFGQSGAGNNWAKGHYTEGAELVDSVLDVVRKESESCDCLQGFQLTHSLGGGTGSGMGTLLISKIREEYPDRIMNTFSVMPSPKVSDTVVEPYNATLSVHQLVENTDETYCIDNEALYDICFRTLKLTTPTYGDLNHLVSATMSGVTTCLRFPGQLNADLRKLAVNMVPFPRLHFFMPGFAPLTSRGSQQYRALTVPELTQQMFDSKNMMAACDPRHGRYLTVAAIFRGRMSMKEVDEQMLNVQNKNSSYFVEWIPNNVKTAVCDIPPRGLKMSATFIGNSTAIQELFKRISEQFTAMFRRKAFLHWYTGEGMDEMEFTEAESNMNDLVSEYQQYQDATADEQGEFEEEEGEDEA",
+                    "pdbx_strand_id": "B,D",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 445,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6FKJ"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "E"
+                    ],
+                    "auth_asym_ids": [
+                        "E"
+                    ],
+                    "entry_id": "6FKJ",
+                    "entity_id": "3"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 10116,
+                        "scientific_name": "Rattus norvegicus"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P63043"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Stathmin-4"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MADMEVIELNKCTSGQSFEVILKPPSFDGVPEFNASLPRRRDPSLEEIQKKLEAAEERRKYQEAELLKHLAEKREHEREVIQKAIEENNNFIKMAKEKLAQKMESNKENREAHLAAMLERLQEKDKHAEEVRKNKELKEEASR",
+                    "pdbx_seq_one_letter_code_can": "MADMEVIELNKCTSGQSFEVILKPPSFDGVPEFNASLPRRRDPSLEEIQKKLEAAEERRKYQEAELLKHLAEKREHEREVIQKAIEENNNFIKMAKEKLAQKMESNKENREAHLAAMLERLQEKDKHAEEVRKNKELKEEASR",
+                    "pdbx_strand_id": "E",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 143,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6FKJ"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "F"
+                    ],
+                    "auth_asym_ids": [
+                        "F"
+                    ],
+                    "entry_id": "6FKJ",
+                    "entity_id": "4"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9031,
+                        "scientific_name": "Gallus gallus"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": null,
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Tubulin tyrosine ligase"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MYTFVVRDENSSVYAEVSRLLLATGQWKRLRKDNPRFNLMLGERNRLPFGRLGHEPGLVQLVNYYRGADKLCRKASLVKLIKTSPELSESCTWFPESYVIYPTNLKTPVAPAQNGIRHLINNTRTDEREVFLAAYNRRREGREGNVWIAKSSAGAKGEGILISSEASELLDFIDEQGQVHVIQKYLEKPLLLEPGHRKFDIRSWVLVDHLYNIYLYREGVLRTSSEPYNSANFQDKTCHLTNHCIQKEYSKNYGRYEEGNEMFFEEFNQYLMDALNTTLENSILLQIKHIIRSCLMCIEPAISTKHLHYQSFQLFGFDFMVDEELKVWLIEVNGAPACAQKLYAELCQGIVDVAISSVFPLADTGQKTSQPTSIFIKLHHHHHH",
+                    "pdbx_seq_one_letter_code_can": "MYTFVVRDENSSVYAEVSRLLLATGQWKRLRKDNPRFNLMLGERNRLPFGRLGHEPGLVQLVNYYRGADKLCRKASLVKLIKTSPELSESCTWFPESYVIYPTNLKTPVAPAQNGIRHLINNTRTDEREVFLAAYNRRREGREGNVWIAKSSAGAKGEGILISSEASELLDFIDEQGQVHVIQKYLEKPLLLEPGHRKFDIRSWVLVDHLYNIYLYREGVLRTSSEPYNSANFQDKTCHLTNHCIQKEYSKNYGRYEEGNEMFFEEFNQYLMDALNTTLENSILLQIKHIIRSCLMCIEPAISTKHLHYQSFQLFGFDFMVDEELKVWLIEVNGAPACAQKLYAELCQGIVDVAISSVFPLADTGQKTSQPTSIFIKLHHHHHH",
+                    "pdbx_strand_id": "F",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 384,
+                    "type": "polypeptide(L)"
+                }
+            }
+        ],
+        "nonpolymer_entities": [
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "GTP",
+                    "name": "GUANOSINE-5'-TRIPHOSPHATE",
+                    "entity_id": "5"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.523,
+                    "pdbx_description": "GUANOSINE-5'-TRIPHOSPHATE",
+                    "pdbx_number_of_molecules": 2
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "GTP",
+                        "name": "GUANOSINE-5'-TRIPHOSPHATE",
+                        "three_letter_code": "GTP"
+                    },
+                    "rcsb_chem_comp_target": [
+                        {
+                            "interaction_type": "target",
+                            "name": "GTP cyclohydrolase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P30793",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Genome polyprotein",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P26662",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "RNA-directed RNA polymerase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P11124",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Uridine-cytidine kinase-like 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9NWZ5",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTPase HRas",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P01112",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Genome polyprotein",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P26663",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Rho-related GTP-binding protein RhoE",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P61587",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Genome polyprotein",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P19711",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTP-binding protein Rheb",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q15382",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTP cyclohydrolase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0A6T8",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "6-phosphofructo-2-kinase/fructose-2,6-bisphosphatase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P16118",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rab-5A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P20339",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Probable GTP-binding protein EngB",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P38424",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "mRNA-capping enzyme",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q84424",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Genome polyprotein",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P03300",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P84077",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Molybdenum cofactor guanylyltransferase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P32173",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ornithine decarboxylase, inducible",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P43099",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Glutamate dehydrogenase 1, mitochondrial",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P00367",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Adenylosuccinate synthetase isozyme 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q8N142",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rap-2a",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P10114",
+                            "reference_database_name": "UniProt"
+                        }
+                    ],
+                    "drugbank": {
+                        "drugbank_container_identifiers": {
+                            "drugbank_id": "DB04137"
+                        },
+                        "drugbank_info": {
+                            "cas_number": "86-01-1",
+                            "description": "Guanosine 5&#39;-(tetrahydrogen triphosphate). A guanine nucleotide containing three phosphate groups esterified to the sugar moiety. [PubChem]",
+                            "indication": null,
+                            "mechanism_of_action": null,
+                            "name": "Guanosine-5'-Triphosphate",
+                            "pharmacology": null
+                        }
+                    }
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "MG",
+                    "name": "MAGNESIUM ION",
+                    "entity_id": "6"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.024,
+                    "pdbx_description": "MAGNESIUM ION",
+                    "pdbx_number_of_molecules": 5
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "MG",
+                        "name": "MAGNESIUM ION",
+                        "three_letter_code": "MG"
+                    },
+                    "rcsb_chem_comp_target": null,
+                    "drugbank": null
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "CA",
+                    "name": "CALCIUM ION",
+                    "entity_id": "7"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.04,
+                    "pdbx_description": "CALCIUM ION",
+                    "pdbx_number_of_molecules": 5
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "CA",
+                        "name": "CALCIUM ION",
+                        "three_letter_code": "CA"
+                    },
+                    "rcsb_chem_comp_target": null,
+                    "drugbank": null
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "GOL",
+                    "name": "GLYCEROL",
+                    "entity_id": "8"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.092,
+                    "pdbx_description": "GLYCEROL",
+                    "pdbx_number_of_molecules": 2
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "GOL",
+                        "name": "GLYCEROL",
+                        "three_letter_code": "GOL"
+                    },
+                    "rcsb_chem_comp_target": [
+                        {
+                            "interaction_type": "target",
+                            "name": "Peroxisome proliferator-activated receptor delta",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q03181",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Group IIE secretory phospholipase A2",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9NZK7",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Inositol-3-phosphate synthase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9NPH2",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "All-trans-retinol dehydrogenase [NAD(+)] ADH1B",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P00325",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Inositol 1,4,5-trisphosphate-gated calcium channel ITPR1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q14643",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Glycodelin",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P09466",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Alpha-N-acetylgalactosaminidase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P17050",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P84077",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Bifunctional 3'-phosphoadenosine 5'-phosphosulfate synthase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O43252",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "DNA mismatch repair protein MutL",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P23367",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ribonucleoside-diphosphate reductase 1 subunit beta",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P69924",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Adenine DNA glycosylase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P17802",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "tRNA (cytosine(38)-C(5))-methyltransferase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O14717",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Maleylacetoacetate isomerase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O43708",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "enzyme",
+                            "name": "Aldehyde dehydrogenase 1A1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P00352",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "enzyme",
+                            "name": "Cytochrome P450 2E1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P05181",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "transporter",
+                            "name": "Aquaporin-7",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O14520",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "transporter",
+                            "name": "Aquaporin-9",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O43315",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "transporter",
+                            "name": "Glycerol uptake facilitator protein",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0AER0",
+                            "reference_database_name": "UniProt"
+                        }
+                    ],
+                    "drugbank": {
+                        "drugbank_container_identifiers": {
+                            "drugbank_id": "DB09462"
+                        },
+                        "drugbank_info": {
+                            "cas_number": "56-81-5",
+                            "description": "A trihydroxy sugar alcohol that is an intermediate in carbohydrate and lipid metabolism.",
+                            "indication": "It is used as a solvent, emollient, pharmaceutical agent, and sweetening agent.",
+                            "mechanism_of_action": null,
+                            "name": "Glycerin",
+                            "pharmacology": null
+                        }
+                    }
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "DLW",
+                    "name": "(5~{S})-2-[(~{E})-~{N}-(2-ethoxyphenyl)-~{C}-methyl-carbonimidoyl]-3-oxidanyl-5-phenyl-cyclohex-2-en-1-one",
+                    "entity_id": "9"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.349,
+                    "pdbx_description": "(5~{S})-2-[(~{E})-~{N}-(2-ethoxyphenyl)-~{C}-methyl-carbonimidoyl]-3-oxidanyl-5-phenyl-cyclohex-2-en-1-one",
+                    "pdbx_number_of_molecules": 2
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "DLW",
+                        "name": "(5~{S})-2-[(~{E})-~{N}-(2-ethoxyphenyl)-~{C}-methyl-carbonimidoyl]-3-oxidanyl-5-phenyl-cyclohex-2-en-1-one",
+                        "three_letter_code": "DLW"
+                    },
+                    "rcsb_chem_comp_target": null,
+                    "drugbank": null
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "GDP",
+                    "name": "GUANOSINE-5'-DIPHOSPHATE",
+                    "entity_id": "10"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.443,
+                    "pdbx_description": "GUANOSINE-5'-DIPHOSPHATE",
+                    "pdbx_number_of_molecules": 2
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "GDP",
+                        "name": "GUANOSINE-5'-DIPHOSPHATE",
+                        "three_letter_code": "GDP"
+                    },
+                    "rcsb_chem_comp_target": [
+                        {
+                            "interaction_type": "target",
+                            "name": "Protein-glutamine gamma-glutamyltransferase 2",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P21980",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor 1-alpha",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q00080",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Adenylosuccinate synthetase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9U8D3",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rab-9A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P51151",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTPase HRas",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P01112",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Transforming protein RhoA",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P61586",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rab-11A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P62491",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Adenylosuccinate synthetase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0A7D4",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Cell division protein FtsZ",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P9WN95",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Protein-glutamine gamma-glutamyltransferase E",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q08188",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rab-8B",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q92930",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor 6",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P62330",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Adenylosuccinate synthetase isozyme 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q8N142",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor G",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P13551",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor Tu, mitochondrial",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P49411",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTPase Der",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9X1F8",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GDP-mannose mannosyl hydrolase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P32056",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Probable GTP-binding protein EngB",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P38424",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Eukaryotic translation initiation factor 2 subunit 3",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P41091",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Guanine nucleotide-binding protein G(i) subunit alpha-1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P63096",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Signal recognition particle protein",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O07347",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Guanine nucleotide-binding protein G(t) subunit alpha-1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P11488",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor Tu-B",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P60339",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Nucleoside diphosphate kinase A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P15531",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTP-binding protein Rheb",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q15382",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Cell division control protein 42 homolog",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P60953",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor Tu",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q83JC4",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P84077",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor 2",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P13639",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Bifunctional (p)ppGpp synthase/hydrolase RelA",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q54089",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rap-2a",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P10114",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor-like GTPase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q7Z2Z2",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor-like protein 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P40616",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTP-binding nuclear protein Ran",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P62826",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rab-7a",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P51149",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Interferon-inducible GTPase 5",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q6NXR0",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Eukaryotic peptide chain release factor GTP-binding subunit ERF3A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P15170",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Rab-5A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P20339",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor 1-alpha 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P68104",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor 4",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P18085",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GDP-mannose 4,6 dehydratase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O60547",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related protein Ral-A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P11233",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Elongation factor Tu",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q01698",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor-like protein 5B",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q96KC2",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GTPase (Rab6)",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q26000",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor-like protein 3",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P36405",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Nucleoside diphosphate kinase B",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P22392",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "GDP-mannose 4,6-dehydratase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q51366",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ras-related C3 botulinum toxin substrate 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P63000",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Putative ribosome biogenesis GTPase RsgA",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9X242",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Small COPII coat GTPase SAR1B",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9Y6B6",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor-like protein 5A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9Y689",
+                            "reference_database_name": "UniProt"
+                        }
+                    ],
+                    "drugbank": {
+                        "drugbank_container_identifiers": {
+                            "drugbank_id": "DB04315"
+                        },
+                        "drugbank_info": {
+                            "cas_number": "146-91-8",
+                            "description": "A guanine nucleotide containing two phosphate groups esterified to the sugar moiety. [PubChem]",
+                            "indication": null,
+                            "mechanism_of_action": null,
+                            "name": "Guanosine-5'-Diphosphate",
+                            "pharmacology": null
+                        }
+                    }
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "MES",
+                    "name": "2-(N-MORPHOLINO)-ETHANESULFONIC ACID",
+                    "entity_id": "11"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.195,
+                    "pdbx_description": "2-(N-MORPHOLINO)-ETHANESULFONIC ACID",
+                    "pdbx_number_of_molecules": 1
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "MES",
+                        "name": "2-(N-MORPHOLINO)-ETHANESULFONIC ACID",
+                        "three_letter_code": "MES"
+                    },
+                    "rcsb_chem_comp_target": [
+                        {
+                            "interaction_type": "target",
+                            "name": "11-beta-hydroxysteroid dehydrogenase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P28845",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Peptide deformylase, mitochondrial",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9HBH1",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Beta-lactamase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P00807",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Acetylcholinesterase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P22303",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Glutamine--fructose-6-phosphate aminotransferase [isomerizing]",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P17169",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Chymase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P23946",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Cholinesterase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P06276",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Dihydrofolate reductase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P22906",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Copper-containing nitrite reductase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P25006",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Glutathione S-transferase P",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P09211",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Hydroxylamine reductase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q01770",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Diaminopimelate decarboxylase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P00861",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Alpha-xylosidase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P31434",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Limonene-1,2-epoxide hydrolase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9ZAG3",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Mannan endo-1,4-beta-mannosidase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P49424",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Beta-1,4-galactosyltransferase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P15291",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Tyrosine-protein kinase transforming protein Abl",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P00521",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Bifunctional protein GlmU",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0ACC7",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Thiol:disulfide interchange protein DsbC",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0AEG6",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Glyceraldehyde-3-phosphate dehydrogenase A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0A9B2",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "(S)-mandelate dehydrogenase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P20932",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Copper-containing nitrite reductase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O68601",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "33 kDa chaperonin",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0A6Y5",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Free methionine-R-sulfoxide reductase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P76270",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ornithine cyclodeaminase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q88H32",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Dihydropteridine reductase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P09417",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Argininosuccinate lyase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P04424",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "O-acetyl-ADP-ribose deacetylase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0A8D6",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "ADP-ribosylation factor-like protein 3",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P36405",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Beta-lactamase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P52664",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "3-deoxy-D-manno-octulosonate 8-phosphate phosphatase KdsC",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P45314",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Lethal(3)malignant brain tumor-like protein 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9Y468",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ribonuclease Z",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P54548",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Peroxiredoxin-6",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P30041",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Hypothetical gliding protein",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9X9L0",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Prolyl endopeptidase Pep",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9X5N2",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Pulmonary surfactant-associated protein A1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q8IWL2",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Manganese catalase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P60355",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Chorismate mutase AroH",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q84FH6",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Biflaviolin synthase CYP158A2",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9FCA6",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Interferon-inducible GTPase 5",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q6NXR0",
+                            "reference_database_name": "UniProt"
+                        }
+                    ],
+                    "drugbank": {
+                        "drugbank_container_identifiers": {
+                            "drugbank_id": "DB03814"
+                        },
+                        "drugbank_info": {
+                            "cas_number": "4432-31-9",
+                            "description": null,
+                            "indication": null,
+                            "mechanism_of_action": null,
+                            "name": "2-(N-morpholino)ethanesulfonic acid",
+                            "pharmacology": null
+                        }
+                    }
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "PG4",
+                    "name": "TETRAETHYLENE GLYCOL",
+                    "entity_id": "12"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.194,
+                    "pdbx_description": "TETRAETHYLENE GLYCOL",
+                    "pdbx_number_of_molecules": 1
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "PG4",
+                        "name": "TETRAETHYLENE GLYCOL",
+                        "three_letter_code": "PG4"
+                    },
+                    "rcsb_chem_comp_target": null,
+                    "drugbank": null
+                }
+            },
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "ACP",
+                    "name": "PHOSPHOMETHYLPHOSPHONIC ACID ADENYLATE ESTER",
+                    "entity_id": "13"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.505,
+                    "pdbx_description": "PHOSPHOMETHYLPHOSPHONIC ACID ADENYLATE ESTER",
+                    "pdbx_number_of_molecules": 1
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "ACP",
+                        "name": "PHOSPHOMETHYLPHOSPHONIC ACID ADENYLATE ESTER",
+                        "three_letter_code": "ACP"
+                    },
+                    "rcsb_chem_comp_target": [
+                        {
+                            "interaction_type": "target",
+                            "name": "Insulin receptor",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P06213",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Folylpolyglutamate synthase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P15925",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Chemotaxis protein CheA",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q56310",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "UDP-N-acetylmuramate--L-alanine ligase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P45066",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Thermoresistant gluconokinase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P46859",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Phosphoribosylglycinamide formyltransferase 2",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P33221",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Sarcoplasmic/endoplasmic reticulum calcium ATPase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O14983",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Pyridoxal kinase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "O00764",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Phosphoglycerate kinase 1",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P00558",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Serine/threonine-protein kinase PknB",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P9WI81",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Ribokinase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "P0A9J6",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Putative sugar kinase",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q8ZKR2",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Probable butyrate kinase 2",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q9X278",
+                            "reference_database_name": "UniProt"
+                        },
+                        {
+                            "interaction_type": "target",
+                            "name": "Kinesin-like protein KIF1A",
+                            "provenance_source": "DrugBank",
+                            "reference_database_accession_code": "Q12756",
+                            "reference_database_name": "UniProt"
+                        }
+                    ],
+                    "drugbank": {
+                        "drugbank_container_identifiers": {
+                            "drugbank_id": "DB03909"
+                        },
+                        "drugbank_info": {
+                            "cas_number": null,
+                            "description": null,
+                            "indication": null,
+                            "mechanism_of_action": null,
+                            "name": "Adenosine-5'-[Beta, Gamma-Methylene]Triphosphate",
+                            "pharmacology": null
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}
