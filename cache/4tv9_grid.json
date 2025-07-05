@@ -1,0 +1,39 @@
+{
+  "subunits": [
+    {
+      "id": "pf0-su0-D",
+      "auth_asym_id": "D",
+      "protofilament": 0,
+      "subunitIndex": 0,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf0-su1-C",
+      "auth_asym_id": "C",
+      "protofilament": 0,
+      "subunitIndex": 1,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf0-su2-B",
+      "auth_asym_id": "B",
+      "protofilament": 0,
+      "subunitIndex": 2,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf0-su3-A",
+      "auth_asym_id": "A",
+      "protofilament": 0,
+      "subunitIndex": 3,
+      "monomerType": "alpha"
+    }
+  ],
+  "structure_type": "sheet",
+  "metadata": {
+    "pdb_id": "4tv9",
+    "num_tubulin_chains": 4,
+    "num_protofilaments": 1,
+    "nterm_connections": 3
+  }
+}

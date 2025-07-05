@@ -1,0 +1,343 @@
+{
+    "entry": {
+        "assemblies": [
+            {
+                "rcsb_id": "6OWT-1",
+                "nonpolymer_entity_instances": null,
+                "polymer_entity_instances": [
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "entity_id": "2"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "M",
+                            "entity_id": "3"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "T",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "N",
+                            "entity_id": "4"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "S",
+                            "entity_id": "5"
+                        }
+                    }
+                ]
+            }
+        ],
+        "rcsb_id": "6OWT",
+        "rcsb_accession_info": {
+            "deposit_date": "2019-05-10T00:00:00Z"
+        },
+        "struct_keywords": {
+            "pdbx_keywords": "PROTEIN TRANSPORT",
+            "text": "AP, HIV, Nef, trafficking, Protein transport, viral restriction factor"
+        },
+        "rcsb_entry_info": {
+            "resolution_combined": [
+                3.8
+            ]
+        },
+        "rcsb_external_references": [
+            {
+                "link": "https://www.emdataresource.org/EMD-20217",
+                "type": "EM DATA RESOURCE",
+                "id": "EMD-20217"
+            }
+        ],
+        "exptl": [
+            {
+                "method": "ELECTRON MICROSCOPY"
+            }
+        ],
+        "citation": [
+            {
+                "rcsb_authors": [
+                    "Buffalo, C.Z.",
+                    "Sturzel, C.M.",
+                    "Heusinger, E.",
+                    "Kmiec, D.",
+                    "Kirchhoff, F.",
+                    "Hurley, J.H.",
+                    "Ren, X."
+                ],
+                "year": 2019,
+                "title": "Structural Basis for Tetherin Antagonism as a Barrier to Zoonotic Lentiviral Transmission.",
+                "pdbx_database_id_DOI": "10.1016/j.chom.2019.08.002"
+            }
+        ],
+        "polymer_entities": [
+            {
+                "entry": {
+                    "rcsb_id": "6OWT"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "A"
+                    ],
+                    "auth_asym_ids": [
+                        "A"
+                    ],
+                    "entry_id": "6OWT",
+                    "entity_id": "1"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 10116,
+                        "scientific_name": "Rattus norvegicus"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P18484"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "AP-2 complex subunit alpha"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MPAVSKGEGMRGLAVFISDIRNCKSKEAEIKRINKELANIRSKFKGDKALDGYSKKKYVCKLLFIFLLGHDIDFGHMEAVNLLSSNRYTEKQIGYLFISVLVNSNSELIRLINNAIKNDLASRNPTFMGLALHCIANVGSREMAEAFAGEIPKILVAGDTMDSVKQSAALCLLRLYRTSPDLVPMGDWTSRVVHLLNDQHLGVVTAATSLITTLAQKNPEEFKTSVSLAVSRLSRIVTSASTDLQDYTYYFVPAPWLSVKLLRLLQCYPPPEDPAVRGRLTECLETILNKAQEPPKSKKVQHSNAKNAVLFEAISLIIHHDSEPNLLVRACNQLGQFLQHRETNLRYLALESMCTLASSEFSHEAVKTHIETVINALKTERDVSVRQRAVDLLYAMCDRSNAQQIVAEMLSYLETADYSIREEIVLKVAILAEKYAVDYTWYVDTILNLIRIAGDYVSEEVWYRVIQIVINRDDVQGYAAKTVFEALQAPACHENLVKVGGYILGEFGNLIAGDPRSSPLIQFNLLHSKFHLCSVPTRALLLSTYIKFVNLFPEVKATIQDVLRSDSQLKNADVELQQRAVEYLRLSTVASTDILATVLEEMPPFPERESSILAKLKKKKGPSTVTDLEETKRERSIDVNGGPEPVPASTSAASTPSPSADLLGLGAVPPAPTGPPPTSGGGLLVDVFSDSASAVAPLAPGSEDNFARFVCKNNGVLFENQLLQIGLKSEFRQNLGRMFIFYGNKTSTQFLNFTPTLICADDLQTNLNLQTKPVDPTVDGGAQVQQVVNIECISDFTEAPVLNIQFRYGGTFQNVSVKLPITLNKFFQPTEMASQDFFQRWKQLSNPQQEVQNIFKAKHPMDTEITKAKIIGFGSALLEEVDPNPANFVGAGIIHTKTTQIGCLLRLEPNLQAQMYRLTLRTSKDTVSQRLCELLSEQF",
+                    "pdbx_seq_one_letter_code_can": "MPAVSKGEGMRGLAVFISDIRNCKSKEAEIKRINKELANIRSKFKGDKALDGYSKKKYVCKLLFIFLLGHDIDFGHMEAVNLLSSNRYTEKQIGYLFISVLVNSNSELIRLINNAIKNDLASRNPTFMGLALHCIANVGSREMAEAFAGEIPKILVAGDTMDSVKQSAALCLLRLYRTSPDLVPMGDWTSRVVHLLNDQHLGVVTAATSLITTLAQKNPEEFKTSVSLAVSRLSRIVTSASTDLQDYTYYFVPAPWLSVKLLRLLQCYPPPEDPAVRGRLTECLETILNKAQEPPKSKKVQHSNAKNAVLFEAISLIIHHDSEPNLLVRACNQLGQFLQHRETNLRYLALESMCTLASSEFSHEAVKTHIETVINALKTERDVSVRQRAVDLLYAMCDRSNAQQIVAEMLSYLETADYSIREEIVLKVAILAEKYAVDYTWYVDTILNLIRIAGDYVSEEVWYRVIQIVINRDDVQGYAAKTVFEALQAPACHENLVKVGGYILGEFGNLIAGDPRSSPLIQFNLLHSKFHLCSVPTRALLLSTYIKFVNLFPEVKATIQDVLRSDSQLKNADVELQQRAVEYLRLSTVASTDILATVLEEMPPFPERESSILAKLKKKKGPSTVTDLEETKRERSIDVNGGPEPVPASTSAASTPSPSADLLGLGAVPPAPTGPPPTSGGGLLVDVFSDSASAVAPLAPGSEDNFARFVCKNNGVLFENQLLQIGLKSEFRQNLGRMFIFYGNKTSTQFLNFTPTLICADDLQTNLNLQTKPVDPTVDGGAQVQQVVNIECISDFTEAPVLNIQFRYGGTFQNVSVKLPITLNKFFQPTEMASQDFFQRWKQLSNPQQEVQNIFKAKHPMDTEITKAKIIGFGSALLEEVDPNPANFVGAGIIHTKTTQIGCLLRLEPNLQAQMYRLTLRTSKDTVSQRLCELLSEQF",
+                    "pdbx_strand_id": "A",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 939,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6OWT"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "B"
+                    ],
+                    "auth_asym_ids": [
+                        "B"
+                    ],
+                    "entry_id": "6OWT",
+                    "entity_id": "2"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF01602",
+                        "rcsb_pfam_comment": "This family consists of the N terminal region of various alpha, beta and gamma subunits of the AP-1, AP-2 and AP-3 adaptor protein complexes. The adaptor protein (AP) complexes are involved in the formation of clathrin-coated pits and vesicles [1]. The N-terminal region of the various adaptor proteins (APs) is constant by comparison to the C-terminal which is variable within members of the AP-2 family[2]; and it has been proposed that this constant region interacts with another uniform component of the coated vesicles [2]. ",
+                        "rcsb_pfam_description": "Adaptin N terminal region"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 10116,
+                        "scientific_name": "Rattus norvegicus"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P62944"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "AP-2 complex subunit beta"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MTDSKYFTTNKKGEIFELKAELNNEKKEKRKEAVKKVIAAMTVGKDVSSLFPDVVNCMQTDNLELKKLVYLYLMNYAKSQPDMAIMAVNSFVKDCEDPNPLIRALAVRTMGCIRVDKITEYLCEPLRKCLKDEDPYVRKTAAVCVAKLHDINAQMVEDQGFLDSLRDLIADSNPMVVANAVAALSEISESHPNSNLLDLNPQNINKLLTALNECTEWGQIFILDCLSNYNPKDDREAQSICERVTPRLSHANSAVVLSAVKVLMKFLELLPKDSDYYNMLLKKLAPPLVTLLSGEPEVQYVALRNINLIVQKRPEILKQEIKVFFVKYNDPIYVKLEKLDIMIRLASQANIAQVLAELKEYATEVDVDFVRKAVRAIGRCAIKVEQSAERCVSTLLDLIQTKVNYVVQEAIVVIRDIFRKYPNKYESIIATLCENLDSLDEPDARAAMIWIVGEYAERIDNADELLESFLEGFHDESTQVQLTLLTAIVKLFLKKPSETQELVQQVLSLATQDSDNPDLRDRGYIYWRLLSTDPVTAKEVVLSEKPLISEETDLIEPTLLDELICHIGSLASVYHKPPNAFVEGSHGIHRK",
+                    "pdbx_seq_one_letter_code_can": "MTDSKYFTTNKKGEIFELKAELNNEKKEKRKEAVKKVIAAMTVGKDVSSLFPDVVNCMQTDNLELKKLVYLYLMNYAKSQPDMAIMAVNSFVKDCEDPNPLIRALAVRTMGCIRVDKITEYLCEPLRKCLKDEDPYVRKTAAVCVAKLHDINAQMVEDQGFLDSLRDLIADSNPMVVANAVAALSEISESHPNSNLLDLNPQNINKLLTALNECTEWGQIFILDCLSNYNPKDDREAQSICERVTPRLSHANSAVVLSAVKVLMKFLELLPKDSDYYNMLLKKLAPPLVTLLSGEPEVQYVALRNINLIVQKRPEILKQEIKVFFVKYNDPIYVKLEKLDIMIRLASQANIAQVLAELKEYATEVDVDFVRKAVRAIGRCAIKVEQSAERCVSTLLDLIQTKVNYVVQEAIVVIRDIFRKYPNKYESIIATLCENLDSLDEPDARAAMIWIVGEYAERIDNADELLESFLEGFHDESTQVQLTLLTAIVKLFLKKPSETQELVQQVLSLATQDSDNPDLRDRGYIYWRLLSTDPVTAKEVVLSEKPLISEETDLIEPTLLDELICHIGSLASVYHKPPNAFVEGSHGIHRK",
+                    "pdbx_strand_id": "B",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 591,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6OWT"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "C"
+                    ],
+                    "auth_asym_ids": [
+                        "M"
+                    ],
+                    "entry_id": "6OWT",
+                    "entity_id": "3"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF01217",
+                        "rcsb_pfam_comment": "",
+                        "rcsb_pfam_description": "Clathrin adaptor complex small chain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 10090,
+                        "scientific_name": "Mus musculus"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P84091"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Adaptor protein complex AP-2, mu1"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MIGGLFIYNHKGEVLISRVYRDDIGRNAVDAFRVNVIHARQQVRSPVTNIARTSFFHVKRSNIWLAAVTKQNVNAAMVFEFLYKMCDVMAAYFGKISEENIKNNFVLIYELLDEILDFGYPQNSETGALKTFITQQGIKSQ",
+                    "pdbx_seq_one_letter_code_can": "MIGGLFIYNHKGEVLISRVYRDDIGRNAVDAFRVNVIHARQQVRSPVTNIARTSFFHVKRSNIWLAAVTKQNVNAAMVFEFLYKMCDVMAAYFGKISEENIKNNFVLIYELLDEILDFGYPQNSETGALKTFITQQGIKSQ",
+                    "pdbx_strand_id": "M",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 141,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6OWT"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "D",
+                        "E"
+                    ],
+                    "auth_asym_ids": [
+                        "N",
+                        "T"
+                    ],
+                    "entry_id": "6OWT",
+                    "entity_id": "4"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 9531,
+                        "scientific_name": "Cercocebus atys"
+                    },
+                    {
+                        "ncbi_taxonomy_id": 11723,
+                        "scientific_name": "Simian immunodeficiency virus"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    },
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "C3VHQ5"
+                    },
+                    {
+                        "rcsb_id": "Q4JGV0"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Tetherin,Protein Nef"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "ILYDYSRMPMGDIWKEDGDKRSKGSDEASEGSGMGGVTSKKQSKRRQGLRERLLQARGETDGYSRSRGELGKGWNLPSAEGQGYSEEQFMNTPWRNPAREGEKLKYRQQNMDDVDDDDDELVGVAVHPKVPLRAMSYKLAIDMSHFIKEKGGLEGIYYSDRRHRILDIYLEKEEGIIPDWQNYTSGPGVRYPLFFGWLWKLVPVNVSDEAQEDETHCLVHPAQTSQWDDPWGEVLAWKFDPKLAYTYEAFIRYPEEFGNDSGLSKEEVKRRLTAR",
+                    "pdbx_seq_one_letter_code_can": "ILYDYSRMPMGDIWKEDGDKRSKGSDEASEGSGMGGVTSKKQSKRRQGLRERLLQARGETDGYSRSRGELGKGWNLPSAEGQGYSEEQFMNTPWRNPAREGEKLKYRQQNMDDVDDDDDELVGVAVHPKVPLRAMSYKLAIDMSHFIKEKGGLEGIYYSDRRHRILDIYLEKEEGIIPDWQNYTSGPGVRYPLFFGWLWKLVPVNVSDEAQEDETHCLVHPAQTSQWDDPWGEVLAWKFDPKLAYTYEAFIRYPEEFGNDSGLSKEEVKRRLTAR",
+                    "pdbx_strand_id": "T,N",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 275,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "6OWT"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "F"
+                    ],
+                    "auth_asym_ids": [
+                        "S"
+                    ],
+                    "entry_id": "6OWT",
+                    "entity_id": "5"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF01217",
+                        "rcsb_pfam_comment": "",
+                        "rcsb_pfam_description": "Clathrin adaptor complex small chain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 10116,
+                        "scientific_name": "Rattus norvegicus"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "P62744"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "AP-2 complex subunit sigma"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "MIRFILIQNRAGKTRLAKWYMQFDDDEKQKLIEEVHAVVTVRDAKHTNFVEFRNFKIIYRRYAGLYFCICVDVNDNNLAYLEAIHNFVEVLNEYFHCVSELDLVFNFYKVYTVVDEMFLAGEIRETSQTKVLKQLLMLQSLE",
+                    "pdbx_seq_one_letter_code_can": "MIRFILIQNRAGKTRLAKWYMQFDDDEKQKLIEEVHAVVTVRDAKHTNFVEFRNFKIIYRRYAGLYFCICVDVNDNNLAYLEAIHNFVEVLNEYFHCVSELDLVFNFYKVYTVVDEMFLAGEIRETSQTKVLKQLLMLQSLE",
+                    "pdbx_strand_id": "S",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 142,
+                    "type": "polypeptide(L)"
+                }
+            }
+        ],
+        "nonpolymer_entities": null
+    }
+}

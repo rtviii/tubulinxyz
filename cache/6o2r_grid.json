@@ -1,0 +1,95 @@
+{
+  "subunits": [
+    {
+      "id": "pf0-su0-I",
+      "auth_asym_id": "I",
+      "protofilament": 0,
+      "subunitIndex": 0,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf0-su1-C",
+      "auth_asym_id": "C",
+      "protofilament": 0,
+      "subunitIndex": 1,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf0-su2-D",
+      "auth_asym_id": "D",
+      "protofilament": 0,
+      "subunitIndex": 2,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf0-su3-L",
+      "auth_asym_id": "L",
+      "protofilament": 0,
+      "subunitIndex": 3,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf1-su0-H",
+      "auth_asym_id": "H",
+      "protofilament": 1,
+      "subunitIndex": 0,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf1-su1-A",
+      "auth_asym_id": "A",
+      "protofilament": 1,
+      "subunitIndex": 1,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf1-su2-B",
+      "auth_asym_id": "B",
+      "protofilament": 1,
+      "subunitIndex": 2,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf1-su3-K",
+      "auth_asym_id": "K",
+      "protofilament": 1,
+      "subunitIndex": 3,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf2-su0-G",
+      "auth_asym_id": "G",
+      "protofilament": 2,
+      "subunitIndex": 0,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf2-su1-E",
+      "auth_asym_id": "E",
+      "protofilament": 2,
+      "subunitIndex": 1,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf2-su2-F",
+      "auth_asym_id": "F",
+      "protofilament": 2,
+      "subunitIndex": 2,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf2-su3-J",
+      "auth_asym_id": "J",
+      "protofilament": 2,
+      "subunitIndex": 3,
+      "monomerType": "alpha"
+    }
+  ],
+  "structure_type": "sheet",
+  "metadata": {
+    "pdb_id": "6o2r",
+    "num_tubulin_chains": 12,
+    "num_protofilaments": 3,
+    "nterm_connections": 9
+  }
+}
