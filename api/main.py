@@ -5,6 +5,8 @@ import sys
 import traceback
 import os
 
+from fastapi.responses import PlainTextResponse
+
 # Add the parent directory to the path to import tubulin_analyzer
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
@@ -153,7 +155,88 @@ async def get_pymol_instructions(pdb_id: str):
     }
     
     return instructions
+@app.get("/models/{filename}")
+async def get_model_file(filename: str):
+    """Serve mmCIF model files with computed metadata"""
+    try:
+        print(f"Current working directory: {os.getcwd()}")
+        
+        # Try different path strategies
+        paths_to_try = [
+            f"/Users/rtviii/dev/tubulinxyz/api/maxim_data/{filename}",
+            f"maxim_data/{filename}",
+            f"./maxim_data/{filename}",
+            f"../maxim_data/{filename}",
+        ]
+        
+        print(f"Looking for file: {filename}")
+        for path in paths_to_try:
+            print(f"Trying path: {path}")
+            if os.path.exists(path):
+                print(f"✅ Found file at: {path}")
+                with open(path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                return PlainTextResponse(
+                    content=content,
+                    media_type="chemical/x-mmcif",
+                    headers={
+                        "Content-Disposition": f"inline; filename={filename}",
+                        "Access-Control-Allow-Origin": "*"
+                    }
+                )
+            else:
+                print(f"❌ Not found at: {path}")
+        
+        # List what's actually in the directory
+        try:
+            maxim_dir = "/Users/rtviii/dev/tubulinxyz/api/maxim_data"
+            if os.path.exists(maxim_dir):
+                files = os.listdir(maxim_dir)
+                print(f"Files in {maxim_dir}: {files}")
+            else:
+                print(f"Directory {maxim_dir} doesn't exist")
+        except Exception as e:
+            print(f"Error listing directory: {e}")
+        
+        raise HTTPException(status_code=404, detail=f"File '{filename}' not found in any location")
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Error serving model file {filename}: {e}")
 
+@app.get("/models")
+async def list_models():
+    """List available model files"""
+    try:
+        models_dir = Path("maxim_data")
+        if not models_dir.exists():
+            models_dir.mkdir(exist_ok=True)
+            return {"models": [], "message": "maxim_data directory created but empty"}
+        
+        # Find all .cif files
+        cif_files = list(models_dir.glob("*.cif"))
+        
+        models = []
+        for file_path in cif_files:
+            stat = file_path.stat()
+            models.append({
+                "filename": file_path.name,
+                "size_bytes": stat.st_size,
+                "modified": stat.st_mtime
+            })
+        
+        return {
+            "models": models,
+            "count": len(models),
+            "directory": str(models_dir.absolute())
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing models: {str(e)}")
+
+# Update your root endpoint to include the new models endpoints
 @app.get("/")
 async def root():
     """API information and usage"""
@@ -163,8 +246,10 @@ async def root():
         "description": "Converts microtubule PDB structures into idealized 2D grids",
         "endpoints": {
             "/grid/{pdb_id}": "Generate 2D grid layout (cached automatically)",
-            "/debug/{pdb_id}": "Debug N-terminus connectivity analysis",
-            "/debug/{pdb_id}/pymol": "Get PyMOL visualization instructions"
+            "/debug/{pdb_id}": "Debug N-terminus connectivity analysis", 
+            "/debug/{pdb_id}/pymol": "Get PyMOL visualization instructions",
+            "/models": "List available model files in maxim_data/",
+            "/models/{filename}": "Serve mmCIF model files from maxim_data/"
         },
         "algorithm": {
             "method": "N-terminus connectivity tracing",
@@ -174,20 +259,54 @@ async def root():
         },
         "example_usage": [
             "curl http://localhost:8000/grid/6o2t",
-            "curl http://localhost:8000/debug/6o2t"
+            "curl http://localhost:8000/debug/6o2t",
+            "curl http://localhost:8000/models",
+            "curl http://localhost:8000/models/7sj7_with_metadata.cif"
         ]
     }
 
+# Also update the health check to verify models directory
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     debug_dir = Path("debug_output")
+    models_dir = Path("maxim_data")
     return {
         "status": "healthy",
         "version": "0.1.0",
         "debug_directory": str(debug_dir),
-        "debug_directory_exists": debug_dir.exists()
+        "debug_directory_exists": debug_dir.exists(),
+        "models_directory": str(models_dir),
+        "models_directory_exists": models_dir.exists()
     }
+    """List available model files"""
+    try:
+        models_dir = Path("maxim_data")
+        if not models_dir.exists():
+            models_dir.mkdir(exist_ok=True)
+            return {"models": [], "message": "Models directory created but empty"}
+        
+        # Find all .cif files
+        cif_files = list(models_dir.glob("*.cif"))
+        
+        models = []
+        for file_path in cif_files:
+            stat = file_path.stat()
+            models.append({
+                "filename": file_path.name,
+                "size_bytes": stat.st_size,
+                "modified": stat.st_mtime
+            })
+        
+        return {
+            "models": models,
+            "count": len(models),
+            "directory": str(models_dir.absolute())
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error listing models: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

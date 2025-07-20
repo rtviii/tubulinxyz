@@ -1,0 +1,192 @@
+{
+    "entry": {
+        "assemblies": [
+            {
+                "rcsb_id": "4TV0-1",
+                "nonpolymer_entity_instances": [
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "101",
+                            "entity_id": "3"
+                        }
+                    },
+                    {
+                        "rcsb_nonpolymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "auth_seq_id": "102",
+                            "entity_id": "3"
+                        }
+                    }
+                ],
+                "polymer_entity_instances": [
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "A",
+                            "entity_id": "1"
+                        }
+                    },
+                    {
+                        "rcsb_polymer_entity_instance_container_identifiers": {
+                            "auth_asym_id": "B",
+                            "entity_id": "2"
+                        }
+                    }
+                ]
+            }
+        ],
+        "rcsb_id": "4TV0",
+        "rcsb_accession_info": {
+            "deposit_date": "2014-06-25T00:00:00Z"
+        },
+        "struct_keywords": {
+            "pdbx_keywords": "RNA BINDING PROTEIN/RNA",
+            "text": "SLBP, histone mRNA stem-loop, RNA BINDING PROTEIN-RNA complex"
+        },
+        "rcsb_entry_info": {
+            "resolution_combined": [
+                2.601
+            ]
+        },
+        "rcsb_external_references": [
+            {
+                "link": "https://nakb.org/atlas=4TV0",
+                "type": "NAKB",
+                "id": "4TV0"
+            }
+        ],
+        "exptl": [
+            {
+                "method": "X-RAY DIFFRACTION"
+            }
+        ],
+        "citation": [
+            {
+                "rcsb_authors": [
+                    "Zhang, J.",
+                    "Tan, D.",
+                    "DeRose, E.F.",
+                    "Perera, L.",
+                    "Dominski, Z.",
+                    "Marzluff, W.F.",
+                    "Tong, L.",
+                    "Hall, T.M."
+                ],
+                "year": 2014,
+                "title": "Molecular mechanisms for the regulation of histone mRNA stem-loop-binding protein by phosphorylation.",
+                "pdbx_database_id_DOI": "10.1073/pnas.1406381111"
+            }
+        ],
+        "polymer_entities": [
+            {
+                "entry": {
+                    "rcsb_id": "4TV0"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "A"
+                    ],
+                    "auth_asym_ids": [
+                        "A"
+                    ],
+                    "entry_id": "4TV0",
+                    "entity_id": "1"
+                },
+                "pfams": [
+                    {
+                        "rcsb_pfam_accession": "PF15247",
+                        "rcsb_pfam_comment": "This family represents the RNA-binding domain of histone RNA hairpin-binding protein [1]. ",
+                        "rcsb_pfam_description": "Histone RNA hairpin-binding protein RNA-binding domain"
+                    }
+                ],
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 7227,
+                        "scientific_name": "Drosophila melanogaster"
+                    }
+                ],
+                "rcsb_entity_host_organism": [
+                    {
+                        "ncbi_taxonomy_id": 562,
+                        "scientific_name": "Escherichia coli"
+                    }
+                ],
+                "uniprots": [
+                    {
+                        "rcsb_id": "Q9VAN6"
+                    }
+                ],
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "Histone RNA hairpin-binding protein"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "SSSYTEADPAILSRRQKQIDYGKNTAAYERYVE(MSE)VPKDERTRDHPRTPNKYGKYSRRAFDG(MSE)VKIWRKS(MSE)HIYDPPTQARDTAKDSNSDSDSD",
+                    "pdbx_seq_one_letter_code_can": "SSSYTEADPAILSRRQKQIDYGKNTAAYERYVEMVPKDERTRDHPRTPNKYGKYSRRAFDGMVKIWRKSMHIYDPPTQARDTAKDSNSDSDSD",
+                    "pdbx_strand_id": "A",
+                    "rcsb_entity_polymer_type": "Protein",
+                    "rcsb_sample_sequence_length": 93,
+                    "type": "polypeptide(L)"
+                }
+            },
+            {
+                "entry": {
+                    "rcsb_id": "4TV0"
+                },
+                "rcsb_polymer_entity_container_identifiers": {
+                    "asym_ids": [
+                        "B"
+                    ],
+                    "auth_asym_ids": [
+                        "B"
+                    ],
+                    "entry_id": "4TV0",
+                    "entity_id": "2"
+                },
+                "pfams": null,
+                "rcsb_entity_source_organism": [
+                    {
+                        "ncbi_taxonomy_id": 32630,
+                        "scientific_name": "synthetic construct"
+                    }
+                ],
+                "rcsb_entity_host_organism": null,
+                "uniprots": null,
+                "rcsb_polymer_entity": {
+                    "pdbx_description": "RNA (26-MER)"
+                },
+                "entity_poly": {
+                    "pdbx_seq_one_letter_code": "GGCCAAAGGCCCUUUUCAGGGCCACC",
+                    "pdbx_seq_one_letter_code_can": "GGCCAAAGGCCCUUUUCAGGGCCACC",
+                    "pdbx_strand_id": "B",
+                    "rcsb_entity_polymer_type": "RNA",
+                    "rcsb_sample_sequence_length": 26,
+                    "type": "polyribonucleotide"
+                }
+            }
+        ],
+        "nonpolymer_entities": [
+            {
+                "pdbx_entity_nonpoly": {
+                    "comp_id": "CA",
+                    "name": "CALCIUM ION",
+                    "entity_id": "3"
+                },
+                "rcsb_nonpolymer_entity": {
+                    "details": null,
+                    "formula_weight": 0.04,
+                    "pdbx_description": "CALCIUM ION",
+                    "pdbx_number_of_molecules": 2
+                },
+                "nonpolymer_comp": {
+                    "chem_comp": {
+                        "id": "CA",
+                        "name": "CALCIUM ION",
+                        "three_letter_code": "CA"
+                    },
+                    "rcsb_chem_comp_target": null,
+                    "drugbank": null
+                }
+            }
+        ]
+    }
+}

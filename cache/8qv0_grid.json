@@ -1,0 +1,193 @@
+{
+  "subunits": [
+    {
+      "id": "pf0-su1-S",
+      "auth_asym_id": "S",
+      "protofilament": 0,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf0-su0-G",
+      "auth_asym_id": "G",
+      "protofilament": 0,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf1-su1-T",
+      "auth_asym_id": "T",
+      "protofilament": 1,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf1-su0-H",
+      "auth_asym_id": "H",
+      "protofilament": 1,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf2-su1-R",
+      "auth_asym_id": "R",
+      "protofilament": 2,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf2-su0-F",
+      "auth_asym_id": "F",
+      "protofilament": 2,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf3-su1-U",
+      "auth_asym_id": "U",
+      "protofilament": 3,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf3-su0-I",
+      "auth_asym_id": "I",
+      "protofilament": 3,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf4-su1-V",
+      "auth_asym_id": "V",
+      "protofilament": 4,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf4-su0-J",
+      "auth_asym_id": "J",
+      "protofilament": 4,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf5-su1-B",
+      "auth_asym_id": "B",
+      "protofilament": 5,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf5-su0-A",
+      "auth_asym_id": "A",
+      "protofilament": 5,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf6-su1-O",
+      "auth_asym_id": "O",
+      "protofilament": 6,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf6-su0-C",
+      "auth_asym_id": "C",
+      "protofilament": 6,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf7-su1-Z",
+      "auth_asym_id": "Z",
+      "protofilament": 7,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf7-su0-N",
+      "auth_asym_id": "N",
+      "protofilament": 7,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf8-su1-W",
+      "auth_asym_id": "W",
+      "protofilament": 8,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf8-su0-K",
+      "auth_asym_id": "K",
+      "protofilament": 8,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf9-su1-P",
+      "auth_asym_id": "P",
+      "protofilament": 9,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf9-su0-D",
+      "auth_asym_id": "D",
+      "protofilament": 9,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf10-su1-Q",
+      "auth_asym_id": "Q",
+      "protofilament": 10,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf10-su0-E",
+      "auth_asym_id": "E",
+      "protofilament": 10,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf11-su1-X",
+      "auth_asym_id": "X",
+      "protofilament": 11,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf11-su0-L",
+      "auth_asym_id": "L",
+      "protofilament": 11,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    },
+    {
+      "id": "pf12-su1-Y",
+      "auth_asym_id": "Y",
+      "protofilament": 12,
+      "subunitIndex": 1,
+      "monomerType": "beta"
+    },
+    {
+      "id": "pf12-su0-M",
+      "auth_asym_id": "M",
+      "protofilament": 12,
+      "subunitIndex": 0,
+      "monomerType": "alpha"
+    }
+  ],
+  "structure_type": "cylindrical",
+  "metadata": {
+    "pdb_id": "8qv0",
+    "num_tubulin_chains": 26,
+    "num_protofilaments": 13,
+    "nterm_connections": 13
+  }
+}
