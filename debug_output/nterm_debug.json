@@ -2,112 +2,22 @@
   "n_terminus_data": {
     "A": {
       "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "B": 75
-      },
-      "neighbor_residues": {
-        "B": 6
-      }
-    },
-    "C": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "D": 95
-      },
-      "neighbor_residues": {
-        "D": 7
-      }
-    },
-    "E": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "F": 86
-      },
-      "neighbor_residues": {
-        "F": 6
-      }
-    },
-    "J": {
-      "n_terminus_resnum": 1,
       "neighbor_counts": {},
       "neighbor_residues": {}
-    },
-    "K": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {},
-      "neighbor_residues": {}
-    },
-    "L": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {},
-      "neighbor_residues": {}
-    },
-    "F": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "J": 30
-      },
-      "neighbor_residues": {
-        "J": 3
-      }
-    },
-    "D": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "L": 32
-      },
-      "neighbor_residues": {
-        "L": 3
-      }
-    },
-    "G": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "E": 29
-      },
-      "neighbor_residues": {
-        "E": 3
-      }
-    },
-    "H": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "A": 33
-      },
-      "neighbor_residues": {
-        "A": 3
-      }
-    },
-    "I": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "C": 28
-      },
-      "neighbor_residues": {
-        "C": 3
-      }
     },
     "B": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {
-        "K": 33
+        "A": 133
       },
       "neighbor_residues": {
-        "K": 3
+        "A": 9
       }
     }
   },
   "connections": {
-    "A": "B",
-    "C": "D",
-    "E": "F",
-    "F": "J",
-    "D": "L",
-    "G": "E",
-    "H": "A",
-    "I": "C",
-    "B": "K"
+    "B": "A"
   },
-  "total_chains": 12,
-  "successful_connections": 9
+  "total_chains": 2,
+  "successful_connections": 1
 }

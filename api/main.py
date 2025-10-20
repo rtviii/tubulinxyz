@@ -14,6 +14,9 @@ sys.path.insert(0, str(parent_dir))
 
 from tubulin_analyzer import SpatialGridGenerator, GridData, DebugData
 
+# Import the alignment mapper
+from api_muscle_alignment import TubulinAlignmentMapper, Annotation
+
 # --- FastAPI App ---
 app = FastAPI(
     title="Tubulin Spatial Grid API", 
@@ -28,8 +31,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- API Endpoints ---
+# --- Initialize Services ---
 grid_generator = SpatialGridGenerator()
+
+# Initialize alignment mapper with your specific paths
+MUSCLE_BINARY = str(parent_dir / "muscle3.8.1")
+MASTER_PROFILE = str(parent_dir / "data" / "alpha_tubulin"/"alpha_tubulin.afasta")  # or alpha_tubulin.fasta
+
+# Create the mapper instance
+alignment_mapper = TubulinAlignmentMapper(
+    master_profile_path=MASTER_PROFILE,
+    muscle_binary=MUSCLE_BINARY
+)
+
+# --- API Endpoints ---
 
 @app.get("/grid/{pdb_id}", response_model=GridData)
 async def get_grid(pdb_id: str):
@@ -64,6 +79,147 @@ async def get_grid(pdb_id: str):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"An internal error occurred: {str(e)}")
+
+# --- NEW ALIGNMENT ENDPOINTS ---
+
+@app.post("/align/sequence")
+async def align_sequence(sequence: str, sequence_id: str = None, annotations: list = None):
+    """
+    Align a tubulin sequence to the master alpha-tubulin profile
+    
+    Args:
+        sequence: Amino acid sequence to align
+        sequence_id: Optional identifier for the sequence
+        annotations: Optional list of annotations in format [{"start": 1, "end": 10, "label": "PTM"}]
+    """
+    try:
+        if sequence_id is None:
+            sequence_id = f"user_sequence_{hash(sequence) % 10000:04d}"
+        
+        if annotations is None:
+            annotations = []
+        
+        # Convert to Annotation objects
+        annotation_objs = [
+            Annotation(
+                start=ann['start'],
+                end=ann['end'],
+                label=ann['label'],
+                metadata=ann.get('metadata', {})
+            ) for ann in annotations
+        ]
+        
+        # Perform alignment
+        aligned_sequence, mapping = alignment_mapper.align_sequence(sequence_id, sequence)
+        mapped_annotations = alignment_mapper.map_annotations(annotation_objs, mapping)
+        statistics = alignment_mapper.get_alignment_statistics(aligned_sequence, mapping)
+        
+        return {
+            "sequence_id": sequence_id,
+            "aligned_sequence": aligned_sequence,
+            "mapped_annotations": [
+                {
+                    "start": ann.start,
+                    "end": ann.end,
+                    "label": ann.label,
+                    "metadata": ann.metadata
+                } for ann in mapped_annotations
+            ],
+            "statistics": statistics,
+            "mapping": mapping,  # For debugging
+            "original_sequence": sequence
+        }
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Alignment failed: {str(e)}")
+
+@app.get("/align/master-profile")
+async def get_master_profile():
+    """Get information about the master alignment profile INCLUDING THE ACTUAL SEQUENCES"""
+    try:
+        profile_path = Path(MASTER_PROFILE)
+        if not profile_path.exists():
+            raise HTTPException(status_code=404, detail="Master profile not found")
+        
+        # Read and parse the master profile
+        from Bio import AlignIO
+        alignment = AlignIO.read(profile_path, "fasta")
+        
+        sequences_info = []
+        for record in alignment:
+            sequences_info.append({
+                "id": record.id,
+                "description": record.description,
+                "length": len(record.seq),
+                "gap_count": str(record.seq).count('-'),
+                "sequence": str(record.seq)  # <- HERE'S THE FUCKING SEQUENCE!
+            })
+        
+        # Also return the full alignment as a string for good measure
+        full_alignment = ""
+        for record in alignment:
+            full_alignment += f">{record.description}\n{record.seq}\n"
+        
+        return {
+            "profile_path": str(profile_path),
+            "profile_exists": profile_path.exists(),
+            "num_sequences": len(alignment),
+            "alignment_length": alignment.get_alignment_length(),
+            "sequences": sequences_info,
+            "full_alignment": full_alignment,  # <- AND THE WHOLE DAMN THING!
+            "muscle_binary": MUSCLE_BINARY,
+            "muscle_exists": Path(MUSCLE_BINARY).exists()
+        }
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error reading master profile: {str(e)}")
+
+@app.post("/align/structure/{pdb_id}/{chain_id}")
+async def align_structure_chain(pdb_id: str, chain_id: str, annotations: list = None):
+    """
+    Extract and align a specific chain from a PDB structure
+    """
+    try:
+        # This would need your PDB parsing logic - here's a skeleton
+        pdb_sequence = await extract_chain_sequence(pdb_id, chain_id)
+        
+        if pdb_sequence is None:
+            raise HTTPException(status_code=404, detail=f"Chain {chain_id} not found in {pdb_id}")
+        
+        # Use the alignment endpoint
+        return await align_sequence(pdb_sequence, f"{pdb_id}_{chain_id}", annotations)
+        
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Structure alignment failed: {str(e)}")
+
+async def extract_chain_sequence(pdb_id: str, chain_id: str) -> str:
+    """
+    Extract sequence from PDB chain - you'll need to implement this
+    based on your existing PDB processing code
+    """
+    # TODO: Integrate with your existing PDB processing code
+    # This is a placeholder - you'll want to use your actual PDB parsing
+    try:
+        # Example using your existing structure processing
+        # You might need to adapt this based on your actual code
+        from tubulin_analyzer.structural_analyzer import load_structure
+        structure = await load_structure(pdb_id)
+        
+        # Extract chain sequence logic here
+        # This is pseudocode - adapt to your actual implementation
+        for chain in structure.get_chains():
+            if chain.id == chain_id:
+                return extract_aa_sequence(chain)
+        
+        return None
+    except Exception as e:
+        print(f"Error extracting sequence from {pdb_id} chain {chain_id}: {e}")
+        return None
+
+# --- Existing endpoints (keep all your current functionality) ---
 
 @app.get("/debug/{pdb_id}", response_model=DebugData)
 async def debug_analysis(pdb_id: str):
@@ -155,6 +311,7 @@ async def get_pymol_instructions(pdb_id: str):
     }
     
     return instructions
+
 @app.get("/models/{filename}")
 async def get_model_file(filename: str):
     """Serve mmCIF model files with computed metadata"""
@@ -236,77 +393,60 @@ async def list_models():
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing models: {str(e)}")
 
-# Update your root endpoint to include the new models endpoints
+# Update root endpoint to include alignment endpoints
 @app.get("/")
 async def root():
     """API information and usage"""
     return {
         "title": "Tubulin Spatial Grid API",
         "version": "0.1.0", 
-        "description": "Converts microtubule PDB structures into idealized 2D grids",
+        "description": "Converts microtubule PDB structures into idealized 2D grids with sequence alignment",
         "endpoints": {
             "/grid/{pdb_id}": "Generate 2D grid layout (cached automatically)",
             "/debug/{pdb_id}": "Debug N-terminus connectivity analysis", 
             "/debug/{pdb_id}/pymol": "Get PyMOL visualization instructions",
+            "/align/sequence": "POST - Align a tubulin sequence to master profile",
+            "/align/master-profile": "GET - Info about master alignment",
+            "/align/structure/{pdb_id}/{chain_id}": "POST - Align a PDB chain",
             "/models": "List available model files in maxim_data/",
             "/models/{filename}": "Serve mmCIF model files from maxim_data/"
         },
-        "algorithm": {
-            "method": "N-terminus connectivity tracing",
-            "cutoff": "7.0 Ångström for N-terminus neighbors",
-            "min_contacts": "3 atoms for valid connection",
-            "output": "Protofilament traces → 2D grid coordinates"
+        "alignment": {
+            "master_profile": MASTER_PROFILE,
+            "method": "MUSCLE profile alignment",
+            "version": "3.8.1"
         },
         "example_usage": [
             "curl http://localhost:8000/grid/6o2t",
-            "curl http://localhost:8000/debug/6o2t",
-            "curl http://localhost:8000/models",
-            "curl http://localhost:8000/models/7sj7_with_metadata.cif"
+            "curl http://localhost:8000/align/master-profile",
+            'curl -X POST http://localhost:8000/align/sequence -H "Content-Type: application/json" -d \'{"sequence": "MREIVHIQ...", "annotations": [{"start": 40, "end": 40, "label": "K40_acetylation"}]]}\'',
+            "curl http://localhost:8000/models"
         ]
     }
 
-# Also update the health check to verify models directory
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint including alignment service"""
     debug_dir = Path("debug_output")
     models_dir = Path("maxim_data")
+    profile_path = Path(MASTER_PROFILE)
+    muscle_path = Path(MUSCLE_BINARY)
+    
     return {
         "status": "healthy",
         "version": "0.1.0",
         "debug_directory": str(debug_dir),
         "debug_directory_exists": debug_dir.exists(),
         "models_directory": str(models_dir),
-        "models_directory_exists": models_dir.exists()
-    }
-    """List available model files"""
-    try:
-        models_dir = Path("maxim_data")
-        if not models_dir.exists():
-            models_dir.mkdir(exist_ok=True)
-            return {"models": [], "message": "Models directory created but empty"}
-        
-        # Find all .cif files
-        cif_files = list(models_dir.glob("*.cif"))
-        
-        models = []
-        for file_path in cif_files:
-            stat = file_path.stat()
-            models.append({
-                "filename": file_path.name,
-                "size_bytes": stat.st_size,
-                "modified": stat.st_mtime
-            })
-        
-        return {
-            "models": models,
-            "count": len(models),
-            "directory": str(models_dir.absolute())
+        "models_directory_exists": models_dir.exists(),
+        "alignment_service": {
+            "master_profile": str(profile_path),
+            "master_profile_exists": profile_path.exists(),
+            "muscle_binary": str(muscle_path),
+            "muscle_exists": muscle_path.exists(),
+            "service_ready": profile_path.exists() and muscle_path.exists()
         }
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing models: {str(e)}")
-
+    }
 
 if __name__ == "__main__":
     import uvicorn
