@@ -23,12 +23,56 @@ class TubulinAlignmentMapper:
         self.muscle_binary = muscle_binary
         self.master_alignment = self._load_master_alignment()
         
+    def _extract_new_sequence(self, output_file: str, sequence_id: str) -> str:
+        """
+        Extract the newly aligned sequence from the MUSCLE output file.
+        
+        Args:
+            output_file: Path to the MUSCLE output file
+            sequence_id: The ID of the sequence we're looking for
+            
+        Returns:
+            The aligned sequence string
+        """
+        from Bio import AlignIO
+        
+        # Read the alignment
+        alignment = AlignIO.read(output_file, "fasta")
+        
+        # Find our sequence (should be the last one in the profile alignment)
+        for record in alignment:
+            if record.id == sequence_id:
+                return str(record.seq)
+        
+        # If not found by ID, return the last sequence (our custom sequence should be last)
+        if alignment:
+            return str(alignment[-1].seq)
+        
+        raise ValueError(f"Sequence {sequence_id} not found in alignment output")
     def _load_master_alignment(self) -> List[Tuple[str, str]]:
         """Load the master MSA profile"""
-        # Implementation to load and parse the master MSA
-        # Returns list of (sequence_id, aligned_sequence)
-        pass
-        
+        try:
+            from Bio import AlignIO
+            
+            if not self.master_profile_path.exists():
+                print(f"Warning: Master profile not found at {self.master_profile_path}")
+                return []
+            
+            # Read the alignment
+            alignment = AlignIO.read(self.master_profile_path, "fasta")
+            
+            # Extract sequence IDs and aligned sequences
+            master_alignment = []
+            for record in alignment:
+                master_alignment.append((record.id, str(record.seq)))
+            
+            print(f"Loaded master alignment with {len(master_alignment)} sequences, length {alignment.get_alignment_length()}")
+            return master_alignment
+            
+        except Exception as e:
+            print(f"Error loading master alignment: {e}")
+            return []
+            
     def align_sequence(self, sequence_id: str, sequence: str) -> Tuple[str, List[int]]:
         """
         Align a new sequence to the master profile
@@ -65,17 +109,6 @@ class TubulinAlignmentMapper:
         return aligned_seq, mapping
     
     def _create_alignment_mapping(self, original_seq: str, aligned_seq: str) -> List[int]:
-        """
-        Create a mapping from aligned sequence positions back to original sequence positions.
-        
-        Args:
-            original_seq: The unaligned sequence (no gaps)
-            aligned_seq: The sequence with gaps after alignment
-            
-        Returns:
-            mapping: List where index i (0-based aligned position) contains the 
-                     original 1-based position, or -1 if it's a gap
-        """
         mapping = []
         orig_pos = 1  # Using 1-based indexing for residues
         
@@ -90,15 +123,9 @@ class TubulinAlignmentMapper:
     
     def map_annotations(self, annotations: List[Annotation], 
                        mapping: List[int]) -> List[Annotation]:
-        """
-        Map annotations from original sequence coordinates to aligned sequence coordinates.
-        
-        This is where we need to be VERY careful with the gap arithmetic!
-        """
         mapped_annotations = []
         
         for ann in annotations:
-            # Find the aligned start and end positions
             aligned_start = self._find_aligned_position(ann.start, mapping, 'start')
             aligned_end = self._find_aligned_position(ann.end, mapping, 'end')
             

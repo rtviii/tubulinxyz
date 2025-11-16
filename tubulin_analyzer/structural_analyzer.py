@@ -20,10 +20,10 @@ class SpatialGridGenerator:
         self.parser = MMCIFParser(QUIET=True)
         self.profile_base_path = Path(os.getenv("PROFILE_BASE_PATH", "profiles"))
         self.profile_base_path.mkdir(exist_ok=True)
-        self.NEIGHBOR_CUTOFF_Å = 75.0
+        self.NEIGHBOR_CUTOFF_Å  = 75.0
         self.interface_analyzer = InterfaceAnalyzer()
         self.geometric_analyzer = GeometricAnalyzer()
-        self.visualizer = VisualizationUtils()
+        self.visualizer         = VisualizationUtils()
 
     async def get_profile(self, pdb_id: str) -> Dict[str, Any]:
         """Get or download PDB profile data using GraphQL"""

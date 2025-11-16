@@ -11,3 +11,6 @@ grid**
 profiles**
 *.cif
 */**.pyc
+
+**/q_*.md
+q_*.md

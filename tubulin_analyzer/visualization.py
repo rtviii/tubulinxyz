@@ -141,10 +141,10 @@ pymol {pdb_id.upper()}.cif -d "@{pdb_id}_visualize.pml"
         # Add grid
         ax.grid(True, linestyle=":", alpha=0.6)
 
-        plt.tight_layout(rect=[0, 0, 0.9, 1])
-        grid_viz_filename = f"grid_{pdb_id}_{grid_data.structure_type}.png"
-        plt.savefig(grid_viz_filename, dpi=150)
-        plt.close()
+        # plt.tight_layout(rect=[0, 0, 0.9, 1])
+        # grid_viz_filename = f"grid_{pdb_id}_{grid_data.structure_type}.png"
+        # plt.savefig(grid_viz_filename, dpi=150)
+        # plt.close()
 
     def create_protofilament_tracing_plot(
         self,
@@ -215,10 +215,10 @@ pymol {pdb_id.upper()}.cif -d "@{pdb_id}_visualize.pml"
         if len(protofilaments) <= 15:
             ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
 
-        plt.tight_layout()
-        pf_viz_filename = f"protofilaments_{pdb_id}.png"
-        plt.savefig(pf_viz_filename, dpi=150, bbox_inches="tight")
-        plt.close()
+        # plt.tight_layout()
+        # pf_viz_filename = f"protofilaments_{pdb_id}.png"
+        # plt.savefig(pf_viz_filename, dpi=150, bbox_inches="tight")
+        # plt.close()
 
         # Create PyMOL script after creating the plot
         self.create_pymol_script(pdb_id)
