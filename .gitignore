@@ -26,11 +26,12 @@ q_*.md
 
 *fasta
 
+*.gz
 
 notes
 notes/**
 
-.DS_Store
+**/.DS_Store
 
 
 TUBETL_DATA/**
