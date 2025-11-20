@@ -26,8 +26,9 @@ class SpatialGridGenerator:
         self.visualizer         = VisualizationUtils()
 
     async def get_profile(self, pdb_id: str) -> Dict[str, Any]:
+
         """Get or download PDB profile data using GraphQL"""
-        profile_path = self.profile_base_path / f"{pdb_id.upper()}_profile.json"
+        profile_path = self.profile_base_path / f"{pdb_id.upper()}.json"
         if profile_path.exists():
             with open(profile_path, "r") as f:
                 return json.load(f)

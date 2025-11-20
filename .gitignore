@@ -1,7 +1,12 @@
 **/venv/** 
 venv
-__pycache__
-**/__pycache__/**
+
+*.pyc
+**__pycache__/
+*.pyo
+*.pyd
+
+
 
 *.pdb
 **debug**
@@ -14,3 +19,19 @@ profiles**
 
 **/q_*.md
 q_*.md
+
+**env
+.env
+
+
+*fasta
+
+
+notes
+notes/**
+
+.DS_Store
+
+
+TUBETL_DATA/**
+TUBETL_DATA
