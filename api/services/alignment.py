@@ -4,6 +4,46 @@ from pathlib import Path
 from typing import List, Tuple, Dict, Optional
 from dataclasses import dataclass, field
 from Bio import AlignIO
+from collections import Counter
+from Bio import AlignIO
+from pathlib import Path
+from typing import List, Optional
+
+class ConsensusCalculator:
+    def __init__(self, master_profile_path: str):
+        self.path = Path(master_profile_path)
+        self.consensus_sequence: List[str] = []
+        self._calculate()
+
+    def _calculate(self):
+        if not self.path.exists():
+            raise FileNotFoundError(f"Master alignment not found at {self.path}")
+
+        alignment = AlignIO.read(str(self.path), "fasta")
+        length = alignment.get_alignment_length()
+        
+        consensus = []
+        # Iterate over columns
+        for i in range(length):
+            column = alignment[:, i]
+            # Remove gaps from consideration
+            residues = [r for r in column if r != '-' and r != '.']
+            
+            if not residues:
+                # If column is all gaps (rare in Master, but possible), use gap
+                consensus.append('-')
+                continue
+
+            # Get most common residue
+            most_common = Counter(residues).most_common(1)[0][0]
+            consensus.append(most_common)
+            
+        self.consensus_sequence = consensus
+
+    def get_residue_at(self, index_0_based: int) -> str:
+        if 0 <= index_0_based < len(self.consensus_sequence):
+            return self.consensus_sequence[index_0_based]
+        return '?'
 
 @dataclass
 class Annotation:
