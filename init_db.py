@@ -17,11 +17,6 @@ if __name__ == "__main__":
     
     try:
         adapter = Neo4jAdapter(NEO4J_URI, NEO4J_USER, NEO4J_CURRENTDB, NEO4J_PASSWORD)
-        
-        # This one function does everything you asked for:
-        # 1. Sets constraints
-        # 2. Creates master alignments
-        # 3. Scans all profiles for taxIDs and builds the phylogeny tree
         adapter.initialize_new_instance()
         
         print("\n--- 4. SUCCESS ---")

@@ -9,11 +9,11 @@ This library provides tools for:
 - Visualization utilities
 """
 
-from tubulin_analyzer.structural_analyzer import SpatialGridGenerator
-from tubulin_analyzer.interface_analyzer import InterfaceAnalyzer
-from tubulin_analyzer.geometric_analyzer import GeometricAnalyzer
-from tubulin_analyzer.visualization import VisualizationUtils
-from tubulin_analyzer.models import SubunitData, GridData, DebugData
+from lib.tubulin_analyzer.structural_analyzer import SpatialGridGenerator
+from lib.tubulin_analyzer.interface_analyzer import InterfaceAnalyzer
+from lib.tubulin_analyzer.geometric_analyzer import GeometricAnalyzer
+from lib.tubulin_analyzer.visualization import VisualizationUtils
+from lib.tubulin_analyzer.models import SubunitData, GridData, DebugData
 
 __version__ = "0.1.0"
 __author__ = "Your Name"

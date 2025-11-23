@@ -9,10 +9,10 @@ from typing import Dict, List, Any, Tuple, Set
 from Bio.PDB.MMCIFParser import MMCIFParser
 from fastapi import HTTPException
 
-from tubulin_analyzer.interface_analyzer import InterfaceAnalyzer
-from tubulin_analyzer.geometric_analyzer import GeometricAnalyzer
-from tubulin_analyzer.visualization import VisualizationUtils
-from tubulin_analyzer.models import GridData, SubunitData
+from lib.tubulin_analyzer.interface_analyzer import InterfaceAnalyzer
+from lib.tubulin_analyzer.geometric_analyzer import GeometricAnalyzer
+from lib.tubulin_analyzer.visualization import VisualizationUtils
+from lib.tubulin_analyzer.models import GridData, SubunitData
 
 
 class SpatialGridGenerator:
