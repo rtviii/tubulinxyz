@@ -57,7 +57,6 @@ def parse_mmcif_polymers(mmcif_path: str) -> List[PolymerEntity]:
     
     return polymers
 
-
 def parse_master_alignment(msa_path: str) -> Tuple[str, str]:
     """
     Parse the master alignment FASTA file.
@@ -71,7 +70,6 @@ def parse_master_alignment(msa_path: str) -> Tuple[str, str]:
     sequence = ''.join(line.strip() for line in lines[1:])
     
     return seq_id, sequence
-
 
 def align_to_master_with_muscle(
     target_seq: str,
@@ -223,7 +221,6 @@ def align_polymer_to_master(
     
     return polymer, mappings
 
-
 def process_polymers_parallel(
     polymers: List[PolymerEntity],
     master_aln_path: str,  # Changed to path
@@ -251,73 +248,169 @@ def process_polymers_parallel(
     
     return results
 
-def map_annotations_between_sequences(
-    annotations_indices: List[int],
-    source_mappings: AlignmentMappings,
-    target_mappings: AlignmentMappings
-) -> List[int]:
+
+from etl.assets import TubulinStructureAssets
+from models.types_tubulin import TubulinFamily
+from Bio.PDB import MMCIFParser
+from Bio.PDB.Polypeptide import protein_letters_3to1
+from typing import Dict
+
+def get_observed_sequence_from_structure(cif_path: str, chain_id: str) -> str:
     """
-    Map annotation indices from source sequence to target sequence via master alignment.
-    
-    Args:
-        annotations_indices: List of indices in source sequence (0-based)
-        source_mappings: AlignmentMappings for source sequence
-        target_mappings: AlignmentMappings for target sequence
-    
-    Returns:
-        List of corresponding indices in target sequence (-1 if deletion, -2 if insertion)
+    Extract the actual observed sequence from the structure file.
+    Only includes residues that have at least one atom coordinate.
     """
-    result = []
+    parser = MMCIFParser(QUIET=True)
+    structure = parser.get_structure("structure", cif_path)
     
-    for source_idx in annotations_indices:
-        # Step 1: Map source index to master index
-        if source_idx >= len(source_mappings.target_to_master):
-            result.append(-1)
-            continue
-            
-        master_idx = source_mappings.target_to_master[source_idx]
-        
-        # If source position is an insertion (-2), can't map it
-        if master_idx == -2:  # Changed from -1
-            result.append(-2)
+    # Get the first model (index 0)
+    model = structure[0]
+    
+    if chain_id not in model:
+        raise ValueError(f"Chain {chain_id} not found in structure")
+    
+    chain = model[chain_id]
+    sequence = []
+    
+    for residue in chain:
+        # Skip heteroatoms (water, ligands, etc.)
+        if residue.id[0] != ' ':
             continue
         
-        # Step 2: Map master index to target index
-        if master_idx >= len(target_mappings.master_to_target):
-            result.append(-1)
-            continue
-            
-        target_idx = target_mappings.master_to_target[master_idx]
-        result.append(target_idx)  # Could be -1 (deletion) or valid index
+        resname = residue.resname
+        try:
+            # Convert 3-letter code to 1-letter
+            sequence.append(protein_letters_3to1[resname])
+        except KeyError:
+            # Unknown residue, use X
+            sequence.append('X')
     
-    return result
+    return ''.join(sequence)
+
+def get_alpha_tubulins_from_structure(rcsb_id: str) -> List[PolymerEntity]:
+    """
+    Load profile to identify alpha tubulins, but get sequences from actual structure.
+    """
+    try:
+        assets = TubulinStructureAssets(rcsb_id)
+        profile = assets.profile()
+        cif_path = assets.paths.cif
+        
+        if not os.path.exists(cif_path):
+            print(f"CIF file not found: {cif_path}")
+            return []
+        
+        alpha_tubulins = []
+        for protein in profile.proteins:
+            if protein.family == TubulinFamily.ALPHA:
+                # Use auth_asym_id as the chain identifier
+                chain_id = protein.auth_asym_id
+                
+                try:
+                    observed_seq = get_observed_sequence_from_structure(cif_path, chain_id)
+                    print(f"Entity {protein.entity_id}, Chain {chain_id}: {len(observed_seq)} residues observed")
+                    
+                    alpha_tubulins.append(
+                        PolymerEntity(
+                            entity_id=protein.entity_id,
+                            sequence=observed_seq  # Actual coordinates
+                        )
+                    )
+                except Exception as e:
+                    print(f"Error getting observed sequence for chain {chain_id}: {e}")
+        
+        return alpha_tubulins
+        
+    except FileNotFoundError:
+        print(f"Profile not found for {rcsb_id}")
+        return []
+    except Exception as e:
+        print(f"Error loading profile for {rcsb_id}: {e}")
+        return []
+
+def get_alpha_tubulins_from_profile(rcsb_id: str) -> List[PolymerEntity]:
+    """
+    Load a structure profile and extract only alpha tubulin proteins.
+    Uses the observed sequence (what's actually in the structure).
+    """
+    try:
+        assets = TubulinStructureAssets(rcsb_id)
+        profile = assets.profile()
+        
+        alpha_tubulins = []
+        for protein in profile.proteins:
+            if protein.family == TubulinFamily.ALPHA:
+                alpha_tubulins.append(
+                    PolymerEntity(
+                        entity_id=protein.entity_id,
+                        sequence=protein.entity_poly_seq_one_letter_code  # Observed, not canonical
+                    )
+                )
+        
+        return alpha_tubulins
+        
+    except FileNotFoundError:
+        print(f"Profile not found for {rcsb_id}")
+        return []
+    except Exception as e:
+        print(f"Error loading profile for {rcsb_id}: {e}")
+        return []
+
+
+def get_observed_sequence_and_numbering(cif_path: str, chain_id: str) -> Tuple[str, List[int]]:
+    """
+    Extracts the observed sequence and the corresponding auth_seq_ids.
+    Strictly filters for protein residues only (skipping waters/ligands).
+    """
+    parser = MMCIFParser(QUIET=True)
+    structure = parser.get_structure("structure", cif_path)
+    model = structure[0]
+    
+    if chain_id not in model:
+        raise ValueError(f"Chain {chain_id} not found")
+    
+    chain = model[chain_id]
+    sequence_chars = []
+    auth_seq_ids = []
+    
+    for residue in chain:
+        # 1. Filter Heteroatoms (Water, Ligands)
+        # residue.id is a tuple: (hetero_flag, sequence_identifier, insertion_code)
+        # hetero_flag is ' ' for standard residues, 'W' for water, 'H_x' for ligands
+        if residue.id[0] != ' ':
+            continue
+
+        # 2. Extract Data
+        resname = residue.resname
+        # residue.id[1] is the auth_seq_id (integer)
+        seq_id = residue.id[1] 
+        
+        try:
+            one_letter = protein_letters_3to1.get(resname, 'X')
+            sequence_chars.append(one_letter)
+            auth_seq_ids.append(seq_id)
+        except Exception:
+            sequence_chars.append('X')
+            auth_seq_ids.append(seq_id)
+            
+    return ''.join(sequence_chars), auth_seq_ids
 
 
 if __name__ == "__main__":
-    RCSB_ID           = '1JFF'
-    cif_path          = os.path.join(TUBETL_DATA, RCSB_ID, "{}.cif".format(RCSB_ID))
+    RCSB_ID = '1JFF'
     family_master_aln = "/Users/rtviii/dev/tubulinxyz/data/alpha_tubulin/alpha_tubulin.afasta"
     
-    polymers = parse_mmcif_polymers(cif_path)
-    pprint(polymers)
-
-    # Pass the file path, not the parsed sequence
-    mappings_dict = process_polymers_parallel(polymers, family_master_aln, max_workers=8)
-    pprint(mappings_dict)
-
-
-    if len(polymers) >= 2:
-        entity1_id = polymers[0].entity_id
-        entity2_id = polymers[1].entity_id
-        
-        # Some PTM sites in entity 1
-        ptm_sites = [10, 25, 47]
-        
-        mapped_sites = map_annotations_between_sequences(
-            ptm_sites,
-            mappings_dict[entity1_id],
-            mappings_dict[entity2_id]
+    # Use the structure-based extraction (reads actual atoms from CIF)
+    alpha_polymers = get_alpha_tubulins_from_structure(RCSB_ID)
+    
+    if not alpha_polymers:
+        print(f"No alpha tubulins found in {RCSB_ID}")
+    else:
+        print(f"Found {len(alpha_polymers)} alpha tubulin(s) in {RCSB_ID}")
+        mappings_dict = process_polymers_parallel(
+            alpha_polymers, 
+            family_master_aln,
+            muscle_path="/Users/rtviii/dev/tubulinxyz/muscle3.8.1",
+            max_workers=8
         )
-        
-        print(f"PTM sites in {entity1_id}: {ptm_sites}")
-        print(f"Mapped to {entity2_id}: {mapped_sites}")
+        pprint(mappings_dict['1'])

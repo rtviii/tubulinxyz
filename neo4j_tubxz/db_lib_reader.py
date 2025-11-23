@@ -12,16 +12,18 @@ from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 sys.dont_write_bytecode = True
 
 class StructureFilterParams(BaseModel):
-    cursor       : Optional[str] = None
-    limit        : int = Field(default=20, ge=1, le=100)
-    year         : Optional[tuple[Optional[int], Optional[int]]] = None
-    search       : Optional[str] = None
-    resolution   : Optional[tuple[Optional[float], Optional[float]]] = None
-    source_taxa  : Optional[List[int]] = None
-    host_taxa    : Optional[List[int]] = None
-    polymerization_state: Optional[List[str]] = None
+
+    cursor               : Optional[str]                                     = None
+    limit                : int                                               = Field(default=20, ge=1, le=100)
+    year                 : Optional[tuple[Optional[int], Optional[int]]]     = None
+    search               : Optional[str]                                     = None
+    resolution           : Optional[tuple[Optional[float], Optional[float]]] = None
+    source_taxa          : Optional[List[int]]                               = None
+    host_taxa            : Optional[List[int]]                               = None
+    polymerization_state: Optional[List[str]]                                = None
 
 class PolymersFilterParams(BaseModel):
+
     cursor        : Optional[ Union[Tuple[Optional[str], Optional[str]], List[Optional[str]], str] ] = None
     limit         : int = Field(default=20, ge=1, le=100)
     
