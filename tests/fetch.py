@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from api.services.structure_parser import TubulinStructureParser
+from api.services.mmcif_parser import TubulinStructureParser
 
 parser = TubulinStructureParser()
 pdb = "1JFF"

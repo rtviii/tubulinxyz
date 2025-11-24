@@ -36,3 +36,5 @@ notes/**
 
 TUBETL_DATA/**
 TUBETL_DATA
+
+ingestion_logs/*

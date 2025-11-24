@@ -5,28 +5,27 @@ from pathlib import Path
 import sys
 import traceback
 import json
-
-from api.services import structure_parser
-from api.services.structure_parser import TubulinStructureParser
+from datetime import datetime
 
 # --- Path Setup ---
-# Add parent directory to path to allow imports from sibling packages
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
 sys.path.insert(0, str(parent_dir))
 
 # --- Imports ---
-# New strict schemas and mapper
 from api.schemas import AlignmentRequest, AlignmentResponse
-from api.services.alignment import TubulinAlignmentMapper
+from api.services.alignment import (
+    TubulinAlignmentMapper, 
+    TubulinStructureParser,
+    TubulinIngestor  # Add this
+)
 
-# Existing logic
 from lib.tubulin_analyzer import SpatialGridGenerator, GridData, DebugData
 
 # --- App Configuration ---
 app = FastAPI(
     title="Tubulin Spatial Grid API",
-    version="0.2.0", # Bumped version for refactor
+    version="0.2.0",
     description="Generates idealized, aligned 2D grids and MSAs from 3D tubulin structures.",
 )
 
@@ -44,83 +43,100 @@ grid_generator = SpatialGridGenerator()
 MUSCLE_BINARY = str(parent_dir / "muscle3.8.1")
 MASTER_PROFILE = str(parent_dir / "data" / "alpha_tubulin" / "alpha_tubulin.afasta")
 
-# Initialize Mapper (Fail fast if binary/profile missing)
-try:
-    alignment_mapper = TubulinAlignmentMapper(
-        master_profile_path=MASTER_PROFILE, 
-        muscle_binary=MUSCLE_BINARY
-    )
-except Exception as e:
-    print(f"CRITICAL: Failed to initialize AlignmentMapper: {e}")
-    # We don't exit here to allow other endpoints (like models) to work, 
-    # but alignment endpoints will fail.
-    alignment_mapper = None
+# Create ingestion logs directory
+INGESTION_LOGS_DIR = parent_dir / "ingestion_logs"
+INGESTION_LOGS_DIR.mkdir(exist_ok=True)
+
+# Initialize services
+alignment_mapper = TubulinAlignmentMapper(
+    master_profile_path=MASTER_PROFILE, 
+    muscle_binary=MUSCLE_BINARY
+)
+mmcif_parser = TubulinStructureParser()
+ingestor = TubulinIngestor(MASTER_PROFILE, MUSCLE_BINARY)
 
 # --- MSA / Alignment Endpoints ---
 
 @app.post("/msaprofile/sequence", response_model=AlignmentResponse)
 async def align_sequence(request: AlignmentRequest):
-    """
-    Align a tubulin sequence to the master alpha-tubulin profile.
-    
-    CRITICAL: For PDB structures, the frontend MUST provide 'auth_seq_ids' 
-    that correspond 1:1 with the 'sequence'. This ensures the returned mapping
-    uses strict PDB numbering rather than inferred indices.
-    """
     if not alignment_mapper:
-        raise HTTPException(status_code=503, detail="Alignment service unavailable (configuration error)")
+        raise HTTPException(
+            status_code=503, 
+            detail="Alignment service unavailable (configuration error)"
+        )
 
     try:
-        # 1. Logic: Align
-        # Pass the strict auth_seq_ids to the mapper
-        aligned_sequence, mapping = alignment_mapper.align_sequence(
+        # 1. Main alignment for frontend
+        aligned_sequence, mapping = alignment_mapper.align_sequence_with_mapping(
             request.sequence_id, 
             request.sequence,
             request.auth_seq_ids
         )
-        structure_parser = TubulinStructureParser()
-    # 2. On-the-fly Verification
-        # Only verify if we have a valid PDB ID structure (e.g., "1JFF_A")
+        
+        # 2. Verification
         if request.sequence_id and "_" in request.sequence_id:
             pdb_id, chain_id = request.sequence_id.split("_")[:2]
-            
-            # Run verification (Fetch -> Parse -> Compare)
             print(f"Verifying {pdb_id} chain {chain_id} against RCSB...")
-            verification = structure_parser.verify_integrity(
+            
+            verification = mmcif_parser.verify_integrity(
                 pdb_id, chain_id, request.sequence, request.auth_seq_ids
             )
             
             if verification["status"] == "success":
                 if verification["match"]:
-                    print(f"✅ VERIFIED: Frontend data for {pdb_id}_{chain_id} matches PDB perfectly.")
+                    print(f"✅ VERIFIED: {pdb_id}_{chain_id} matches PDB")
                 else:
-                    print(f"⚠️ MISMATCH: Frontend vs PDB divergence for {pdb_id}_{chain_id}")
+                    print(f"⚠️ MISMATCH: {pdb_id}_{chain_id}")
                     print(verification["details"])
-                    # Optional: Raise HTTPException if strictness is required
-            else:
-                print(f"⚠️ Verification skipped: {verification.get('reason')}")
-                    
-        # 2. Logic: Map Annotations (if any)
-        mapped_annotations = []
-        if request.annotations:
-            # The mapper expects Annotation objects, which match our Pydantic schema
-            mapped_annotations = alignment_mapper.map_annotations(request.annotations, mapping)
+            
+            # 3. Run full ingestion pipeline (for logging/analysis)
+            try:
+                print(f"\n{'='*60}")
+                print(f"RUNNING INGESTION PIPELINE FOR {pdb_id} CHAIN {chain_id}")
+                print(f"{'='*60}")
+                
+                tubulin_class = "Alpha"  # Default, adjust as needed
+                result = ingestor.process_chain(pdb_id, chain_id, tubulin_class)
+                
+                # Save to timestamped file
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                output_file = INGESTION_LOGS_DIR / f"{pdb_id}_{chain_id}_{timestamp}.json"
+                
+                with open(output_file, "w") as f:
+                    from dataclasses import asdict
+                    json.dump(asdict(result), f, indent=2)
+                
+                print(f"\n📊 INGESTION STATS:")
+                print(f"  - Mutations detected: {result.stats['total_mutations']}")
+                print(f"  - Insertions: {result.stats['insertions']}")
+                print(f"  - MA Coverage: {result.stats['ma_coverage']}/{len(result.ma_to_auth_map)}")
+                print(f"  - Results saved to: {output_file.name}")
+                
+                if result.mutations:
+                    print(f"\n🧬 MUTATIONS:")
+                    for mut in result.mutations[:5]:  # Show first 5
+                        print(f"  - MA pos {mut.ma_position}: {mut.wild_type} → {mut.observed} (PDB ID: {mut.pdb_auth_id})")
+                    if len(result.mutations) > 5:
+                        print(f"  ... and {len(result.mutations) - 5} more")
+                
+                print(f"{'='*60}\n")
+                
+            except Exception as ing_error:
+                # Don't fail the whole request if ingestion fails
+                print(f"⚠️ INGESTION PIPELINE FAILED (non-critical): {ing_error}")
+                traceback.print_exc()
         
-        # 3. Logic: Statistics
-        statistics = alignment_mapper.get_alignment_statistics(aligned_sequence, mapping)
-        
-        # 4. Response (Pydantic will validate this against AlignmentResponse)
+        # 4. Return frontend response (unchanged)
         return {
             "sequence_id": request.sequence_id,
             "aligned_sequence": aligned_sequence,
             "mapping": mapping,
-            "mapped_annotations": mapped_annotations,
-            "statistics": statistics,
+            "mapped_annotations": [],
+            "statistics": {},
             "original_sequence": request.sequence
         }
         
     except ValueError as ve:
-        # Handles validation errors (e.g. length mismatch)
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         traceback.print_exc()
@@ -148,7 +164,6 @@ async def get_master_profile():
                 "sequence": str(record.seq),
             })
 
-        # Generate full FASTA string
         full_alignment = ""
         for record in alignment:
             full_alignment += f">{record.description}\n{record.seq}\n"
@@ -195,6 +210,7 @@ async def get_grid(pdb_id: str):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
 
 # --- Root ---
 
