@@ -72,7 +72,6 @@ def upsert__polymer_to_protein(
         }).single(strict=True)['p']
     return _
 
-
 def link__polymer_to_structure(polymer_node: Node, parent_rcsb_id: str) -> Callable[[Transaction | ManagedTransaction], list[list[Node | Relationship]]]:
     def _(tx: Transaction | ManagedTransaction):
         # : Relationship is HAS_POLYMER

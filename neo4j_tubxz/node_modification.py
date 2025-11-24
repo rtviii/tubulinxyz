@@ -2,18 +2,15 @@
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
-
 from lib.models.types_tubulin import Modification
 
 def node__modification(
-    mod: Modification  # noqa: F821
+    mod: Modification
 ) -> Callable[[Transaction | ManagedTransaction], Node]:
     
     mod_props = mod.model_dump()
-    mod_props["modification_type"] = mod_props["modification_type"].value
-
+    
     def _(tx: Transaction | ManagedTransaction):
-        # Modifications are instances, so we CREATE, not MERGE.
         return tx.run("""
             CREATE (m:Modification)
             SET m = $properties
@@ -21,18 +18,19 @@ def node__modification(
             """, {"properties": mod_props}).single(strict=True)['m']
     return _
 
-def link__polymer_to_modification(
-    polymer_node: Node,
-    modification_node: Node
+def link__modification_to_master_alignment(
+    modification_node: Node,
+    master_aln_node: Node
 ) -> Callable[[Transaction | ManagedTransaction], Relationship]:
+    """Links a modification to the master alignment it references"""
     def _(tx: Transaction | ManagedTransaction):
         return tx.run("""
-            MATCH (p:Polymer) WHERE ELEMENTID(p) = $p_elem_id
             MATCH (m:Modification) WHERE ELEMENTID(m) = $m_elem_id
-            MERGE (p)-[r:HAS_MODIFICATION]->(m)
+            MATCH (a:MasterAlignment) WHERE ELEMENTID(a) = $a_elem_id
+            MERGE (m)-[r:ANNOTATES_POSITION_IN]->(a)
             RETURN r
             """, {
-                "p_elem_id": polymer_node.element_id,
                 "m_elem_id": modification_node.element_id,
+                "a_elem_id": master_aln_node.element_id,
             }).single(strict=True)['r']
     return _

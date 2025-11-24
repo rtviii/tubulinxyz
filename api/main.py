@@ -1,3 +1,4 @@
+# api/main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
@@ -17,24 +18,39 @@ from api.schemas import AlignmentRequest, AlignmentResponse
 from api.services.alignment import (
     TubulinAlignmentMapper, 
     TubulinStructureParser,
-    TubulinIngestor  # Add this
+    TubulinIngestor
 )
-
 from lib.tubulin_analyzer import SpatialGridGenerator, GridData, DebugData
+
+# NEW: Import routers for Neo4j queries
+from api.routers.router_structures import router_structures
+from api.routers.router_polymers import router_polymers
+from api.routers.router_ligands import router_ligands
+from api.routers.router_annotations import router_annotations
 
 # --- App Configuration ---
 app = FastAPI(
-    title="Tubulin Spatial Grid API",
+    title="TubXYZ API",
     version="0.2.0",
-    description="Generates idealized, aligned 2D grids and MSAs from 3D tubulin structures.",
+    description="API for tubulin structure data, spatial grids, and MSA alignment.",
+    docs_url="/docs",
+    openapi_url="/openapi.json"
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+app.include_router(router_annotations, prefix="/annotations", tags=["Annotations"])
+app.include_router(router_structures, prefix="/structures", tags=["Structures"])
+app.include_router(router_polymers, prefix="/polymers", tags=["Polymers"])
+app.include_router(router_ligands, prefix="/ligands", tags=["Ligands"])
 
 # --- Service Initialization ---
 grid_generator = SpatialGridGenerator()
@@ -74,59 +90,57 @@ async def align_sequence(request: AlignmentRequest):
         )
         
         # 2. Verification
-        if request.sequence_id and "_" in request.sequence_id:
-            pdb_id, chain_id = request.sequence_id.split("_")[:2]
-            print(f"Verifying {pdb_id} chain {chain_id} against RCSB...")
+        # if request.sequence_id and "_" in request.sequence_id:
+        #     pdb_id, chain_id = request.sequence_id.split("_")[:2]
+        #     print(f"Verifying {pdb_id} chain {chain_id} against RCSB...")
             
-            verification = mmcif_parser.verify_integrity(
-                pdb_id, chain_id, request.sequence, request.auth_seq_ids
-            )
+            # verification = mmcif_parser.verify_integrity(
+            #     pdb_id, chain_id, request.sequence, request.auth_seq_ids
+            # )
             
-            if verification["status"] == "success":
-                if verification["match"]:
-                    print(f"✅ VERIFIED: {pdb_id}_{chain_id} matches PDB")
-                else:
-                    print(f"⚠️ MISMATCH: {pdb_id}_{chain_id}")
-                    print(verification["details"])
+            # if verification["status"] == "success":
+            #     if verification["match"]:
+            #         print(f"✅ VERIFIED: {pdb_id}_{chain_id} matches PDB")
+            #     else:
+            #         print(f"⚠️ MISMATCH: {pdb_id}_{chain_id}")
+            #         print(verification["details"])
             
             # 3. Run full ingestion pipeline (for logging/analysis)
-            try:
-                print(f"\n{'='*60}")
-                print(f"RUNNING INGESTION PIPELINE FOR {pdb_id} CHAIN {chain_id}")
-                print(f"{'='*60}")
+            # try:
+            #     print(f"\n{'='*60}")
+            #     print(f"RUNNING INGESTION PIPELINE FOR {pdb_id} CHAIN {chain_id}")
+            #     print(f"{'='*60}")
                 
-                tubulin_class = "Alpha"  # Default, adjust as needed
-                result = ingestor.process_chain(pdb_id, chain_id, tubulin_class)
+            #     tubulin_class = "Alpha"
+            #     result = ingestor.process_chain(pdb_id, chain_id, tubulin_class)
                 
-                # Save to timestamped file
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                output_file = INGESTION_LOGS_DIR / f"{pdb_id}_{chain_id}_{timestamp}.json"
+            #     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            #     output_file = INGESTION_LOGS_DIR / f"{pdb_id}_{chain_id}_{timestamp}.json"
                 
-                with open(output_file, "w") as f:
-                    from dataclasses import asdict
-                    json.dump(asdict(result), f, indent=2)
+            #     with open(output_file, "w") as f:
+            #         from dataclasses import asdict
+            #         json.dump(asdict(result), f, indent=2)
                 
-                print(f"\n📊 INGESTION STATS:")
-                print(f"  - Mutations detected: {result.stats['total_mutations']}")
-                print(f"  - Insertions: {result.stats['insertions']}")
-                print(f"  - MA Coverage: {result.stats['ma_coverage']}/{len(result.ma_to_auth_map)}")
-                print(f"  - Results saved to: {output_file.name}")
+            #     print(f"\n📊 INGESTION STATS:")
+            #     print(f"  - Mutations detected: {result.stats['total_mutations']}")
+            #     print(f"  - Insertions: {result.stats['insertions']}")
+            #     print(f"  - MA Coverage: {result.stats['ma_coverage']}/{len(result.ma_to_auth_map)}")
+            #     print(f"  - Results saved to: {output_file.name}")
                 
-                if result.mutations:
-                    print(f"\n🧬 MUTATIONS:")
-                    for mut in result.mutations[:5]:  # Show first 5
-                        print(f"  - MA pos {mut.ma_position}: {mut.wild_type} → {mut.observed} (PDB ID: {mut.pdb_auth_id})")
-                    if len(result.mutations) > 5:
-                        print(f"  ... and {len(result.mutations) - 5} more")
+            #     if result.mutations:
+            #         print(f"\n🧬 MUTATIONS:")
+            #         for mut in result.mutations[:5]:
+            #             print(f"  - MA pos {mut.ma_position}: {mut.wild_type} → {mut.observed} (PDB ID: {mut.pdb_auth_id})")
+            #         if len(result.mutations) > 5:
+            #             print(f"  ... and {len(result.mutations) - 5} more")
                 
-                print(f"{'='*60}\n")
+            #     print(f"{'='*60}\n")
                 
-            except Exception as ing_error:
-                # Don't fail the whole request if ingestion fails
-                print(f"⚠️ INGESTION PIPELINE FAILED (non-critical): {ing_error}")
-                traceback.print_exc()
+            # except Exception as ing_error:
+            #     print(f"⚠️ INGESTION PIPELINE FAILED (non-critical): {ing_error}")
+            #     traceback.print_exc()
         
-        # 4. Return frontend response (unchanged)
+        # 4. Return frontend response
         return {
             "sequence_id": request.sequence_id,
             "aligned_sequence": aligned_sequence,
@@ -214,17 +228,21 @@ async def get_grid(pdb_id: str):
 
 # --- Root ---
 
-@app.get("/")
-async def root():
-    return {
-        "title": "Tubulin Spatial Grid API",
-        "version": "0.2.0",
-        "endpoints": {
-            "/grid/{pdb_id}": "Generate 2D grid",
-            "/msaprofile/sequence": "POST - Align sequence with explicit PDB numbering (auth_seq_ids)",
-            "/msaprofile/master": "GET - Master alignment info",
-        }
-    }
+# @app.get("/")
+# async def root():
+#     return {
+#         "title": "TubXYZ API",
+#         "version": "0.2.0",
+#         "endpoints": {
+#             "/structures/*": "Neo4j structure queries",
+#             "/polymers/*": "Neo4j polymer queries",
+#             "/ligands/*": "Neo4j ligand queries",
+#             "/grid/{pdb_id}": "Generate 2D grid",
+#             "/msaprofile/sequence": "POST - Align sequence",
+#             "/msaprofile/master": "GET - Master alignment info",
+#             "/docs": "Interactive API documentation",
+#         }
+#     }
 
 if __name__ == "__main__":
     import uvicorn

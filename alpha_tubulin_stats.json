@@ -1,0 +1,14 @@
+{
+  "mutations": {
+    "total": 2288,
+    "mapped_to_ma": 2284,
+    "utn_insertions": 0,
+    "missing_in_utn": 4
+  },
+  "modifications": {
+    "total": 1083,
+    "mapped_to_ma": 1078,
+    "utn_insertions": 0,
+    "missing_in_utn": 5
+  }
+}

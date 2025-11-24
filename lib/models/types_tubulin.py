@@ -96,46 +96,52 @@ class MasterAlignment(BaseModel):
     created_date: str # ISO 8601 string
     description: Optional[str] = None
 
-class Modification(BaseModel):
-    """Instance of a post-translational modification"""
-    modification_type: ModificationType
-    evidence_url: str
-    master_index     : int           # Position in master alignment
-    master_residue   : str           # One-letter code at that position
-    pubmed_ids       : List[str] = []
-    
-    # These would be PTMs found in the structure, not yet mapped
-    # auth_asym_id: str
-    # auth_seq_id: int
 
 class Mutation(BaseModel):
-    """
-    Represents a single sequence variation (mutation, insertion, or deletion)
-    in a polymer, relative to a master alignment sequence.
-    """
-    # Linkage fields
-    parent_rcsb_id: str
-    auth_asym_id: str
-
+    """Mutation from literature/clinical databases"""
+    
+    # Position mapping
+    master_index: int  # Position in your MA
+    utn_position: Optional[int] = None  # Position in their UTN system
+    
     # Mutation details
-    mutation_type: MutationType
+    from_residue: str  # Wild-type
+    to_residue: str    # Mutant
     
-    # Position in the master alignment
-    master_index: int 
+    # Source metadata
+    uniprot_id: str
+    species: str
+    tubulin_type: str  # e.g., "α1", "α2"
+    
+    # Annotation
+    phenotype: str
+    database_source: str  # BioMuta, ClinVar, etc.
+    reference_link: str
+    keywords: str
+    notes: Optional[str] = None
 
-    from_residue: str = Field(
-        ..., 
-        description="Residue(s) in the master sequence (one-letter code). "
-                    "For insertions, this is an empty string ''.",
-        examples=["K", "AVG", ""]
-    )
+class Modification(BaseModel):
+    """Post-translational modification from literature/databases"""
     
-    to_residue: str = Field(
-        ...,
-        description="Residue(s) in the observed PDB sequence (one-letter code). "
-                    "For deletions, this is an empty string ''.",
-        examples=["A", "GPL", ""]
-    )
+    # Position mapping
+    master_index: int  # Position in your MA
+    utn_position: Optional[int] = None  # Position in their UTN system
+    
+    # Modification details
+    amino_acid: str  # The residue being modified
+    modification_type: str  # PLM, PHO, ACE, etc.
+    
+    # Source metadata
+    uniprot_id: str
+    species: str
+    tubulin_type: str  # e.g., "α4"
+    
+    # Annotation
+    phenotype: str  # Description of the modification
+    database_source: str  # SwissPalm, PhosphoSitePlus, etc.
+    database_link: str
+    keywords: str
+    notes: Optional[str] = None
 
 class NonpolymericLigand(BaseModel):
     """Ligand model - unchanged from riboxyz"""
@@ -248,9 +254,5 @@ class AssemblyInstancesMap(BaseModel):
 # --- Relationship Models ---
 
 class AlignmentMapping(BaseModel):
-    """
-    Properties for the IS_MAPPED_TO relationship.
-    Stored as JSON strings in the graph.
-    """
     seqres_to_master: str  # JSON array: list[int] (seqres_idx -> master_idx | -1)
     master_to_seqres: str  # JSON array: list[int] (master_idx -> seqres_idx | -1)
