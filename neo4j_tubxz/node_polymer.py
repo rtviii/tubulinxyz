@@ -2,7 +2,7 @@
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
-from models.types_tubulin import Polymer, TubulinProtein
+from lib.models.types_tubulin import Polymer, TubulinProtein
 
 def node__polymer(poly:Polymer)->Callable[[Transaction | ManagedTransaction], Node ]:
     """

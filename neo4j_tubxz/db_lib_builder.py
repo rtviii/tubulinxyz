@@ -4,9 +4,9 @@ from typing import Tuple, List, Dict
 import datetime
 
 # TUBE-UPDATE: Import all new node/link functions and schema
-from etl.assets import GlobalOps
-from etl.libtax import PhylogenyNode, Taxid
-from models.types_tubulin import (
+from lib.etl.assets import GlobalOps
+from lib.etl.libtax import PhylogenyNode, Taxid
+from lib.models.types_tubulin import (
     TubulinStructure, NonpolymericLigand, MasterAlignment, TubulinFamily,
     AlignmentMapping, Mutation, Modification, TubulinProtein
 )
@@ -17,7 +17,7 @@ from neo4j_tubxz.node_mutation import link__polymer_to_mutation, node__mutation
 from neo4j_tubxz.node_phylogeny import link__phylogeny, node__phylogeny
 from neo4j_tubxz.node_polymer import link__polymer_to_structure, node__polymer, upsert__polymer_to_protein
 from neo4j_tubxz.node_structure import link__structure_to_lineage_member, link__structure_to_organism, node__structure, struct_exists
-from etl.assets import GlobalOps, TubulinStructureAssets
+from lib.etl.assets import GlobalOps, TubulinStructureAssets
 
 
 NODE_CONSTRAINTS = [

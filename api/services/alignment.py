@@ -15,6 +15,8 @@ from collections import Counter
 from Bio.PDB.MMCIFParser import MMCIFParser
 from Bio import BiopythonWarning, AlignIO
 
+from api.config import PROJECT_ROOT
+
 # Suppress PDB construction warnings
 warnings.simplefilter('ignore', BiopythonWarning)
 
@@ -429,7 +431,9 @@ class TubulinIngestor:
 def main():
     # --- CONFIGURATION ---
     MUSCLE_BINARY = "./muscle3.8.1" # <--- ADJUST THIS PATH
-    MASTER_PROFILE = "./data/alpha_tubulin/alpha_tubulin.afasta" # <--- ADJUST THIS PATH
+    MASTER_PROFILE = os.path.join(PROJECT_ROOT,"/data/alpha_tubulin/alpha_tubulin.afasta" )# <--- ADJUST THIS PATH
+
+    
     
     OUTPUT_FILE = "ingestion_results.json"
 

@@ -3,7 +3,7 @@ from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
 
-from models.types_tubulin import NonpolymericLigand
+from lib.models.types_tubulin import NonpolymericLigand
 # TUBE-UPDATE: Import new tubulin schema
 
 def node__ligand(

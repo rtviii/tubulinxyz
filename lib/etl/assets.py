@@ -4,14 +4,13 @@ import typing
 import requests
 from typing import Any
 
-from etl.constants import TUBETL_DATA
-from etl.libtax import PhylogenyNode, Taxid
-from models.types_tubulin import TubulinStructure 
+from lib.etl.constants import TUBETL_DATA
+from lib.etl.libtax import PhylogenyNode, Taxid
+from lib.models.types_tubulin import TubulinStructure 
 
 import os
 import json
-from models.types_tubulin import TubulinStructure
-from etl.constants import TUBETL_DATA
+from lib.etl.constants import TUBETL_DATA
 
 class TubulinStructureAssetPaths:
     """Manages file paths for a given tubulin structure asset."""
@@ -39,6 +38,11 @@ class TubulinStructureAssetPaths:
     def chains_dir(self) -> str:
         """Directory for split chain files."""
         return os.path.join(self.base_dir, "CHAINS")
+    
+    @property
+    def sequence_ingestion(self) -> str:
+        """Path to the sequence ingestion results JSON."""
+        return os.path.join(self.base_dir, "sequence_ingestion.json")
 
 class TubulinStructureAssets:
     """Manager for accessing and verifying tubulin structure assets."""

@@ -1,5 +1,5 @@
 from pathlib import Path
-from api.services.structure_parser import TubulinStructureParser
+from api.services.mmcif_parser import TubulinStructureParser
 
 # 1. Setup
 parser = TubulinStructureParser()

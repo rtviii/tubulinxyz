@@ -5,9 +5,9 @@ import typer
 from rich.console import Console
 from neo4j import GraphDatabase, Driver
 from typing_extensions import Annotated
-from etl.collector import TubulinETLCollector
-from etl.assets import GlobalOps, TubulinStructureAssets
-from etl.constants import NEO4J_URI, NEO4J_USER, NEO4J_CURRENTDB, NEO4J_PASSWORD
+from lib.etl.collector import TubulinETLCollector
+from lib.etl.assets import GlobalOps, TubulinStructureAssets
+from lib.etl.constants import NEO4J_URI, NEO4J_USER, NEO4J_CURRENTDB, NEO4J_PASSWORD
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 from neo4j_tubxz.db_lib_reader import Neo4jReader, StructureFilterParams, PolymersFilterParams
 from rich.table import Table  # <--- ADD THIS IMPORT
@@ -379,6 +379,61 @@ def list_proteins(
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {e}")
 
+@app.command(name="collect-all")
+def collect_all(
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Overwrite existing profiles on disk.")] = False
+):
+    """
+    Collects ALL tubulin structures from RCSB, optionally overwriting existing profiles.
+    """
+    console.print("Fetching complete list of tubulin structures from RCSB...", style="cyan")
+    
+    try:
+        all_rcsb_ids = GlobalOps.current_rcsb_structs()
+    except Exception as e:
+        console.print(f"[bold red]Error fetching RCSB structure list:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+    if not all_rcsb_ids:
+        console.print("[yellow]No tubulin structures found on RCSB.[/yellow]")
+        return
+
+    console.print(f"Found [bold yellow]{len(all_rcsb_ids)}[/bold yellow] total structures on RCSB.")
+    
+    # Filter out existing if not overwriting
+    to_process = all_rcsb_ids
+    if not overwrite:
+        existing = set(GlobalOps.list_profiles())
+        to_process = [rid for rid in all_rcsb_ids if rid not in existing]
+        console.print(f"Skipping {len(existing)} existing profiles. Processing [bold yellow]{len(to_process)}[/bold yellow] structures.")
+    else:
+        console.print(f"Overwrite enabled. Processing all [bold yellow]{len(to_process)}[/bold yellow] structures.")
+
+    if not to_process:
+        console.print("✨ [bold green]All profiles already exist![/bold green]")
+        return
+
+    success_count = 0
+    fail_count = 0
+    failed_ids = []
+
+    for i, rcsb_id in enumerate(to_process, 1):
+        console.print(f"\n[{i}/{len(to_process)}] Collecting [bold magenta]{rcsb_id}[/bold magenta]...")
+        try:
+            collector = TubulinETLCollector(rcsb_id)
+            asyncio.run(collector.generate_profile(overwrite=overwrite))
+            console.print(f"[green]✓ {rcsb_id}[/green]")
+            success_count += 1
+        except Exception as e:
+            console.print(f"[bold red]✗ Failed {rcsb_id}:[/bold red] {e}")
+            fail_count += 1
+            failed_ids.append(rcsb_id)
+    
+    console.print("\n--- [bold]Collection Complete[/bold] ---")
+    console.print(f"[green]Successful:[/green] {success_count}")
+    console.print(f"[red]Failed:[/red] {fail_count}")
+    if failed_ids:
+        console.print(f"[red]Failed IDs:[/red] {', '.join(failed_ids)}")
 
 if __name__ == "__main__":
     # Ensure environment variables are set

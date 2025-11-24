@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from neo4j import Driver, Transaction, ManagedTransaction
 from neo4j.graph import Node
 
-from etl.libtax import PhylogenyNode
+from lib.etl.libtax import PhylogenyNode
 
 # Create constraint on phylogenyNode that ncbi_tax_id is unique
 def node__phylogeny(phylogeny_obj:PhylogenyNode)->Callable[[Transaction | ManagedTransaction], Node ]:

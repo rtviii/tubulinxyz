@@ -7,7 +7,7 @@ from ete3 import NCBITaxa
 
 import threading
 
-from etl.constants import NCBI_TAXA_SQLITE
+from lib.etl.constants import NCBI_TAXA_SQLITE
 
 
 

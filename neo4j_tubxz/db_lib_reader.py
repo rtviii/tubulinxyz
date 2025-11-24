@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from neo4j import ManagedTransaction, Transaction
 
 # Adjust imports to match your project structure
-from etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from lib.etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 
 sys.dont_write_bytecode = True

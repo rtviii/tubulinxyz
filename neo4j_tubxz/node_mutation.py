@@ -3,7 +3,7 @@ from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
 
-from models.types_tubulin import Mutation
+from lib.models.types_tubulin import Mutation
 
 def node__mutation(
     mut: Mutation
