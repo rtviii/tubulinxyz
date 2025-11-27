@@ -1,54 +1,9 @@
 {
   "n_terminus_data": {
-    "K": {
+    "B": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {
-        "B": 36
-      },
-      "neighbor_residues": {
-        "B": 4
-      }
-    },
-    "H": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "K": 38
-      },
-      "neighbor_residues": {
-        "K": 3
-      }
-    },
-    "I": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "A": 36
-      },
-      "neighbor_residues": {
-        "A": 4
-      }
-    },
-    "E": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "I": 38
-      },
-      "neighbor_residues": {
-        "I": 3
-      }
-    },
-    "J": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "G": 36
-      },
-      "neighbor_residues": {
-        "G": 4
-      }
-    },
-    "C": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "E": 36
+        "E": 329
       },
       "neighbor_residues": {
         "E": 4
@@ -57,57 +12,47 @@
     "D": {
       "n_terminus_resnum": 1,
       "neighbor_counts": {
-        "H": 36
+        "G": 329
       },
       "neighbor_residues": {
-        "H": 4
+        "G": 4
       }
-    },
-    "F": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {},
-      "neighbor_residues": {}
     },
     "A": {
       "n_terminus_resnum": 1,
-      "neighbor_counts": {},
-      "neighbor_residues": {}
-    },
-    "B": {
-      "n_terminus_resnum": 1,
-      "neighbor_counts": {},
-      "neighbor_residues": {}
-    },
-    "L": {
-      "n_terminus_resnum": 1,
       "neighbor_counts": {
-        "F": 36
+        "B": 135
       },
       "neighbor_residues": {
-        "F": 4
+        "B": 3
+      }
+    },
+    "C": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {
+        "D": 136
+      },
+      "neighbor_residues": {
+        "D": 3
       }
     },
     "G": {
       "n_terminus_resnum": 1,
-      "neighbor_counts": {
-        "L": 38
-      },
-      "neighbor_residues": {
-        "L": 3
-      }
+      "neighbor_counts": {},
+      "neighbor_residues": {}
+    },
+    "E": {
+      "n_terminus_resnum": 1,
+      "neighbor_counts": {},
+      "neighbor_residues": {}
     }
   },
   "connections": {
-    "K": "B",
-    "H": "K",
-    "I": "A",
-    "E": "I",
-    "J": "G",
-    "C": "E",
-    "D": "H",
-    "L": "F",
-    "G": "L"
+    "B": "E",
+    "D": "G",
+    "A": "B",
+    "C": "D"
   },
-  "total_chains": 12,
-  "successful_connections": 9
+  "total_chains": 6,
+  "successful_connections": 4
 }

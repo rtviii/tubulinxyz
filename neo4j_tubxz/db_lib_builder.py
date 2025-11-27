@@ -4,20 +4,18 @@ from typing import Tuple, List, Dict
 import datetime
 
 # TUBE-UPDATE: Import all new node/link functions and schema
-from etl.assets import GlobalOps
-from etl.libtax import PhylogenyNode, Taxid
-from models.types_tubulin import (
+from lib.etl.assets import GlobalOps
+from lib.etl.libtax import PhylogenyNode, Taxid
+from lib.models.types_tubulin import (
     TubulinStructure, NonpolymericLigand, MasterAlignment, TubulinFamily,
     AlignmentMapping, Mutation, Modification, TubulinProtein
 )
 from neo4j_tubxz.node_ligand import link__ligand_to_struct, node__ligand
 from neo4j_tubxz.node_master_alignment import get_master_alignment, link__polymer_to_master_alignment, node__master_alignment
-from neo4j_tubxz.node_modification import link__polymer_to_modification, node__modification
-from neo4j_tubxz.node_mutation import link__polymer_to_mutation, node__mutation
 from neo4j_tubxz.node_phylogeny import link__phylogeny, node__phylogeny
 from neo4j_tubxz.node_polymer import link__polymer_to_structure, node__polymer, upsert__polymer_to_protein
 from neo4j_tubxz.node_structure import link__structure_to_lineage_member, link__structure_to_organism, node__structure, struct_exists
-from etl.assets import GlobalOps, TubulinStructureAssets
+from lib.etl.assets import GlobalOps, TubulinStructureAssets
 
 
 NODE_CONSTRAINTS = [
@@ -63,25 +61,6 @@ class Neo4jAdapter:
                 session.execute_write(lambda tx: tx.run(c))
                 print("\nAdded constraint: ", c)
 
-    # def init_master_alignments(self):
-    #     """
-    #     Load canonical master alignments into the DB.
-    #     """
-    #     print("Initializing Master Alignments...")
-    #     # Placeholder: In a real app, load this from files.
-    #     today = datetime.date.today().isoformat()
-    #     master_seqs = [
-    #         # MasterAlignment(family=TubulinFamily.ALPHA, version="v1.0", fasta_content="MREVI...", created_date=today, description="Canonical Alpha Tubulin v1.0"),
-    #         # MasterAlignment(family=TubulinFamily.BETA, version="v1.0", fasta_content="MREIV...", created_date=today, description="Canonical Beta Tubulin v1.0"),
-    #         # MasterAlignment(family=TubulinFamily.GAMMA, version="v1.0", fasta_content="MRECI...", created_date=today, description="Canonical Gamma Tubulin v1.0"),
-    #     ]
-        
-    #     with self.driver.session() as session:
-    #         for aln in master_seqs:
-    #             session.execute_write(node__master_alignment(aln))
-    #     print(f"Initialized {len(master_seqs)} master alignments.")
-
-    # ... (Phylogeny functions: add_phylogeny_node, init_phylogenies, _create_lineage - unchanged) ...
     def add_phylogeny_node(self, taxid: int): #-> Node:
         with self.driver.session() as session:
             node = session.execute_write(
@@ -157,54 +136,6 @@ class Neo4jAdapter:
             # Pass parent_rcsb_id to node__ligand for the ON CREATE/ON MATCH logic
             ligand_node = s.execute_write(node__ligand(ligand, parent_rcsb_id))
             s.execute_write(link__ligand_to_struct(ligand_node, parent_rcsb_id))
-
-    # --- ETL Placeholder Functions ---
-    # These functions would be defined in your ETL/ops logic
-    
-    def _get_auth_to_seqres_map(self, protein: TubulinProtein) -> Dict[int, int]:
-        """
-        Placeholder: Gets map from auth_seq_id -> seqres_index.
-        (From _pdbx_poly_seq_scheme)
-        """
-        # print(f"Stub: Getting auth_to_seqres map for {protein.auth_asym_id}")
-        # This is just a dummy 1-to-1 mapping for illustration
-        return {i+1: i for i in range(protein.entity_poly_seq_length)}
-
-    def _run_muscle_profile(self, seqres_seq: str, master_fasta: str) -> str:
-        """
-        Placeholder: Runs MUSCLE alignment.
-        Returns raw alignment text.
-        """
-        # print(f"Stub: Running MUSCLE for seq of length {len(seqres_seq)}")
-        # Dummy alignment result
-        return f">master\n{master_fasta}\n>seqres\n{seqres_seq}\n"
-
-    def _parse_alignment(self, alignment_text: str, master_aln_node, parent_rcsb_id: str, auth_asym_id: str) -> Tuple[AlignmentMapping, List[Mutation]]:
-        """
-        Placeholder: Parses MUSCLE output.
-        Returns mapping object and list of Mutation objects.
-        """
-        # print(f"Stub: Parsing alignment for {parent_rcsb_id}.{auth_asym_id}")
-        # Dummy data
-        map_list = [-1] * 200
-        mapping = AlignmentMapping(
-            seqres_to_master=json.dumps(map_list),
-            master_to_seqres=json.dumps(map_list)
-        )
-        mutations = []
-        return (mapping, mutations)
-
-    def _find_ptms(self, protein: TubulinProtein) -> List[Dict]:
-        """
-        Placeholder: Finds PTMs for a polymer *in auth coordinates*.
-        Returns a list of dictionaries.
-        """
-        # print(f"Stub: Finding PTMs for {protein.auth_asym_id}")
-        # Dummy PTM
-        # return [
-        #     {"type": ModificationType.ACETYLATION, "auth_seq_id": 40, "evidence": "...", "pubmed": "..."}
-        # ]
-        return []
 
     # --- Main ETL Function ---
 

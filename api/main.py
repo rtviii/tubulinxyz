@@ -1,438 +1,183 @@
+# api/main.py
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from pathlib import Path
 import sys
 import traceback
-import os
+import json
+from datetime import datetime
 
-from fastapi.responses import PlainTextResponse
-from matplotlib.text import Annotation
-
-# Add the parent directory to the path to import tubulin_analyzer
+# --- Path Setup ---
 current_dir = Path(__file__).parent
 parent_dir = current_dir.parent
 sys.path.insert(0, str(parent_dir))
 
-from api.musle_alignment import TubulinAlignmentMapper
-from tubulin_analyzer import SpatialGridGenerator, GridData, DebugData
+# --- Imports ---
+from api.schemas import AlignmentRequest, AlignmentResponse
+from api.services.alignment import (
+    TubulinAlignmentMapper, 
+    TubulinStructureParser,
+    TubulinIngestor
+)
+from lib.tubulin_analyzer import SpatialGridGenerator, GridData, DebugData
 
-# # Import the alignment mapper
-# from api_muscle_alignment import TubulinAlignmentMapper, Annotation
+# NEW: Import routers for Neo4j queries
+from api.routers.router_structures import router_structures
+from api.routers.router_polymers import router_polymers
+from api.routers.router_ligands import router_ligands
+from api.routers.router_annotations import router_annotations
 
-# --- FastAPI App ---
+# --- App Configuration ---
 app = FastAPI(
-    title="Tubulin Spatial Grid API",
-    version="0.1.0",
-    description="Generates an idealized, aligned 2D grid from 3D tubulin structures using N-terminus connectivity analysis.",
+    title="TubXYZ API",
+    version="0.2.0",
+    description="API for tubulin structure data, spatial grids, and MSA alignment.",
+    docs_url="/docs",
+    openapi_url="/openapi.json"
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --- Initialize Services ---
+
+
+app.include_router(router_annotations, prefix="/annotations", tags=["Annotations"])
+app.include_router(router_structures, prefix="/structures", tags=["Structures"])
+app.include_router(router_polymers, prefix="/polymers", tags=["Polymers"])
+app.include_router(router_ligands, prefix="/ligands", tags=["Ligands"])
+
+# --- Service Initialization ---
 grid_generator = SpatialGridGenerator()
 
-# Initialize alignment mapper with your specific paths
+# Paths
 MUSCLE_BINARY = str(parent_dir / "muscle3.8.1")
-MASTER_PROFILE = str(
-    parent_dir / "data" / "alpha_tubulin" / "alpha_tubulin.afasta"
-)  # or alpha_tubulin.fasta
+MASTER_PROFILE = str(parent_dir / "data" / "alpha_tubulin" / "alpha_tubulin.afasta")
 
-# Create the mapper instance
+# Create ingestion logs directory
+INGESTION_LOGS_DIR = parent_dir / "ingestion_logs"
+INGESTION_LOGS_DIR.mkdir(exist_ok=True)
+
+# Initialize services
 alignment_mapper = TubulinAlignmentMapper(
-    master_profile_path=MASTER_PROFILE, muscle_binary=MUSCLE_BINARY
+    master_profile_path=MASTER_PROFILE, 
+    muscle_binary=MUSCLE_BINARY
 )
+mmcif_parser = TubulinStructureParser()
+ingestor = TubulinIngestor(MASTER_PROFILE, MUSCLE_BINARY)
 
-# --- API Endpoints ---
+# --- MSA / Alignment Endpoints ---
 
-
-@app.get("/grid/{pdb_id}", response_model=GridData)
-async def get_grid(pdb_id: str):
-    """Generate idealized 2D grid from PDB structure with caching"""
-    try:
-        # Check cache first
-        cache_dir = Path("cache")
-        cache_dir.mkdir(exist_ok=True)
-        cache_file = cache_dir / f"{pdb_id.lower()}_grid.json"
-
-        if cache_file.exists():
-            print(f"Loading cached grid data for {pdb_id.upper()}")
-            with open(cache_file, "r") as f:
-                import json
-
-                cached_data = json.load(f)
-                # Reconstruct GridData object from cached JSON
-                grid_data = GridData(**cached_data)
-                return grid_data
-
-        # Generate new grid data
-        print(f"Generating new grid data for {pdb_id.upper()}")
-        grid_data = await grid_generator.generate_grid(pdb_id.lower())
-
-        # Save to cache
-        with open(cache_file, "w") as f:
-            import json
-
-            json.dump(grid_data.dict(), f, indent=2)
-
-        print(f"Grid data cached to: {cache_file}")
-        return grid_data
-
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"An internal error occurred: {str(e)}"
-        )
-
-
-@app.post("/align/structure/{pdb_id}/{chain_id}")
-async def align_structure_chain(pdb_id: str, chain_id: str, annotations: list = None):
-    """
-    Extract and align a specific chain from a PDB structure
-    """
-    try:
-        # This would need your PDB parsing logic - here's a skeleton
-        pdb_sequence = await extract_chain_sequence(pdb_id, chain_id)
-
-        if pdb_sequence is None:
-            raise HTTPException(
-                status_code=404, detail=f"Chain {chain_id} not found in {pdb_id}"
-            )
-
-        # Use the alignment endpoint
-        return await align_sequence(pdb_sequence, f"{pdb_id}_{chain_id}", annotations)
-
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Structure alignment failed: {str(e)}"
-        )
-
-
-async def extract_chain_sequence(pdb_id: str, chain_id: str) -> str:
-    """
-    Extract sequence from PDB chain - you'll need to implement this
-    based on your existing PDB processing code
-    """
-    # TODO: Integrate with your existing PDB processing code
-    # This is a placeholder - you'll want to use your actual PDB parsing
-    try:
-        # Example using your existing structure processing
-        # You might need to adapt this based on your actual code
-        from tubulin_analyzer.structural_analyzer import load_structure
-
-        structure = await load_structure(pdb_id)
-
-        # Extract chain sequence logic here
-        # This is pseudocode - adapt to your actual implementation
-        for chain in structure.get_chains():
-            if chain.id == chain_id:
-                return extract_aa_sequence(chain)
-
-        return None
-    except Exception as e:
-        print(f"Error extracting sequence from {pdb_id} chain {chain_id}: {e}")
-        return None
-
-
-# --- Existing endpoints (keep all your current functionality) ---
-
-
-@app.get("/debug/{pdb_id}", response_model=DebugData)
-async def debug_analysis(pdb_id: str):
-    """Debug N-terminus connectivity and protofilament tracing"""
-    try:
-        # Run the grid generation which includes debugging
-        grid_data = await grid_generator.generate_grid(pdb_id.lower())
-
-        # Extract debug info from generated files
-        debug_dir = Path("debug_output")
-        debug_files = []
-
-        # Check for generated debug files
-        potential_files = [
-            "nterm_debug.json",
-            f"{pdb_id}_visualize.pml",
-            f"view_{pdb_id}.sh",
-            f"protofilaments_{pdb_id}.png",
-            f"grid_{pdb_id}_{grid_data.structure_type}.png",
-        ]
-
-        for file in potential_files:
-            if (debug_dir / file).exists():
-                debug_files.append(file)
-
-        # Calculate debug metrics
-        pf_lengths = []
-        for subunit in grid_data.subunits:
-            pf_idx = subunit.protofilament
-            while len(pf_lengths) <= pf_idx:
-                pf_lengths.append(0)
-            pf_lengths[pf_idx] += 1
-
-        # Remove empty protofilaments
-        pf_lengths = [length for length in pf_lengths if length > 0]
-
-        return DebugData(
-            pdb_id=pdb_id.upper(),
-            num_tubulin_chains=grid_data.metadata.get("num_tubulin_chains", 0),
-            num_connections=grid_data.metadata.get("nterm_connections", 0),
-            num_protofilaments=grid_data.metadata.get("num_protofilaments", 0),
-            protofilament_lengths=pf_lengths,
-            connection_success_rate=(
-                grid_data.metadata.get("nterm_connections", 0)
-                / max(grid_data.metadata.get("num_tubulin_chains", 1), 1)
-            ),
-            debug_files=debug_files,
-        )
-
-    except Exception as e:
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Debug analysis failed: {str(e)}")
-
-
-@app.get("/debug/{pdb_id}/pymol")
-async def get_pymol_instructions(pdb_id: str):
-    """Get PyMOL visualization instructions"""
-    debug_dir = Path("debug_output")
-
-    instructions = {
-        "pdb_id": pdb_id.upper(),
-        "steps": [
-            f"1. Download PDB file: wget https://files.rcsb.org/download/{pdb_id.upper()}.cif",
-            f"2. Copy the .cif file to the debug_output/ directory",
-            f"3. Run the batch script: ./debug_output/view_{pdb_id}.sh",
-            f'   OR manually: pymol {pdb_id.upper()}.cif -d "@debug_output/{pdb_id}_visualize.pml"',
-        ],
-        "files_needed": [
-            f"{pdb_id.upper()}.cif (structure file)",
-            f"{pdb_id}_visualize.pml (PyMOL script)",
-        ],
-        "visualization_shows": [
-            "N-terminus residues colored green",
-            "Connected chain pairs colored red",
-            "Distance measurements between connected N-termini",
-            "Overall tubulin structure in cartoon representation",
-        ],
-    }
-
-    # Check if files exist
-    script_file = debug_dir / f"{pdb_id}_visualize.pml"
-    batch_file = debug_dir / f"view_{pdb_id}.sh"
-
-    if not script_file.exists():
-        instructions["error"] = (
-            f"PyMOL script not found. Run /debug/{pdb_id} first to generate visualization files."
-        )
-
-    instructions["files_status"] = {
-        "pymol_script": script_file.exists(),
-        "batch_script": batch_file.exists(),
-    }
-
-    return instructions
-
-
-@app.get("/models/{filename}")
-async def get_model_file(filename: str):
-    """Serve mmCIF model files with computed metadata"""
-    try:
-        print(f"Current working directory: {os.getcwd()}")
-
-        # Try different path strategies
-        paths_to_try = [
-            f"/Users/rtviii/dev/tubulinxyz/api/maxim_data/{filename}",
-            f"maxim_data/{filename}",
-            f"./maxim_data/{filename}",
-            f"../maxim_data/{filename}",
-        ]
-
-        print(f"Looking for file: {filename}")
-        for path in paths_to_try:
-            print(f"Trying path: {path}")
-            if os.path.exists(path):
-                print(f"✅ Found file at: {path}")
-                with open(path, "r", encoding="utf-8") as f:
-                    content = f.read()
-
-                return PlainTextResponse(
-                    content=content,
-                    media_type="chemical/x-mmcif",
-                    headers={
-                        "Content-Disposition": f"inline; filename={filename}",
-                        "Access-Control-Allow-Origin": "*",
-                    },
-                )
-            else:
-                print(f"❌ Not found at: {path}")
-
-        # List what's actually in the directory
-        try:
-            maxim_dir = "/Users/rtviii/dev/tubulinxyz/api/maxim_data"
-            if os.path.exists(maxim_dir):
-                files = os.listdir(maxim_dir)
-                print(f"Files in {maxim_dir}: {files}")
-            else:
-                print(f"Directory {maxim_dir} doesn't exist")
-        except Exception as e:
-            print(f"Error listing directory: {e}")
-
-        raise HTTPException(
-            status_code=404, detail=f"File '{filename}' not found in any location"
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Error serving model file {filename}: {e}")
-
-
-@app.get("/models")
-async def list_models():
-    """List available model files"""
-    try:
-        models_dir = Path("maxim_data")
-        if not models_dir.exists():
-            models_dir.mkdir(exist_ok=True)
-            return {"models": [], "message": "maxim_data directory created but empty"}
-
-        # Find all .cif files
-        cif_files = list(models_dir.glob("*.cif"))
-
-        models = []
-        for file_path in cif_files:
-            stat = file_path.stat()
-            models.append(
-                {
-                    "filename": file_path.name,
-                    "size_bytes": stat.st_size,
-                    "modified": stat.st_mtime,
-                }
-            )
-
-        return {
-            "models": models,
-            "count": len(models),
-            "directory": str(models_dir.absolute()),
-        }
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error listing models: {str(e)}")
-
-
-# Update root endpoint to include alignment endpoints
-@app.get("/")
-async def root():
-    """API information and usage"""
-    return {
-        "title": "Tubulin Spatial Grid API",
-        "version": "0.1.0",
-        "description": "Converts microtubule PDB structures into idealized 2D grids with sequence alignment",
-        "endpoints": {
-            "/grid/{pdb_id}": "Generate 2D grid layout (cached automatically)",
-            "/debug/{pdb_id}": "Debug N-terminus connectivity analysis",
-            "/debug/{pdb_id}/pymol": "Get PyMOL visualization instructions",
-            "/msaprofile/sequence": "POST - Align a tubulin sequence to master profile",
-            "/msaprofile/master": "GET - Info about master alignment",
-            "/align/structure/{pdb_id}/{chain_id}": "POST - Align a PDB chain",
-            "/models": "List available model files in maxim_data/",
-            "/models/{filename}": "Serve mmCIF model files from maxim_data/",
-        },
-        "alignment": {
-            "master_profile": MASTER_PROFILE,
-            "method": "MUSCLE profile alignment",
-            "version": "3.8.1",
-        },
-    }
-
-
-# --- MSA PROFILE ENDPOINTS ---
-
-from pydantic import BaseModel
-from typing import List, Optional
-
-class AlignmentRequest(BaseModel):
-    sequence: str
-    sequence_id: Optional[str] = None
-    annotations: Optional[List[dict]] = []
-
-@app.post("/msaprofile/sequence")
+@app.post("/msaprofile/sequence", response_model=AlignmentResponse)
 async def align_sequence(request: AlignmentRequest):
-    """
-    Align a tubulin sequence to the master alpha-tubulin profile
-    """
+    if not alignment_mapper:
+        raise HTTPException(
+            status_code=503, 
+            detail="Alignment service unavailable (configuration error)"
+        )
+
     try:
-        sequence_id = request.sequence_id
-        if sequence_id is None:
-            sequence_id = f"user_sequence_{hash(request.sequence) % 10000:04d}"
+        # 1. Main alignment for frontend
+        aligned_sequence, mapping = alignment_mapper.align_sequence_with_mapping(
+            request.sequence_id, 
+            request.sequence,
+            request.auth_seq_ids
+        )
         
-        annotations = request.annotations or []
+        # 2. Verification
+        # if request.sequence_id and "_" in request.sequence_id:
+        #     pdb_id, chain_id = request.sequence_id.split("_")[:2]
+        #     print(f"Verifying {pdb_id} chain {chain_id} against RCSB...")
+            
+            # verification = mmcif_parser.verify_integrity(
+            #     pdb_id, chain_id, request.sequence, request.auth_seq_ids
+            # )
+            
+            # if verification["status"] == "success":
+            #     if verification["match"]:
+            #         print(f"OK VERIFIED: {pdb_id}_{chain_id} matches PDB")
+            #     else:
+            #         print(f"️ERROR MISMATCH: {pdb_id}_{chain_id}")
+            #         print(verification["details"])
+            
+            # 3. Run full ingestion pipeline (for logging/analysis)
+            # try:
+            #     print(f"\n{'='*60}")
+            #     print(f"RUNNING INGESTION PIPELINE FOR {pdb_id} CHAIN {chain_id}")
+            #     print(f"{'='*60}")
+                
+            #     tubulin_class = "Alpha"
+            #     result = ingestor.process_chain(pdb_id, chain_id, tubulin_class)
+                
+            #     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            #     output_file = INGESTION_LOGS_DIR / f"{pdb_id}_{chain_id}_{timestamp}.json"
+                
+            #     with open(output_file, "w") as f:
+            #         from dataclasses import asdict
+            #         json.dump(asdict(result), f, indent=2)
+                
+            #     print(f"\n📊 INGESTION STATS:")
+            #     print(f"  - Mutations detected: {result.stats['total_mutations']}")
+            #     print(f"  - Insertions: {result.stats['insertions']}")
+            #     print(f"  - MA Coverage: {result.stats['ma_coverage']}/{len(result.ma_to_auth_map)}")
+            #     print(f"  - Results saved to: {output_file.name}")
+                
+            #     if result.mutations:
+            #         print(f"\n🧬 MUTATIONS:")
+            #         for mut in result.mutations[:5]:
+            #             print(f"  - MA pos {mut.ma_position}: {mut.wild_type} → {mut.observed} (PDB ID: {mut.pdb_auth_id})")
+            #         if len(result.mutations) > 5:
+            #             print(f"  ... and {len(result.mutations) - 5} more")
+                
+            #     print(f"{'='*60}\n")
+                
+            # except Exception as ing_error:
+            #     print(f"⚠️ INGESTION PIPELINE FAILED (non-critical): {ing_error}")
+            #     traceback.print_exc()
         
-        # Convert to Annotation objects
-        annotation_objs = [
-            Annotation(
-                start=ann['start'],
-                end=ann['end'],
-                label=ann['label'],
-                metadata=ann.get('metadata', {})
-            ) for ann in annotations
-        ]
-        
-        # Perform alignment
-        aligned_sequence, mapping = alignment_mapper.align_sequence(sequence_id, request.sequence)
-        mapped_annotations = alignment_mapper.map_annotations(annotation_objs, mapping)
-        statistics = alignment_mapper.get_alignment_statistics(aligned_sequence, mapping)
-        
+        # 4. Return frontend response
         return {
-            "sequence_id": sequence_id,
+            "sequence_id": request.sequence_id,
             "aligned_sequence": aligned_sequence,
-            "mapped_annotations": [
-                {
-                    "start": ann.start,
-                    "end": ann.end,
-                    "label": ann.label,
-                    "metadata": ann.metadata
-                } for ann in mapped_annotations
-            ],
-            "statistics": statistics,
             "mapping": mapping,
+            "mapped_annotations": [],
+            "statistics": {},
             "original_sequence": request.sequence
         }
         
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Alignment failed: {str(e)}")
 
+
 @app.get("/msaprofile/master")
 async def get_master_profile():
-    """Get information about the master alignment profile INCLUDING THE ACTUAL SEQUENCES"""
+    """Get information about the master alignment profile including raw sequences."""
     try:
         profile_path = Path(MASTER_PROFILE)
         if not profile_path.exists():
             raise HTTPException(status_code=404, detail="Master profile not found")
 
-        # Read and parse the master profile
         from Bio import AlignIO
-
         alignment = AlignIO.read(profile_path, "fasta")
 
         sequences_info = []
         for record in alignment:
-            sequences_info.append(
-                {
-                    "id": record.id,
-                    "description": record.description,
-                    "length": len(record.seq),
-                    "gap_count": str(record.seq).count("-"),
-                    "sequence": str(record.seq),
-                }
-            )
+            sequences_info.append({
+                "id": record.id,
+                "description": record.description,
+                "length": len(record.seq),
+                "gap_count": str(record.seq).count("-"),
+                "sequence": str(record.seq),
+            })
 
-        # Also return the full alignment as a string for good measure
         full_alignment = ""
         for record in alignment:
             full_alignment += f">{record.description}\n{record.seq}\n"
@@ -445,20 +190,61 @@ async def get_master_profile():
             "sequences": sequences_info,
             "full_alignment": full_alignment,
             "muscle_binary": MUSCLE_BINARY,
-            "muscle_exists": Path(MUSCLE_BINARY).exists(),
         }
 
     except Exception as e:
         traceback.print_exc()
-        raise HTTPException(
-            status_code=500, detail=f"Error reading master profile: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error reading master profile: {str(e)}")
 
+
+# --- Grid Endpoints ---
+
+@app.get("/grid/{pdb_id}", response_model=GridData)
+async def get_grid(pdb_id: str):
+    """Generate idealized 2D grid from PDB structure with caching"""
+    try:
+        cache_dir = Path("cache")
+        cache_dir.mkdir(exist_ok=True)
+        cache_file = cache_dir / f"{pdb_id.lower()}_grid.json"
+
+        if cache_file.exists():
+            print(f"Loading cached grid data for {pdb_id.upper()}")
+            with open(cache_file, "r") as f:
+                cached_data = json.load(f)
+                return GridData(**cached_data)
+
+        print(f"Generating new grid data for {pdb_id.upper()}")
+        grid_data = await grid_generator.generate_grid(pdb_id.lower())
+
+        with open(cache_file, "w") as f:
+            json.dump(grid_data.dict(), f, indent=2)
+
+        return grid_data
+
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal error: {str(e)}")
+
+
+# --- Root ---
+
+# @app.get("/")
+# async def root():
+#     return {
+#         "title": "TubXYZ API",
+#         "version": "0.2.0",
+#         "endpoints": {
+#             "/structures/*": "Neo4j structure queries",
+#             "/polymers/*": "Neo4j polymer queries",
+#             "/ligands/*": "Neo4j ligand queries",
+#             "/grid/{pdb_id}": "Generate 2D grid",
+#             "/msaprofile/sequence": "POST - Align sequence",
+#             "/msaprofile/master": "GET - Master alignment info",
+#             "/docs": "Interactive API documentation",
+#         }
+#     }
 
 if __name__ == "__main__":
     import uvicorn
-
-    # Ensure debug output directory exists
     Path("debug_output").mkdir(exist_ok=True)
-
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("api.main:app", host="127.0.0.1", port=8000, reload=True)

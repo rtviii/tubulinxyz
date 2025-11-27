@@ -3,7 +3,7 @@ from concurrent.futures import ALL_COMPLETED, Future, ThreadPoolExecutor, wait
 from functools import partial
 import os
 import sys
-from etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from lib.etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 sys.dont_write_bytecode = True
 
