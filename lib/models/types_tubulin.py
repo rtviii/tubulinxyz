@@ -14,11 +14,11 @@ class TubulinFamily(str, Enum):
     GAMMA   = "gamma"
     DELTA   = "delta"
     EPSILON = "epsilon"
-    ZETA    = "zeta"
-    ETA     = "eta"
-    THETA   = "theta"
-    IOTA    = "iota"
-    KAPPA   = "kappa"
+    # ZETA    = "zeta"
+    # ETA     = "eta"
+    # THETA   = "theta"
+    # IOTA    = "iota"
+    # KAPPA   = "kappa"
 
 class MutationType(str, Enum):
     SUBSTITUTION = "substitution"
@@ -38,12 +38,10 @@ class ModificationType(str, Enum):
     TYROSINATION    = "tyrosination"
     DETYROSINATION  = "detyrosination"
 
-# --- Node Models ---
 
 class Polymer(BaseModel):
     """Base polymer model (Instance-centric)"""
     def __hash__(self):
-        # Hash is now based on the instance-specific ID
         return hash(self.auth_asym_id + self.parent_rcsb_id)
 
     def to_SeqRecord(self) -> SeqRecord:
@@ -54,14 +52,11 @@ class Polymer(BaseModel):
             name        = f'{self.parent_rcsb_id}.{self.auth_asym_id}'
         )
 
-    # --- KEY CHANGES (Reverted to Instance-Centric) ---
-    assembly_id     : int       # Back to a single int
-    auth_asym_id    : str       # Back to a single str
+    assembly_id     : int       
+    auth_asym_id    : str      
     parent_rcsb_id  : str
-    entity_id       : str       # We'll ADD this, so we know its parent entity
-    # --------------------------------------------------
-
-    asym_ids        : List[str] # This is the non-auth ID list from the entity
+    entity_id       : str     
+    asym_ids        : List[str] 
 
     src_organism_names : List[str]
     host_organism_names: List[str]
@@ -90,58 +85,51 @@ class TubulinProtein(Polymer):
 
 class MasterAlignment(BaseModel):
     """Versioned canonical reference MSA for a tubulin family"""
-    version: str  # e.g., "alpha_v1.0"
+    version: str  
     family: TubulinFamily
     fasta_content: str
-    created_date: str # ISO 8601 string
+    created_date: str 
     description: Optional[str] = None
 
 
 class Mutation(BaseModel):
-    """Mutation from literature/clinical databases"""
+    """
+    Mutation from literature/clinical databases"""
     
-    # Position mapping
-    master_index: int  # Position in your MA
-    utn_position: Optional[int] = None  # Position in their UTN system
+    master_index: int
+    utn_position: Optional[int] = None
     
-    # Mutation details
     from_residue: str  # Wild-type
-    to_residue: str    # Mutant
+    to_residue  : str  # Mutant
     
-    # Source metadata
-    uniprot_id: str
-    species: str
-    tubulin_type: str  # e.g., "α1", "α2"
+    uniprot_id  : str
+    species     : str
+    tubulin_type: str
     
-    # Annotation
-    phenotype: str
-    database_source: str  # BioMuta, ClinVar, etc.
-    reference_link: str
-    keywords: str
-    notes: Optional[str] = None
+    phenotype      : str
+    database_source: str
+    reference_link : str
+    keywords       : str
+    notes          : Optional[str] = None
 
 class Modification(BaseModel):
     """Post-translational modification from literature/databases"""
     
-    # Position mapping
-    master_index: int  # Position in your MA
-    utn_position: Optional[int] = None  # Position in their UTN system
+    master_index: int
+    utn_position: Optional[int] = None
     
-    # Modification details
-    amino_acid: str  # The residue being modified
-    modification_type: str  # PLM, PHO, ACE, etc.
+    amino_acid       : str
+    modification_type: str
     
-    # Source metadata
-    uniprot_id: str
-    species: str
-    tubulin_type: str  # e.g., "α4"
+    uniprot_id  : str
+    species     : str
+    tubulin_type: str
     
-    # Annotation
-    phenotype: str  # Description of the modification
-    database_source: str  # SwissPalm, PhosphoSitePlus, etc.
-    database_link: str
-    keywords: str
-    notes: Optional[str] = None
+    phenotype      : str
+    database_source: str
+    database_link  : str
+    keywords       : str
+    notes          : Optional[str] = None
 
 class NonpolymericLigand(BaseModel):
     """Ligand model - unchanged from riboxyz"""
@@ -164,26 +152,27 @@ class NonpolymericLigand(BaseModel):
             drugbank_info: Optional[DrugbankInfo] = None
 
         class RcsbChemCompTarget(BaseModel):
-            interaction_type: Optional[str] = None
-            name: Optional[str] = None
-            provenance_source: Optional[str] = None
+
+            interaction_type                 : Optional[str] = None
+            name                             : Optional[str] = None
+            provenance_source                : Optional[str] = None
             reference_database_accession_code: Optional[str] = None
-            reference_database_name: Optional[str] = None
+            reference_database_name          : Optional[str] = None
 
         drugbank: Optional[Drugbank] = None
         rcsb_chem_comp_target: Optional[List[RcsbChemCompTarget]] = None
 
-    chemicalId: str
-    chemicalName: str
-    formula_weight: Optional[float] = None
-    pdbx_description: str
+    chemicalId         : str
+    chemicalName       : str
+    formula_weight     : Optional[float] = None
+    pdbx_description   : str
     number_of_instances: int
-    nonpolymer_comp: Optional[NonpolymerComp] = None
+    nonpolymer_comp    : Optional[NonpolymerComp] = None
     
-    SMILES: Optional[str] = None
+    SMILES       : Optional[str] = None
     SMILES_stereo: Optional[str] = None
-    InChI: Optional[str] = None
-    InChIKey: Optional[str] = None
+    InChI        : Optional[str] = None
+    InChIKey     : Optional[str] = None
 
 class RCSBStructureMetadata(BaseModel):
     """Standard RCSB structure metadata"""
@@ -201,18 +190,18 @@ class RCSBStructureMetadata(BaseModel):
     pdbx_keywords: Optional[str] = None
     pdbx_keywords_text: Optional[str] = None
     
-    rcsb_external_ref_id: List[str]
+    rcsb_external_ref_id  : List[str]
     rcsb_external_ref_type: List[str]
     rcsb_external_ref_link: List[str]
     
-    citation_year: Optional[int] = None
+    citation_year        : Optional[int]       = None
     citation_rcsb_authors: Optional[List[str]] = None
-    citation_title: Optional[str] = None
-    citation_pdbx_doi: Optional[str] = None
+    citation_title       : Optional[str]       = None
+    citation_pdbx_doi    : Optional[str]       = None
     
-    src_organism_ids: List[int]
-    src_organism_names: List[str]
-    host_organism_ids: List[int]
+    src_organism_ids   : List[int]
+    src_organism_names : List[str]
+    host_organism_ids  : List[int]
     host_organism_names: List[str]
     
     assembly_map: Optional[List["AssemblyInstancesMap"]] = None

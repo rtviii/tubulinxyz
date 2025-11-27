@@ -100,9 +100,9 @@ async def align_sequence(request: AlignmentRequest):
             
             # if verification["status"] == "success":
             #     if verification["match"]:
-            #         print(f"✅ VERIFIED: {pdb_id}_{chain_id} matches PDB")
+            #         print(f"OK VERIFIED: {pdb_id}_{chain_id} matches PDB")
             #     else:
-            #         print(f"⚠️ MISMATCH: {pdb_id}_{chain_id}")
+            #         print(f"️ERROR MISMATCH: {pdb_id}_{chain_id}")
             #         print(verification["details"])
             
             # 3. Run full ingestion pipeline (for logging/analysis)

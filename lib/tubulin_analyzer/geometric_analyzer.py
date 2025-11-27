@@ -199,7 +199,7 @@ class GeometricAnalyzer:
             return [], "unknown"
 
         # Import here to avoid circular imports
-        from tubulin_analyzer.models import SubunitData
+        from lib.tubulin_analyzer.models import SubunitData
 
         # Align structure to Z-axis for consistent orientation
         aligned_positions = self.align_structure_to_z_axis(positions, protofilaments)
