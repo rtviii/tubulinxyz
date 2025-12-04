@@ -18,7 +18,7 @@ class UTNMapper:
         self.utn_consensus = utn_consensus
         
         # Get MA length
-        ma_aln = AlignIO.read(str(self.ma_path), "fasta")
+        ma_aln         = AlignIO.read(str(self.ma_path), "fasta")
         self.ma_length = ma_aln.get_alignment_length()
         
         print(f"UTN consensus length: {len(self.utn_consensus)}")

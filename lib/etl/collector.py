@@ -289,7 +289,6 @@ class TubulinETLCollector:
                     
             return mapping
 
-
     def sequence_ingestion(self, protein: TubulinProtein) -> None:
         """
         Runs the full alignment/mutation detection pipeline for a single tubulin protein.

@@ -21,7 +21,6 @@ well-typed properties). We won't have a crazy amount of users (maybe 10 at any
 given moment) but concurrent connections should be assumed.
 
 
-
 What do u recommend to get started with this? I also need to be able to
 prototype this in a safe environment on my mac laptop before its deployed so
 dont' omit that step please as well..

@@ -17,8 +17,6 @@ def add_project_root_to_path():
 
 add_project_root_to_path()
 
-# Now we can import our project modules
-# Limit concurrent requests to avoid hammering the RCSB API
 SEMAPHORE = asyncio.Semaphore(10)
 
 async def download_profile(rcsb_id: str):

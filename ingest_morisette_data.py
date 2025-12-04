@@ -13,20 +13,18 @@ from lib.models.types_tubulin import Mutation, Modification, MasterAlignment, Tu
 
 def create_master_alignment(adapter: Neo4jAdapter, fasta_path: str, family: TubulinFamily, version: str):
     """Create or get the master alignment node"""
-    
-    # Check if it exists first
+
     with adapter.driver.session() as session:
         ma_node = session.execute_read(get_master_alignment(family, version))
         
         if ma_node:
             print(f"Master alignment {family.value} {version} already exists")
             return ma_node
-    
-    # Read FASTA content
+
     with open(fasta_path, 'r') as f:
         fasta_content = f.read()
     
-    # Create master alignment object
+
     ma = MasterAlignment(
         family=family,
         version=version,
@@ -63,18 +61,18 @@ def ingest_mutations(adapter: Neo4jAdapter, json_path: str, ma_node):
                 continue
             
             mut = Mutation(
-                master_index=mut_data['ma_position'],
-                utn_position=mut_data.get('utn_position'),
-                from_residue=mut_data['wild_type'],
-                to_residue=mut_data['mutant'],
-                uniprot_id=mut_data['tubulin_id'],
-                species=mut_data['species'],
-                tubulin_type=mut_data['tubulin_type'],
-                phenotype=mut_data['phenotype'],
-                database_source=mut_data.get('reference', 'Unknown'),
-                reference_link=mut_data.get('ref_link', ''),
-                keywords=mut_data.get('keywords', ''),
-                notes=mut_data.get('notes', '')
+                master_index    = mut_data['ma_position'],
+                utn_position    = mut_data.get('utn_position'),
+                from_residue    = mut_data['wild_type'],
+                to_residue      = mut_data['mutant'],
+                uniprot_id      = mut_data['tubulin_id'],
+                species         = mut_data['species'],
+                tubulin_type    = mut_data['tubulin_type'],
+                phenotype       = mut_data['phenotype'],
+                database_source = mut_data.get('reference', 'Unknown'),
+                reference_link  = mut_data.get('ref_link', ''),
+                keywords        = mut_data.get('keywords', ''),
+                notes           = mut_data.get('notes', '')
             )
             
             # Create mutation node
