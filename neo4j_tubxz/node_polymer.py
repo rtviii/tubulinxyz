@@ -2,87 +2,160 @@
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
-from lib.models.types_tubulin import Polymer, TubulinProtein
+from lib.models.types_tubulin import PolymerEntity, TubulinEntity, PolymerInstance
 
-def node__polymer(poly:Polymer)->Callable[[Transaction | ManagedTransaction], Node ]:
+# --- ENTITY NODES ---
+
+
+def node__entity(
+    entity: PolymerEntity,
+) -> Callable[[Transaction | ManagedTransaction], Node]:
     """
-    Creates or merges the base Polymer node.
-    This works for both base Polymers and TubulinProteins.
+    Creates or merges the PolymerEntity node.
+    Contains Sequence, Taxonomy, and Descriptions.
     """
-    P = poly.model_dump()
+    E = entity.model_dump(
+        exclude={
+            "family",
+            "pfam_accessions",
+            "pfam_comments",
+            "pfam_descriptions",
+            "uniprot_accession",
+        }
+    )
+
     def _(tx: Transaction | ManagedTransaction):
-        return tx.run("""//
-    MERGE (poly:Polymer {
+        return tx.run(
+            """//
+    MERGE (e:Entity {
+        parent_rcsb_id: $parent_rcsb_id,
+        entity_id     : $entity_id
+    })
+    ON CREATE SET
+        e.rcsb_pdbx_description                = $rcsb_pdbx_description,
+        e.src_organism_names                   = $src_organism_names,
+        e.host_organism_names                  = $host_organism_names,
+        e.src_organism_ids                     = $src_organism_ids,
+        e.host_organism_ids                    = $host_organism_ids,
+        
+        e.entity_poly_seq_one_letter_code      = $entity_poly_seq_one_letter_code,
+        e.entity_poly_seq_one_letter_code_can  = $entity_poly_seq_one_letter_code_can,
+        e.entity_poly_seq_length               = $entity_poly_seq_length,
+        e.entity_poly_polymer_type             = $entity_poly_polymer_type,
+        e.entity_poly_entity_type              = $entity_poly_entity_type
+    RETURN e
+    """,
+            **E,
+        ).single(strict=True)["e"]
+
+    return _
+
+
+def upsert__entity_to_tubulin(
+    entity_node: Node, tubulin_entity: TubulinEntity
+) -> Callable[[Transaction | ManagedTransaction], Node]:
+    """
+    Adds :Tubulin label and specific properties to the Entity.
+    """
+    props = tubulin_entity.model_dump(
+        include={
+            "family",
+            "pfam_accessions",
+            "pfam_comments",
+            "pfam_descriptions",
+            "uniprot_accession",
+        }
+    )
+    if props["family"]:
+        props["family"] = props["family"].value
+
+    def _(tx: Transaction | ManagedTransaction):
+        return tx.run(
+            """//
+        MATCH (e:Entity) WHERE ELEMENTID(e) = $elem_id
+        SET
+            e:Tubulin,
+            e.family            = $family,
+            e.pfam_accessions   = $pfam_accessions,
+            e.pfam_comments     = $pfam_comments,
+            e.pfam_descriptions = $pfam_descriptions,
+            e.uniprot_accession = $uniprot_accession
+        RETURN e
+        """,
+            {"elem_id": entity_node.element_id, **props},
+        ).single(strict=True)["e"]
+
+    return _
+
+
+# --- INSTANCE NODES ---
+
+
+def node__instance(
+    instance: PolymerInstance,
+) -> Callable[[Transaction | ManagedTransaction], Node]:
+    """
+    Creates the lightweight Instance node.
+    """
+    I = instance.model_dump()
+
+    def _(tx: Transaction | ManagedTransaction):
+        return tx.run(
+            """//
+    MERGE (i:Instance {
         parent_rcsb_id: $parent_rcsb_id,
         auth_asym_id  : $auth_asym_id
     })
     ON CREATE SET
-        poly.entity_id                           = $entity_id,
-        poly.assembly_id                         = $assembly_id,
-        poly.asym_ids                            = $asym_ids,
-        poly.src_organism_names                  = $src_organism_names,
-        poly.host_organism_names                 = $host_organism_names,
-        poly.src_organism_ids                    = $src_organism_ids,
-        poly.host_organism_ids                   = $host_organism_ids,
-        poly.rcsb_pdbx_description               = $rcsb_pdbx_description,
-        poly.entity_poly_strand_id               = $entity_poly_strand_id,
-        poly.entity_poly_seq_one_letter_code     = $entity_poly_seq_one_letter_code,
-        poly.entity_poly_seq_one_letter_code_can = $entity_poly_seq_one_letter_code_can,
-        poly.entity_poly_seq_length              = $entity_poly_seq_length,
-        poly.entity_poly_polymer_type            = $entity_poly_polymer_type,
-        poly.entity_poly_entity_type             = $entity_poly_entity_type
-    ON MATCH SET
-        poly.entity_id = $entity_id,
-        poly.entity_poly_seq_length = $entity_poly_seq_length
-        // Add other ON MATCH properties as needed
-    RETURN poly
-    """, **P).single(strict=True)['poly']
-    
+        i.assembly_id           = $assembly_id,
+        i.asym_ids              = $asym_ids,
+        i.entity_poly_strand_id = $entity_poly_strand_id
+    RETURN i
+    """,
+            **I,
+        ).single(strict=True)["i"]
+
     return _
 
-def upsert__polymer_to_protein(
-    polymer_node: Node, protein: TubulinProtein
-) -> Callable[[Transaction | ManagedTransaction], Node]:
-    """
-    Adds the :Protein label and protein-specific properties
-    to an existing Polymer node.
-    """
-    # Get only the properties specific to TubulinProtein
-    prot_props = protein.model_dump(
-        include={'family', 'pfam_accessions', 'pfam_comments', 'pfam_descriptions', 'uniprot_accession'}
-    )
-    # Convert Enum to string
-    if prot_props['family']:
-        prot_props['family'] = prot_props['family'].value
 
+# --- LINKS ---
+
+
+def link__instance_to_structure(
+    instance_node: Node, parent_rcsb_id: str
+) -> Callable[[Transaction | ManagedTransaction], list]:
     def _(tx: Transaction | ManagedTransaction):
-        return tx.run("""//
-        MATCH (p:Polymer) WHERE ELEMENTID(p) = $elem_id
-        SET
-            p:Protein,
-            p.family = $family,
-            p.pfam_accessions = $pfam_accessions,
-            p.pfam_comments = $pfam_comments,
-            p.pfam_descriptions = $pfam_descriptions,
-            p.uniprot_accession = $uniprot_accession
-        RETURN p
-        """, {
-            "elem_id": polymer_node.element_id,
-            **prot_props
-        }).single(strict=True)['p']
+        # Relationship: Structure HAS_INSTANCE Instance
+        return tx.run(
+            """//
+            MATCH (i:Instance) WHERE ELEMENTID(i) = $ELEM_ID
+            MATCH (s:Structure {rcsb_id: $PARENT})
+            MERGE (s)-[rel:HAS_INSTANCE]->(i)
+            RETURN s, rel, i
+            """,
+            {"ELEM_ID": instance_node.element_id, "PARENT": parent_rcsb_id},
+        ).values("s", "rel", "i")
+
     return _
 
-def link__polymer_to_structure(polymer_node: Node, parent_rcsb_id: str) -> Callable[[Transaction | ManagedTransaction], list[list[Node | Relationship]]]:
+
+def link__instance_to_entity(
+    instance_node: Node, entity_id: str, parent_rcsb_id: str
+) -> Callable[[Transaction | ManagedTransaction], list]:
     def _(tx: Transaction | ManagedTransaction):
-        # : Relationship is HAS_POLYMER
-        return tx.run("""//
-            MATCH (polymer:Polymer) WHERE ELEMENTID(polymer) = $ELEM_ID
-            MATCH (struct:Structure {rcsb_id: $PARENT})
-            MERGE (struct)-[rel:HAS_POLYMER]->(polymer)
-            RETURN polymer, rel, struct
+        # Relationship: Instance IS_INSTANCE_OF Entity
+        return tx.run(
+            """//
+            MATCH (i:Instance) WHERE ELEMENTID(i) = $I_ID
+            MATCH (e:Entity {parent_rcsb_id: $PARENT, entity_id: $E_ID})
+            MERGE (i)-[rel:IS_INSTANCE_OF]->(e)
+            RETURN i, rel, e
             """,
             {
-                "ELEM_ID": polymer_node.element_id,
-                "PARENT": parent_rcsb_id
-            }).values('polymer', 'rel', 'struct')
+                "I_ID": instance_node.element_id,
+                "PARENT": parent_rcsb_id,
+                "E_ID": entity_id,
+            },
+        ).values("i", "rel", "e")
+
     return _
