@@ -1,30 +1,31 @@
 # tubexyz/neo4j_driver/node_master_alignment.py
-from typing import Callable
+from typing import Callable, Union
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
 
 from lib.models.types_tubulin import AlignmentMapping, MasterAlignment, TubulinFamily
 
 def node__master_alignment(
-    aln: MasterAlignment
+    family: Union[str, TubulinFamily], 
+    version: str = "v1.0"
 ) -> Callable[[Transaction | ManagedTransaction], Node]:
-    
-    aln_props = aln.model_dump()
-    aln_props["family"] = aln_props["family"].value # Convert Enum
+    """
+    Ensures a MasterAlignment node exists for the given family/version.
+    Does NOT require the full FASTA content payload.
+    """
+    # Ensure we have the string value
+    family_val = family.value if isinstance(family, TubulinFamily) else family
 
     def _(tx: Transaction | ManagedTransaction):
         return tx.run("""
             MERGE (a:MasterAlignment { family: $family, version: $version })
             ON CREATE SET
-                a.fasta_content = $fasta_content,
-                a.created_date = $created_date,
-                a.description = $description
-            ON MATCH SET
-                a.fasta_content = $fasta_content,
-                a.created_date = $created_date,
-                a.description = $description
+                a.description = "Canonical reference alignment"
             RETURN a
-            """, aln_props).single(strict=True)['a']
+            """, {
+                "family": family_val, 
+                "version": version
+            }).single(strict=True)['a']
     return _
 
 def get_master_alignment(

@@ -67,9 +67,10 @@ MOD_RES_MAP = {
 
 @dataclass
 class MutationEntry:
+
     ma_position: int  # 1-based index in Master Alignment
-    wild_type: str  # Consensus residue
-    observed: str  # Actual residue in target
+    wild_type  : str  # Consensus residue
+    observed   : str  # Actual residue in target
     pdb_auth_id: int  # The auth_seq_id of the mutation (or Entity index)
 
 
@@ -266,9 +267,9 @@ class TubulinAlignmentMapper:
 
 class TubulinIngestor:
     def __init__(self, master_profile: str, muscle_binary: str):
-        self.parser = TubulinStructureParser()
+        self.parser    = TubulinStructureParser()
         self.consensus = ConsensusCalculator(master_profile)
-        self.mapper = TubulinAlignmentMapper(master_profile, muscle_binary)
+        self.mapper    = TubulinAlignmentMapper(master_profile, muscle_binary)
 
         self.ref_len = len(self.consensus.consensus_sequence)
 
@@ -339,20 +340,20 @@ class TubulinIngestor:
 
         stats = {
             "alignment_length": len(aln_target),
-            "ma_coverage": len([x for x in ma_to_auth if x != -1]),
-            "insertions": observed_to_ma.count(-2),
-            "total_mutations": len(mutations),
+            "ma_coverage"     : len([x for x in ma_to_auth if x != -1]),
+            "insertions"      : observed_to_ma.count(-2),
+            "total_mutations" : len(mutations),
         }
 
         return ProcessedChain(
-            pdb_id=identifier,  # Using Identifier as PDB ID for context
-            chain_id="Entity",
-            tubulin_class=family,
-            sequence=sequence,
-            ma_to_auth_map=ma_to_auth,
-            observed_to_ma_map=observed_to_ma,
-            mutations=mutations,
-            stats=stats,
+            pdb_id             = identifier,       # Using Identifier as PDB ID for context
+            chain_id           = "Entity",
+            tubulin_class      = family,
+            sequence           = sequence,
+            ma_to_auth_map     = ma_to_auth,
+            observed_to_ma_map = observed_to_ma,
+            mutations          = mutations,
+            stats              = stats,
         )
 
     def process_chain(self, pdb_id: str, chain_id: str, t_class: str) -> ProcessedChain:

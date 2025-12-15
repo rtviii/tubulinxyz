@@ -54,6 +54,7 @@ def link__structure_to_organism(
     return _
 
 
+
 def node__structure(
     _struct: TubulinStructure,
 ) -> Callable[[Transaction | ManagedTransaction], Record | None]:
@@ -67,12 +68,14 @@ def node__structure(
                 struct.resolution            = $resolution,
                 struct.pdbx_keywords         = $pdbx_keywords,
                 struct.pdbx_keywords_text    = $pdbx_keywords_text,
+                
+                // --- RESTORED PROPERTIES ---
                 struct.src_organism_ids      = $src_organism_ids,
                 struct.src_organism_names    = $src_organism_names,
                 struct.host_organism_ids     = $host_organism_ids,
                 struct.host_organism_names   = $host_organism_names,
                 
-                struct.rcsb_external_ref_id   = $rcsb_external_ref_id,
+                struct.rcsb_external_ref_id    = $rcsb_external_ref_id,
                 struct.rcsb_external_ref_type = $rcsb_external_ref_type,
                 struct.rcsb_external_ref_link = $rcsb_external_ref_link,
                 

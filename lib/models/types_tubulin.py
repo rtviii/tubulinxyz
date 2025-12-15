@@ -5,35 +5,45 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pydantic import BaseModel, Field
 
-# --- Enums ---
-
-
 class TubulinFamily(str, Enum):
-    ALPHA = "alpha"
-    BETA = "beta"
-    GAMMA = "gamma"
-    DELTA = "delta"
+    ALPHA   = "alpha"
+    BETA    = "beta"
+    GAMMA   = "gamma"
+    DELTA   = "delta"
     EPSILON = "epsilon"
+# --- Enums ---
+class MasterAlignment(BaseModel):
+    """Versioned canonical reference MSA for a tubulin family"""
+    version      : str
+    family       : TubulinFamily
+    fasta_content: str
+    created_date : str
+    description  : Optional[str] = None
+
+class AlignmentMapping(BaseModel):
+    seqres_to_master: str  # JSON array: list[int] (seqres_idx -> master_idx | -1)
+    master_to_seqres: str  # JSON array: list[int] (master_idx -> seqres_idx | -1)
+
 
 
 class MutationType(str, Enum):
     SUBSTITUTION = "substitution"
-    INSERTION = "insertion"
-    DELETION = "deletion"
+    INSERTION    = "insertion"
+    DELETION     = "deletion"
 
 
 class ModificationType(str, Enum):
-    ACETYLATION = "acetylation"
+    ACETYLATION     = "acetylation"
     PHOSPHORYLATION = "phosphorylation"
-    METHYLATION = "methylation"
-    UBIQUITINATION = "ubiquitination"
-    SUMOYLATION = "sumoylation"
-    PALMITOYLATION = "palmitoylation"
-    NITROSYLATION = "nitrosylation"
-    GLUTAMYLATION = "glutamylation"
-    GLYCYLATION = "glycylation"
-    TYROSINATION = "tyrosination"
-    DETYROSINATION = "detyrosination"
+    METHYLATION     = "methylation"
+    UBIQUITINATION  = "ubiquitination"
+    SUMOYLATION     = "sumoylation"
+    PALMITOYLATION  = "palmitoylation"
+    NITROSYLATION   = "nitrosylation"
+    GLUTAMYLATION   = "glutamylation"
+    GLYCYLATION     = "glycylation"
+    TYROSINATION    = "tyrosination"
+    DETYROSINATION  = "detyrosination"
 
 
 # --- Support Models ---
@@ -45,17 +55,14 @@ class Mutation(BaseModel):
     from_residue: str
     to_residue: str
 
-    uniprot_id: str
-    species: str
-    tubulin_type: str
-    phenotype: str
+    uniprot_id     : str
+    species        : str
+    tubulin_type   : str
+    phenotype      : str
     database_source: str
-    reference_link: str
-    keywords: str
-    notes: Optional[str] = None
-
-
-# --- Complex Property Models (Restored) ---
+    reference_link : str
+    keywords       : str
+    notes          : Optional[str] = None
 
 
 class NonpolymerComp(BaseModel):
@@ -63,10 +70,6 @@ class NonpolymerComp(BaseModel):
         class DrugbankInfo(BaseModel):
             cas_number: Optional[str] = None
             description: Optional[str] = None
-            indication: Optional[str] = None
-            mechanism_of_action: Optional[str] = None
-            name: Optional[str] = None
-            pharmacology: Optional[str] = None
 
         class DrugbankContainerIdentifiers(BaseModel):
             drugbank_id: str
@@ -84,17 +87,66 @@ class NonpolymerComp(BaseModel):
     drugbank: Optional[Drugbank] = None
     rcsb_chem_comp_target: Optional[List[RcsbChemCompTarget]] = None
 
+# This one is for db only.
+class ChemicalCompound(BaseModel):
+    """
+    Global chemical identity - shared across all structures.
+    One instance per unique chemical_id in the entire PDB.
+    """
+    chemical_id  : str  # Primary key: "TAX", "PMM", "GTP"
+    chemical_name: str
+    
+    SMILES        : Optional[str]   = None
+    SMILES_stereo : Optional[str]   = None
+    InChI         : Optional[str]   = None
+    InChIKey      : Optional[str]   = None
+    formula_weight: Optional[float] = None
+    
+    nonpolymer_comp: Optional[NonpolymerComp] = None
 
-# --- 1. ENTITIES (The Blueprints) ---
+
+
+class BaseInstance(BaseModel):
+    parent_rcsb_id: str
+    auth_asym_id  : str
+    asym_id       : str
+    entity_id     : str
+    assembly_id   : int
+
+    def __hash__(self):
+        return hash(self.asym_id + self.parent_rcsb_id)
 
 
 class BaseEntity(BaseModel):
-    entity_id: str
-    type: Literal["polymer", "non-polymer", "water", "branched"]
+    entity_id       : str
+    type            : Literal["polymer", "non-polymer", "water", "branched"]
+    pdbx_description: Optional[str] = None
+    formula_weight  : Optional[float] = None
+    pdbx_strand_ids : List[str] = []
+
+
+
+
+class NonpolymerEntity(BaseEntity):
+    type: Literal["non-polymer"] = "non-polymer"
+    
+    # Reference to the shared chemical
+    chemical_id: str
+    chemical_name: str
+    
     pdbx_description: Optional[str] = None
     formula_weight: Optional[float] = None
-    pdbx_strand_ids: List[str] = []
+    
+    # --- MISSING FIELDS ADDED BELOW ---
+    # These are needed so node_ligand.py can create the Global Chemical Node
+    nonpolymer_comp: Optional[NonpolymerComp] = None
+    
+    SMILES        : Optional[str] = None
+    SMILES_stereo : Optional[str] = None
+    InChI         : Optional[str] = None
+    InChIKey      : Optional[str] = None
 
+    num_instances : int = 0
 
 class PolypeptideEntity(BaseEntity):
     type: Literal["polymer"] = "polymer"
@@ -112,9 +164,8 @@ class PolypeptideEntity(BaseEntity):
     family: Optional[TubulinFamily] = None
     uniprot_accessions: List[str] = []
 
-    # Ingestion Results
-    # (These will be populated in memory but excluded from profile.json save)
-    mutations: List[Mutation] = []
+    # Mutations detected vis a vis the Master Alignmnet
+    mutations      : List[Mutation] = []
     alignment_stats: Dict[str, Any] = {}
 
     def to_SeqRecord(self, rcsb_id: str) -> SeqRecord:
@@ -124,7 +175,6 @@ class PolypeptideEntity(BaseEntity):
             description=self.pdbx_description or "",
             name=f"{rcsb_id}_entity_{self.entity_id}",
         )
-
 
 class PolynucleotideEntity(BaseEntity):
     type: Literal["polymer"] = "polymer"
@@ -138,33 +188,10 @@ class PolynucleotideEntity(BaseEntity):
     src_organism_ids: List[int] = []
 
 
-class NonpolymerEntity(BaseEntity):
-    type: Literal["non-polymer"] = "non-polymer"
-
-    chemicalId: str
-    chemicalName: str
-
-    SMILES: Optional[str] = None
-    SMILES_stereo: Optional[str] = None
-    InChI: Optional[str] = None
-    InChIKey: Optional[str] = None
-
-    # RESTORED: The rich annotation object
-    nonpolymer_comp: Optional[NonpolymerComp] = None
 
 
 # --- 2. INSTANCES (The Physical Objects) ---
 
-
-class BaseInstance(BaseModel):
-    parent_rcsb_id: str
-    auth_asym_id: str
-    asym_id: str
-    entity_id: str
-    assembly_id: int
-
-    def __hash__(self):
-        return hash(self.asym_id + self.parent_rcsb_id)
 
 
 class Polypeptide(BaseInstance):
@@ -176,7 +203,29 @@ class Polynucleotide(BaseInstance):
 
 
 class Nonpolymer(BaseInstance):
-    pass
+    """
+    Represents a single nonpolymer instance (one molecule copy) in the structure.
+    
+    Inherits from BaseInstance:
+
+        - parent_rcsb_id: str - The PDB ID (e.g., "6WVR")
+        - auth_asym_id  : str - Author chain ID (e.g., "E")
+        - asym_id       : str - Internal chain ID (e.g., "E")
+        - entity_id     : str - References the NonpolymerEntity (e.g., "4")
+        - assembly_id   : int - Which biological assembly (e.g., 1)
+    
+    Example:
+        Three Taxol molecules in 6WVR would create three Nonpolymer instances,
+        all pointing to the same NonpolymerEntity (which points to the same
+        ChemicalCompound).
+    """
+    
+    # Currently no additional fields beyond BaseInstance
+    # Could add instance-specific data later if needed:
+    # occupancy: Optional[float] = None
+    # b_factor: Optional[float] = None
+
+
 
 
 # --- 3. STRUCTURE ROOT ---
@@ -211,6 +260,12 @@ class RCSBStructureMetadata(BaseModel):
     citation_rcsb_authors: Optional[List[str]] = None
     citation_title: Optional[str] = None
     citation_pdbx_doi: Optional[str] = None
+    
+    # --- RESTORED FIELDS ---
+    src_organism_ids   : List[int] = []
+    src_organism_names : List[str] = []
+    host_organism_ids  : List[int] = []
+    host_organism_names: List[str] = []
 
 
 class TubulinStructure(RCSBStructureMetadata):
@@ -218,11 +273,16 @@ class TubulinStructure(RCSBStructureMetadata):
         str, Union[PolypeptideEntity, PolynucleotideEntity, NonpolymerEntity]
     ]
 
-    polypeptides: List[Polypeptide]
+    polypeptides   : List[Polypeptide]
     polynucleotides: List[Polynucleotide]
-    nonpolymers: List[Nonpolymer]
+    nonpolymers    : List[Nonpolymer]
 
     assembly_map: Optional[List[AssemblyInstancesMap]] = None
     polymerization_state: Optional[
         Literal["monomer", "dimer", "oligomer", "filament", "unknown"]
     ] = None
+
+
+
+
+# ------

@@ -242,7 +242,6 @@ NonpolymerEntitiesString = """{
   }
 }
 """
-
 LigandsChemInfo = """{
   chem_comps(comp_ids: $COMP_IDS) {
     chem_comp{
@@ -512,14 +511,15 @@ RCSB_GQL_URL = "https://data.rcsb.org/graphql"
 
 def query_rcsb_api(gql_string: str) -> dict[str, Any]:
     """
-    Submits a GraphQL query to the RCSB DATA API using POST.
+    Submits a GraphQL query to the RCSB DATA API.
+    This is different from the SEARCH API used in GlobalOps.
+    
+    Raises:
+        Exception: If the query fails or returns no data.
     """
     try:
-        response = requests.post(
-            RCSB_GQL_URL, 
-            json={"query": gql_string}
-        )
-        response.raise_for_status()
+        response = requests.get(f"{RCSB_GQL_URL}?query={gql_string}")
+        response.raise_for_status()  # Raise an exception for bad status codes
         
         resp_json = response.json()
         
