@@ -70,9 +70,7 @@ def node__polynucleotide_entity(
 def node__polymer_instance(
     instance: Polypeptide | Polynucleotide
 ) -> Callable[[Transaction | ManagedTransaction], Node]:
-    
     specific_label = "PolypeptideInstance" if isinstance(instance, Polypeptide) else "PolynucleotideInstance"
-
     def _(tx: Transaction | ManagedTransaction):
         return tx.run(f"""
             MERGE (i:Instance:{specific_label} {{parent_rcsb_id: $rcsb_id, asym_id: $asym_id}})
@@ -85,11 +83,11 @@ def node__polymer_instance(
             MERGE (i)-[:INSTANCE_OF]->(e)
             RETURN i
         """, {
-            "rcsb_id": instance.parent_rcsb_id,
-            "asym_id": instance.asym_id,      # TUBE-FIX: Unique Key
-            "auth_id": instance.auth_asym_id, # TUBE-FIX: Property
+            "rcsb_id"    : instance.parent_rcsb_id,
+            "asym_id"    : instance.asym_id,         
+            "auth_id"    : instance.auth_asym_id,     
             "assembly_id": instance.assembly_id,
-            "entity_id": instance.entity_id
+            "entity_id"  : instance.entity_id
         }).single(strict=True)['i']
     return _
 

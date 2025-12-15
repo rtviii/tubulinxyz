@@ -3,9 +3,7 @@ import urllib.request
 import tempfile
 import warnings
 import os
-import json
 import subprocess
-import sys
 from pathlib import Path
 from typing import List, Tuple, Dict, Optional, Any
 from dataclasses import dataclass, field, asdict
@@ -425,12 +423,12 @@ class TubulinIngestor:
         }
 
         return ProcessedChain(
-            pdb_id=pdb_id,
-            chain_id=chain_id,
-            tubulin_class=t_class,
-            sequence=obs_seq,
-            ma_to_auth_map=ma_to_auth,
-            observed_to_ma_map=observed_to_ma,
-            mutations=mutations,
-            stats=stats,
+            pdb_id             = pdb_id,
+            chain_id           = chain_id,
+            tubulin_class      = t_class,
+            sequence           = obs_seq,
+            ma_to_auth_map     = ma_to_auth,
+            observed_to_ma_map = observed_to_ma,
+            mutations          = mutations,
+            stats              = stats,
         )

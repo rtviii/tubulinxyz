@@ -1,4 +1,3 @@
-
 import json
 import os
 from pathlib import Path
@@ -9,14 +8,13 @@ from neo4j_tubxz.db_driver import Neo4jAdapter
 from neo4j_tubxz.node_mutation import node__mutation, link__mutation_to_master_alignment
 from neo4j_tubxz.node_modification import node__modification, link__modification_to_master_alignment
 from neo4j_tubxz.node_master_alignment import node__master_alignment, get_master_alignment
-from lib.models.types_tubulin import Mutation, Modification, MasterAlignment, TubulinFamily
+from lib.models.types_tubulin import Modification, Mutation, MasterAlignment, TubulinFamily
 
 def create_master_alignment(adapter: Neo4jAdapter, fasta_path: str, family: TubulinFamily, version: str):
     """Create or get the master alignment node"""
 
     with adapter.driver.session() as session:
         ma_node = session.execute_read(get_master_alignment(family, version))
-        
         if ma_node:
             print(f"Master alignment {family.value} {version} already exists")
             return ma_node
@@ -26,11 +24,11 @@ def create_master_alignment(adapter: Neo4jAdapter, fasta_path: str, family: Tubu
     
 
     ma = MasterAlignment(
-        family=family,
-        version=version,
-        fasta_content=fasta_content,
-        created_date=datetime.now().isoformat(),
-        description=f"Master alignment for {family.value} tubulin"
+        family        = family,
+        version       = version,
+        fasta_content = fasta_content,
+        created_date  = datetime.now().isoformat(),
+        description   = f"Master alignment for {family.value} tubulin"
     )
     
     # Create node
@@ -46,7 +44,6 @@ def ingest_mutations(adapter: Neo4jAdapter, json_path: str, ma_node):
         mutations_data = json.load(f)
     
     print(f"Loading {len(mutations_data)} mutations...")
-    
     created = 0
     skipped = 0
     

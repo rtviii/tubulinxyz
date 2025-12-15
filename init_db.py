@@ -3,7 +3,6 @@ import sys
 from neo4j_tubxz.db_driver import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 
-# --- Helper to make sure we can find the project modules ---
 def add_project_root_to_path():
     project_root = os.path.abspath(os.path.dirname(__file__))
     if project_root not in sys.path:
@@ -25,7 +24,6 @@ if __name__ == "__main__":
         print("You can now run 'test_one_structure.py'.")
 
     except Exception as e:
-        print(f"\n--- FAILED ---")
         print(f"An error occurred during database initialization: {e}")
         import traceback
         traceback.print_exc()

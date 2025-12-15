@@ -48,6 +48,38 @@ class ModificationType(str, Enum):
 
 # --- Support Models ---
 
+class Modification(BaseModel):
+    """Post-translational modification from literature/databases"""
+    
+    master_index: int
+    utn_position: Optional[int] = None
+    
+    amino_acid       : str
+    modification_type: str
+    
+    uniprot_id  : str
+    species     : str
+    tubulin_type: str
+    
+    phenotype      : str
+    database_source: str
+    database_link  : str
+    keywords       : str
+    notes          : Optional[str] = None
+
+class NonpolymericLigand(BaseModel):
+    """Ligand model - unchanged from riboxyz"""
+    model_config = {
+        "json_encoders": {
+            Enum: lambda v: v.value
+        }
+    }
+    
+    class NonpolymerComp(BaseModel):
+        class Drugbank(BaseModel):
+            class DrugbankInfo(BaseModel):
+                cas_number: Optional[str] = None
+                description: Optional[str] = None
 
 class Mutation(BaseModel):
     master_index: int
@@ -57,7 +89,7 @@ class Mutation(BaseModel):
 
     uniprot_id     : str
     species        : str
-    tubulin_type   : str
+    tubulin_type   : TubulinFamily
     phenotype      : str
     database_source: str
     reference_link : str
