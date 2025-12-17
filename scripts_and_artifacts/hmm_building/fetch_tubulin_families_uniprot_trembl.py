@@ -143,12 +143,12 @@ def parse_uniprot_entry(raw: dict) -> UniProtEntry:
 
 TUBULIN_QUERIES = {
     # InterPro families - these are well-curated
-    "alpha": "(xref:interpro-IPR000217) OR (family:tubulin AND protein_name:alpha)",
-    "beta": "(xref:interpro-IPR000217) OR (family:tubulin AND protein_name:beta)", 
-    "gamma": "(xref:interpro-IPR002452) OR (family:tubulin AND protein_name:gamma)",
-    "delta": "(family:tubulin AND protein_name:delta)",
+    "alpha"  : "(xref:interpro-IPR000217) OR (family:tubulin AND protein_name:alpha)",
+    "beta"   : "(xref:interpro-IPR000217) OR (family:tubulin AND protein_name:beta)",
+    "gamma"  : "(xref:interpro-IPR002452) OR (family:tubulin AND protein_name:gamma)",
+    "delta"  : "(family:tubulin AND protein_name:delta)",
     "epsilon": "(family:tubulin AND protein_name:epsilon)",
-    "zeta": "(family:tubulin AND protein_name:zeta)",
+    "zeta"   : "(family:tubulin AND protein_name:zeta)",
 }
 
 # Note: IPR000217 is "Tubulin" (covers alpha/beta), IPR002452 is "Tubulin/FtsZ, GTPase domain"

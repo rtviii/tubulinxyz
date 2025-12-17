@@ -14,39 +14,39 @@ from lib.etl.libtax import Taxid, get_ncbi
 class ClusteringConfig:
     """Configuration for sequence clustering."""
     identity_threshold: float = 0.90
-    word_size: int = 5
-    min_coverage: float = 0.8
-    description_length: int = 0
-    memory: int = 4000
-    threads: int = 4
+    word_size         : int   = 5
+    min_coverage      : float = 0.8
+    description_length: int   = 0
+    memory            : int   = 4000
+    threads           : int   = 4
 
 
 @dataclass
 class BalancingConfig:
     """Configuration for taxonomic balancing."""
-    max_per_phylum: int = 5
+    max_per_phylum : int        = 5
     max_per_kingdom: int | None = None  # None = no cap
-    min_total: int = 30
-    seed: int = 42
+    min_total      : int        = 30
+    seed           : int        = 42
 
 
 # Defaults per family
 CLUSTERING_DEFAULTS: dict[str, ClusteringConfig] = {
-    "alpha": ClusteringConfig(identity_threshold=0.90),
-    "beta": ClusteringConfig(identity_threshold=0.90),
-    "gamma": ClusteringConfig(identity_threshold=0.85),
-    "delta": ClusteringConfig(identity_threshold=0.80),
+    "alpha"  : ClusteringConfig(identity_threshold=0.90),
+    "beta"   : ClusteringConfig(identity_threshold=0.90),
+    "gamma"  : ClusteringConfig(identity_threshold=0.85),
+    "delta"  : ClusteringConfig(identity_threshold=0.80),
     "epsilon": ClusteringConfig(identity_threshold=0.80),
-    "zeta": ClusteringConfig(identity_threshold=0.75),
+    "zeta"   : ClusteringConfig(identity_threshold=0.75),
 }
 
 BALANCING_DEFAULTS: dict[str, BalancingConfig] = {
-    "alpha": BalancingConfig(max_per_phylum=5, max_per_kingdom=50, min_total=80),
-    "beta": BalancingConfig(max_per_phylum=5, max_per_kingdom=50, min_total=80),
-    "gamma": BalancingConfig(max_per_phylum=5, max_per_kingdom=40, min_total=60),
-    "delta": BalancingConfig(max_per_phylum=6, max_per_kingdom=60, min_total=80),
+    "alpha"  : BalancingConfig(max_per_phylum=5, max_per_kingdom=50, min_total=80),
+    "beta"   : BalancingConfig(max_per_phylum=5, max_per_kingdom=50, min_total=80),
+    "gamma"  : BalancingConfig(max_per_phylum=5, max_per_kingdom=40, min_total=60),
+    "delta"  : BalancingConfig(max_per_phylum=6, max_per_kingdom=60, min_total=80),
     "epsilon": BalancingConfig(max_per_phylum=3, max_per_kingdom=15, min_total=20),
-    "zeta": BalancingConfig(max_per_phylum=3, max_per_kingdom=None, min_total=15),
+    "zeta"   : BalancingConfig(max_per_phylum=3, max_per_kingdom=None, min_total=15),
 }
 
 

@@ -1,0 +1,356 @@
+Chemical_ID,Name,Category,Structure_Count,Total_Instances,Avg_per_Structure,MW,Is_DrugBank,DrugBank_ID,Example_PDBs
+GTP,GUANOSINE-5'-TRIPHOSPHATE,Common/Ion/Buffer,704,6309,8.96,0.523,True,DB04137,"6FII, 7YYY, 8UTR, 1TUB, 4UXO"
+MG,MAGNESIUM ION,Common/Ion/Buffer,680,6395,9.4,0.024,False,,"6FII, 7YYY, 1Z5V, 8UTR, 4UXO"
+GDP,GUANOSINE-5'-DIPHOSPHATE,Common/Ion/Buffer,677,5551,8.2,0.443,True,DB04315,"6FII, 7YYY, 8UTR, 1TUB, 4UXO"
+CA,CALCIUM ION,Common/Ion/Buffer,317,817,2.58,0.04,False,,"6FII, 7YYY, 6KPP, 3VOA, 5YLS"
+MES,2-(N-MORPHOLINO)-ETHANESULFONIC ACID,Drug/Lead,264,279,1.06,0.195,True,DB03814,"6FII, 6KPP, 6FJF, 5YLS, 7CNM"
+ACP,PHOSPHOMETHYLPHOSPHONIC ACID ADENYLATE ESTER,Drug/Lead,250,253,1.01,0.505,True,DB03909,"6FII, 6FJF, 5YLS, 7OGN, 7CNM"
+TA1,TAXOL,Drug/Lead,119,255,2.14,0.854,True,DB01229,"8UTU, 9DHZ, 8RHH, 8UTR, 4UXO"
+GOL,GLYCEROL,Common/Ion/Buffer,102,173,1.7,0.092,True,DB09462,"6FII, 6KPP, 5YLS, 5BMV, 7OGN"
+G2P,PHOSPHOMETHYLPHOSPHONIC ACID GUANYLATE ESTER,Common/Ion/Buffer,58,200,3.45,0.521,True,DB03532,"7QUQ, 9C13, 9DUQ, 5N5N, 6WSL"
+ANP,PHOSPHOAMINOPHOSPHONIC ACID-ADENYLATE ESTER,Unclassified,53,85,1.6,0.506,False,,"8UTU, 5HNY, 8UTN, 8RHH, 5HNW"
+ADP,ADENOSINE-5'-DIPHOSPHATE,Drug/Lead,49,125,2.55,0.427,True,DB16833,"4UXR, 2HXH, 8UTR, 5KX5, 7TRG"
+CL,CHLORIDE ION,Common/Ion/Buffer,43,50,1.16,0.035,False,,"7XQY, 6I5C, 7OGN, 7ODN, 6N47"
+SO4,SULFATE ION,Common/Ion/Buffer,39,102,2.62,0.096,True,DB14546,"8BVF, 6XER, 7TTD, 6TIU, 7ODN"
+IMD,IMIDAZOLE,Drug/Lead,30,38,1.27,0.069,True,DB03366,"4O2B, 9IXB, 4YJ2, 7OGN, 6S9E"
+ZN,ZINC ION,Common/Ion/Buffer,27,109,4.04,0.065,False,,"4UXR, 9E2G, 4UXT, 4UXS, 4UXO"
+EDO,"1,2-ETHANEDIOL",Common/Ion/Buffer,25,30,1.2,0.062,False,,"8WMO, 6YD6, 6QTN, 8WMU, 9IXB"
+GSP,5'-GUANOSINE-DIPHOSPHATE-MONOTHIOPHOSPHATE,Drug/Lead,19,49,2.58,0.539,True,DB01864,"3WGN, 2Q1Y, 1Z5V, 6YM9, 7YSQ"
+K,POTASSIUM ION,Common/Ion/Buffer,19,27,1.42,0.039,False,,"7OHL, 6YD6, 2VXY, 6YD1, 7OHK"
+LOC,"N-[(7S)-1,2,3,10-tetramethoxy-9-oxo-6,7-dihydro-5H-benzo[d]heptalen-7-yl]ethanamide",Drug/Lead,17,28,1.65,0.399,True,DB01394,"6XER, 8CLG, 4O2B, 5MIO, 8CLH"
+AF3,ALUMINUM FLUORIDE,Unclassified,16,74,4.62,0.084,False,,"6S9E, 7X0S, 6WWK, 7TRG, 9M1M"
+ATP,ADENOSINE-5'-TRIPHOSPHATE,Drug/Lead,13,55,4.23,0.507,True,DB00171,"8IXB, 8IXD, 7JU4, 8IXE, 3J8Y"
+DMS,DIMETHYL SULFOXIDE,Drug/Lead,9,15,1.67,0.078,True,DB01093,"6FII, 7ZYW, 6FJF, 6XES, 6Y1U"
+VYT,Azo-Combretastatin A4 (trans),Unclassified,8,8,1.0,0.318,False,,"7YYY, 8QL7, 8QL6, 8QL8, 7YYZ"
+PEG,DI(HYDROXYETHYL)ETHER,Common/Ion/Buffer,8,9,1.12,0.106,False,,"8WMO, 6FJF, 7VMK, 8WMU, 4O2B"
+IBL,Azo-Combretastatin A4 (cis),Unclassified,8,8,1.0,0.318,False,,"7YZ6, 8QLA, 8QEA, 8QL4, 8QL9"
+NA,SODIUM ION,Common/Ion/Buffer,7,9,1.29,0.023,False,,"8BVF, 2RHJ, 9IXB, 4XCQ, 5YZ3"
+VLB,"(2ALPHA,2'BETA,3BETA,4ALPHA,5BETA)-VINCALEUKOBLASTINE",Drug/Lead,7,7,1.0,0.811,True,DB00570,"7Z7D, 5J2T, 4EB6, 5BMV, 8CLH"
+EP,EPOTHILONE A,Unclassified,7,11,1.57,0.494,False,,"4I50, 1TVK, 8CLG, 4O4I, 8CLH"
+ALF,TETRAFLUOROALUMINATE ION,Drug/Lead,7,8,1.14,0.103,True,DB04444,"4UXR, 5ND4, 8YY4, 8YY5, 7OHN"
+PO4,PHOSPHATE ION,Common/Ion/Buffer,6,21,3.5,0.095,True,DB14523,"4U39, 6RF2, 6J4V, 5V68, 6EVX"
+POU,Peloruside A,Unclassified,6,8,1.33,0.549,False,,"4O4J, 4O4L, 5KMG, 5SYC, 8CLH"
+PGE,TRIETHYLENE GLYCOL,Common/Ion/Buffer,5,8,1.6,0.15,True,DB02327,"6Y4M, 6GX7, 9F07, 6GWC, 6Y4N"
+MB3,1-methylpyrrolidin-2-one,Drug/Lead,4,4,1.0,0.099,True,DB12521,"5XDT, 6RVP, 6YD5, 6YD6"
+BEF,BERYLLIUM TRIFLUORIDE ION,Unclassified,4,4,1.0,0.066,False,,"6GZE, 7OHH, 7OHL, 7OHK"
+CN2,"2-MERCAPTO-N-[1,2,3,10-TETRAMETHOXY-9-OXO-5,6,7,9-TETRAHYDRO-BENZO[A]HEPTALEN-7-YL]ACETAMIDE",Drug/Lead,4,7,1.75,0.432,True,DB07574,"3DU7, 3EDL, 1Z2B, 1SA0"
+PN6,"(3Z,6Z)-3-benzylidene-6-[(5-tert-butyl-1H-imidazol-4-yl)methylidene]piperazine-2,5-dione",Drug/Lead,4,6,1.5,0.336,True,DB05992,"5C8Y, 6S8K, 5XI5, 6S8L"
+ZPN,"(2Z,4E)-N-[(S)-[(1S,2E,5S,8E,10Z,17S)-3,11-dimethyl-19-methylidene-7,13-dioxo-6,21-dioxabicyclo[15.3.1]henicosa-2,8,10-trien-5-yl](hydroxy)methyl]hexa-2,4-dienamide",Unclassified,3,3,1.0,0.498,False,,"5SYG, 4I4T, 5NG1"
+CIT,CITRIC ACID,Drug/Lead,3,3,1.0,0.192,True,DB04272,"2VXY, 2Q1X, 1RQ2"
+BKF,"(1S,2S,3S,5S,6S,16Z,18Z,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl 2-methylpropanoate",Unclassified,3,3,1.0,0.635,False,,"8CLD, 8CLH, 7E4P"
+GCP,PHOSPHOMETHYLPHOSPHONIC ACID GUANYLATE ESTER,Drug/Lead,3,3,1.0,0.521,True,DB03725,"7OMP, 7OMJ, 7OMQ"
+YGY,Cryptophycin 52,Unclassified,3,25,8.33,0.669,False,,"9C6R, 7LXB, 9C6S"
+EPB,"7,11-DIHYDROXY-8,8,10,12,16-PENTAMETHYL-3-[1-METHYL-2-(2-METHYL-THIAZOL-4-YL)VINYL]-4,17-DIOXABICYCLO[14.1.0]HEPTADECANE-5,9-DIONE",Drug/Lead,3,4,1.33,0.508,True,DB03010,"6S8M, 9PND, 7DAE"
+GLU,GLUTAMIC ACID,Drug/Lead,3,3,1.0,0.147,True,DB00142,"8V4M, 8V4K, 8V4L"
+TAJ,taccalonolide AJ,Unclassified,3,7,2.33,0.679,False,,"5EZY, 7DN0, 7DMZ"
+TXL,TAXOTERE,Drug/Lead,2,2,1.0,0.808,True,DB01248,"1TUB, 1IA0"
+V95,methyl N-(6-benzoyl-1H-benzimidazol-2-yl)carbamate,Drug/Lead,2,3,1.5,0.295,True,DB00643,"7ODN, 7OGN"
+X3H,PIRONETIN,Unclassified,2,2,1.0,0.326,False,,"5FNV, 5LA6"
+8WB,"2-methoxy-5-(2,3,4-trimethoxyphenyl)cyclohepta-2,4,6-trien-1-one",Unclassified,2,4,2.0,0.302,False,,"5NFZ, 5NG1"
+MN,MANGANESE (II) ION,Unclassified,2,2,1.0,0.055,False,,"7OHL, 7OMQ"
+I8R,"2-methoxy-5-[2-(5,6,7-trimethoxy-1,3-benzothiazol-2-yl)ethyl]phenol",Unclassified,2,2,1.0,0.375,False,,"7Z01, 8CLA"
+4I2,"N-(4-{2-[3-(trifluoromethyl)anilino]-1,3-thiazol-4-yl}phenyl)acetamide",Unclassified,2,2,1.0,0.377,False,,"5SB7, 7Z7D"
+LLM,Laulimalide,Unclassified,2,2,1.0,0.515,False,,"4O4I, 4O4H"
+ZI6,"3-[[5-bromanyl-4-[4-(trifluoromethyl)phenyl]-1,3-oxazol-2-yl]methoxy]-2,6-bis(fluoranyl)benzamide",Unclassified,2,2,1.0,0.477,False,,"5XDU, 5XDV"
+MZK,"6-[4-(trifluoromethyl)phenyl]-3,4-dihydro-1~{H}-quinolin-2-one",Unclassified,2,2,1.0,0.291,False,,"6TA3, 6TIW"
+O9B,(2~{R})-1-methylpiperidine-2-carboxylic acid,Unclassified,2,2,1.0,0.143,False,,"6Y4M, 6Y4N"
+VAL,VALINE,Drug/Lead,2,2,1.0,0.117,True,DB00161,"6Y4M, 6Y4N"
+4HC,4-HYDROXY-2H-CHROMEN-2-ONE,Drug/Lead,2,2,1.0,0.162,True,DB03410,"6Y1V, 6Y1U"
+W4Q,"1-(2-chloranyl-3,5-dimethoxy-phenyl)-2-(4-fluorophenyl)-3-methyl-6-phenyl-pyridin-4-one",Unclassified,2,2,1.0,0.45,False,,"9KBL, 9KBN"
+A1L2T,"~{N}4-(1,3-benzodioxol-5-ylmethyl)-6-(1~{H}-indol-4-yl)pyrimidine-2,4-diamine",Unclassified,2,5,2.5,0.359,False,,"9IMO, 9IM5"
+ACO,ACETYL COENZYME *A,Unclassified,2,2,1.0,0.81,False,,"8YAR, 8YAL"
+6K9,"(1S,3S,6S,9S,12S,14R,16R,18S,20R,21R,22S,26R,29S,31R,32S,33R,35R,36S)-20-[(2S)-3-amino-2-hydroxypropyl]-21-methoxy-14-methyl-8,15-dimethylidene-2,19,30,34,37,39,40,41-octaoxanonacyclo[24.9.2.1~3,32~.1~3,33~.1~6,9~.1~12,16~.0~18,22~.0~29,36~.0~31,35~]hentetracontan-24-one (non-preferred name)",Drug/Lead,2,3,1.5,0.73,True,DB08871,"7DP8, 5JH7"
+G2X,"6-[2,6-bis(fluoranyl)-4-[3-(methylamino)propoxy]phenyl]-5-chloranyl-N-[(2S)-1,1,1-tris(fluoranyl)propan-2-yl]-[1,2,4]triazolo[1,5-a]pyrimidin-7-amine",Drug/Lead,2,3,1.5,0.465,True,DB12533,"7CLD, 7DP8"
+PG4,TETRAETHYLENE GLYCOL,Unclassified,2,2,1.0,0.194,False,,"6FKJ, 2RHJ"
+9PC,"3-[(6-chloro[1,3]thiazolo[5,4-b]pyridin-2-yl)methoxy]-2,6-difluorobenzamide",Unclassified,2,2,1.0,0.356,False,,"3VOB, 4DXD"
+4Q5,"N-methyl-L-valyl-N-[(3R,4S,5S)-1-{(2S)-2-[(1R,2R)-3-{[(1S,2R)-1-hydroxy-1-phenylpropan-2-yl]amino}-1-methoxy-2-methyl-3-oxopropyl]pyrrolidin-1-yl}-3-methoxy-5-methyl-1-oxoheptan-4-yl]-N-methyl-L-valinamide",Unclassified,2,3,1.5,0.718,False,,"5IYZ, 4ZHQ"
+HOS,Phomopsin A,Unclassified,2,4,2.0,0.789,False,,"3DU7, 7CNO"
+YNP,Cryptophycin 1,Unclassified,2,17,8.5,0.655,False,,"7M18, 7M20"
+SG9,Spongistatin-1,Unclassified,1,1,1.0,1.224,False,,6FII
+Y50,"E-3-(3-azanyl-4-methoxy-phenyl)-1-(5-methoxy-2,2-dimethyl-chromen-8-yl)prop-2-en-1-one",Unclassified,1,2,2.0,0.365,False,,5YLS
+DO6,"(6-methoxy-2-methyl-7-oxidanyl-1-benzofuran-3-yl)-(3,4,5-trimethoxyphenyl)methanone",Unclassified,1,2,2.0,0.372,False,,6KPP
+DKE,FcMaytansine,Unclassified,1,1,1.0,1.133,False,,6FJF
+G70,"(2~{S},4~{S})-4-[[2-[(1~{R},3~{R})-1-acetyloxy-4-methyl-3-[[(2~{S},3~{S})-3-methyl-2-[[(2~{R})-1-methylpiperidin-2-yl]carbonylamino]pentanoyl]amino]pentyl]-1,3-thiazol-4-yl]carbonylamino]-5-cyclohexyl-2-methyl-pentanoic acid",Unclassified,1,2,2.0,0.72,False,,7CNM
+Y5J,"4-(2-chlorofuro[3,2-d]pyrimidin-4-yl)-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.331,False,,6X1C
+KUM,"[2-(1H-indol-3-yl)-1H-imidazol-5-yl](3,4,5-trimethoxyphenyl)methanone",Drug/Lead,1,2,2.0,0.377,True,DB16462,6O61
+A1ECQ,"(5~{S},5~{a}~{S},8~{a}~{R},9~{R})-5-(1~{H}-indazol-5-ylamino)-9-(3,4,5-trimethoxyphenyl)-5~{a},6,8~{a},9-tetrahydro-5~{H}-[2]benzofuro[6,5-f][1,3]benzodioxol-8-one",Unclassified,1,1,1.0,0.53,False,,9IXB
+OMW,"2,6-bis(fluoranyl)-3-[[3-(trifluoromethyl)phenyl]methoxy]benzamide",Unclassified,1,1,1.0,0.331,False,,6YD6
+D3L,(5-methoxy-1H-indol-2-yl)-phenyl-methanone,Unclassified,1,2,2.0,0.251,False,,6K9V
+6YK,"(2~{S},4~{R})-4-[[2-[(1~{R},3~{R})-1-acetyloxy-3-[[(2~{S},3~{S})-2-[[(2~{R})-1,2-dimethylpyrrolidin-2-yl]carbonylamino]-3-methyl-pentanoyl]-methyl-amino]-4-methyl-pentyl]-1,3-thiazol-4-yl]carbonylamino]-5-(4-aminophenyl)-2-methyl-pentanoic acid",Unclassified,1,2,2.0,0.743,False,,5KX5
+QRN,"5-[2-(1,3-benzothiazol-2-yl)ethyl]-2-methoxy-phenol",Unclassified,1,1,1.0,0.285,False,,6ZWB
+8WE,"(2~{Z},4~{E})-~{N}-[(~{S})-oxidanyl-[(1~{S},2~{E},5~{S},11~{R},17~{S},19~{R})-3,11,19-trimethyl-7,13-bis(oxidanylidene)-6,21-dioxabicyclo[15.3.1]henicos-2-en-5-yl]methyl]hexa-2,4-dienamide",Unclassified,1,1,1.0,0.504,False,,5NG1
+OLQ,"2,6-difluoro-3-methoxybenzamide",Unclassified,1,1,1.0,0.187,False,,6YD1
+QW9,"[2-(4-methyl-1H-indol-3-yl)-1H-imidazol-5-yl](3,4,5-trimethoxyphenyl)methanone",Unclassified,1,2,2.0,0.391,False,,6O5N
+FUO,2-[5-[4-[2-[4-(2-cyclopropylethanoyl)piperazin-1-yl]ethoxy]phenyl]pyridin-2-yl]-N-(phenylmethyl)ethanamide,Unclassified,1,2,2.0,0.513,False,,7CBZ
+918,5-(2-morpholin-4-yl-6-pyrrolidin-1-yl-pyrimidin-4-yl)-4-(trifluoromethyl)pyridin-2-amine,Unclassified,1,2,2.0,0.394,False,,5M8G
+A1EE1,"(4~{R})-5-(4-hydroxyphenyl)-3-(4-methylphenyl)-4-phenyl-2,4-dihydropyrrolo[3,4-c]pyrazol-6-one",Unclassified,1,1,1.0,0.381,False,,9K7E
+BG0,"(4R)-2,7,8-triamino-4-(3-bromo-4,5-dimethoxyphenyl)-4H-1-benzopyran-3-carbonitrile",Drug/Lead,1,2,2.0,0.417,True,DB12925,6JCJ
+K2N,"ethyl [(2S)-5-amino-2-methyl-3-phenyl-1,2-dihydropyrido[3,4-b]pyrazin-7-yl]carbamate",Unclassified,1,2,2.0,0.325,False,,3N2K
+Y5L,"4-(2-chloro-6,7-dihydro-5H-cyclopenta[d]pyrimidin-4-yl)-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.331,False,,6X1E
+MXV,"2-(1-methylindol-4-yl)-4-(3,4,5-trimethoxyphenyl)-1~{H}-imidazo[4,5-c]pyridine",Unclassified,1,1,1.0,0.414,False,,8HUH
+A1D68,"2-chloranyl-~{N}-(4-methoxyphenyl)-~{N}-methyl-thieno[2,3-d]pyrimidin-4-amine",Unclassified,1,2,2.0,0.306,False,,8YTX
+SD5,"5-[2,6-di(morpholin-4-yl)pyrimidin-4-yl]-4-(trifluoromethyl)pyridin-2-amine",Drug/Lead,1,1,1.0,0.41,True,DB11666,5M7E
+V1O,"5-[[4-(2-bromoethyl)-3,5-dimethoxy-phenyl]diazenyl]-2-methoxy-phenol",Unclassified,1,1,1.0,0.395,False,,8CLF
+9N5,(2~{R})-2-(3-ethynylquinolin-6-yl)oxy-2-methoxy-~{N}-[(1~{E})-1-methoxyimino-2-methyl-propan-2-yl]ethanamide,Unclassified,1,2,2.0,0.355,False,,5O7A
+QRQ,"2-[2-(3,4,5-trimethoxyphenyl)ethyl]-1,3-benzothiazole",Unclassified,1,1,1.0,0.329,False,,6ZWC
+87U,"(3Z,6Z)-3-[(4-tert-butyl-1H-imidazol-5-yl)methylidene]-6-[[3-(4-fluorophenyl)carbonylphenyl]methylidene]piperazine-2,5-dione",Unclassified,1,1,1.0,0.458,False,,5XHC
+E3Y,"2-chloro-4-(6-methoxy-3,4-dihydroquinolin-1(2H)-yl)pyrido[2,3-d]pyrimidine",Unclassified,1,2,2.0,0.327,False,,6BR1
+IAZ,~{N}-(furan-2-ylmethyl)-6-phenoxy-1~{H}-benzimidazol-2-amine,Unclassified,1,1,1.0,0.305,False,,7Z2N
+GX4,cyclopropyl-[4-(4-fluorophenyl)piperazin-1-yl]methanone,Unclassified,1,1,1.0,0.248,False,,5S4U
+R3T,"[(1~{S},2~{S},3~{R},4~{S},7~{R},9~{S},10~{S},12~{R},15~{S})-4-acetyloxy-15-[(2~{R},3~{S})-3-(2-bromanylethanoylamino)-2-oxidanyl-3-phenyl-propanoyl]oxy-10,14,16,16-tetramethyl-1,9,12-tris(oxidanyl)-11-oxidanylidene-6-oxatetracyclo[11.3.1.0^{3,10}.0^{4,7}]heptadec-13-en-2-yl] benzoate",Unclassified,1,2,2.0,0.829,False,,8BDG
+LON,"(7S)-1,2,3,10-tetramethoxy-7-(methylamino)-6,7-dihydro-5H-benzo[a]heptalen-9-one",Drug/Lead,1,2,2.0,0.371,True,DB13318,5XKE
+JUL,"7-methoxy-4-[2-(morpholin-4-yl)-6,7-dihydro-5H-cyclopenta[d]pyrimidin-4-yl]-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.381,False,,7TTD
+NW7,"3-ethyl-5-methyl-N-(5-methyl-1,2-oxazol-3-yl)-1,2-oxazole-4-carboxamide",Unclassified,1,1,1.0,0.235,False,,5S4R
+4ED,"5,6-dimethyl-2-[(E)-2-(pyridin-3-yl)ethenyl]-1,3-benzothiazole",Unclassified,1,2,2.0,0.266,False,,4YJ2
+36L,"(1R,2R,3E,5R,7R,8S,10S,13E,16R)-8-hydroxy-10-[(2S,3R,4E,6E,8E)-3-methoxy-4,8-dimethyl-9-(2-methyl-1,3-oxazol-4-yl)nona-4,6,8-trien-2-yl]-2,7-dimethyl-6,11,19-trioxatricyclo[14.3.1.0~5,7~]icosa-3,13-diene-12,18-dione",Unclassified,1,1,1.0,0.61,False,,4TUY
+ZI7,"2,6-bis(fluoranyl)-3-[[6-(trifluoromethyl)-[1,3]thiazolo[5,4-b]pyridin-2-yl]methoxy]benzamide",Unclassified,1,1,1.0,0.389,False,,5XDT
+GX5,"2-chloranyl-N-(4-methoxyphenyl)-N-methyl-pyrido[3,2-d]pyrimidin-4-amine",Unclassified,1,2,2.0,0.301,False,,7XQY
+UVA,N-methyl-2-(methylsulfonyl)aniline,Unclassified,1,2,2.0,0.185,False,,5S4N
+A1ISB,"(1S,2R,3S,5S,6S,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl 4-{2-[4-({2-[2-({2-[(3R)-2,6-dioxopiperidin-3-yl]-1,3-dioxo-2,3-dihydro-1H-isoindol-4-yl}amino)ethoxy]ethoxy}methyl)-1H-1,2,3-triazol-1-yl]ethyl}benzoate",Unclassified,1,1,1.0,1.138,False,,9H34
+CVT,"3,4,5-trimethoxy-~{N}-[(~{E})-naphthalen-1-ylmethylideneamino]benzamide",Unclassified,1,1,1.0,0.364,False,,6F7C
+7LZ,"(3~{Z},5~{E},7~{R},8~{S},10~{S},11~{Z},13~{S},14~{R},15~{S},17~{S},20~{R},21~{S},22~{S})-22-[(2~{S},3~{Z})-hexa-3,5-dien-2-yl]-7,13,15,17,21-pentamethyl-8,10,14,20-tetrakis(oxidanyl)-1-oxacyclodocosa-3,5,11-trien-2-one",Unclassified,1,2,2.0,0.533,False,,5MF4
+GXN,"[2-[(3-bromanyl-4,5-dimethoxy-phenyl)methyl]-7-methoxy-3,4-dihydro-1~{H}-isoquinolin-6-yl] sulfamate",Unclassified,1,2,2.0,0.487,False,,6HX8
+DN0,2-[5-[4-(2-morpholin-4-ylethoxy)phenyl]pyridin-2-yl]-~{N}-(phenylmethyl)ethanamide,Drug/Lead,1,2,2.0,0.432,True,DB06137,6KNZ
+A1ISC,"(1S,2R,3S,5S,6S,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl 5-{1-[6-({(4R)-2-[(3R)-2,6-dioxopiperidin-3-yl]-1-oxo-2,4-dihydro-1H-isoindol-4-yl}amino)-6-oxohexyl]-1H-1,2,3-triazol-4-yl}pentanoate",Unclassified,1,1,1.0,1.072,False,,9H33
+R42,"[(1~{S},2~{S},3~{R},4~{S},7~{R},9~{S},10~{S},12~{R},15~{S})-4-acetyloxy-15-[(2~{R},3~{S})-3-[(4-methoxy-2-methylidene-4-oxidanylidene-butanoyl)amino]-2-oxidanyl-3-phenyl-propanoyl]oxy-10,14,16,16-tetramethyl-1,9,12-tris(oxidanyl)-11-oxidanylidene-6-oxatetracyclo[11.3.1.0^{3,10}.0^{4,7}]heptadec-13-en-2-yl] benzoate",Unclassified,1,2,2.0,0.834,False,,8BDF
+K0M,"3-methyl-N-(1-methyl-1H-pyrazol-3-yl)-1,2-oxazole-5-carboxamide",Unclassified,1,3,3.0,0.206,False,,5S4S
+JVR,"4-[2-(cyclopropylamino)-6,7-dihydro-5H-cyclopenta[d]pyrimidin-4-yl]-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.351,False,,7TTE
+A1IHR,cryptophycin-uD[Dab],Unclassified,1,1,1.0,0.655,False,,9FYD
+MLT,D-MALATE,Drug/Lead,1,1,1.0,0.134,True,DB03499,8V3O
+A1BMG,"[(4M)-4-(1H-indol-4-yl)-1H-imidazol-2-yl](3,4,5-trimethoxyphenyl)methanone",Unclassified,1,2,2.0,0.377,False,,9MLF
+K1G,"N,1-dimethyl-N-(propan-2-yl)-1H-pyrazolo[3,4-d]pyrimidin-4-amine",Unclassified,1,1,1.0,0.205,False,,5S4T
+WN1,N-(2-fluorophenyl)-3-methoxybenzamide,Unclassified,1,1,1.0,0.245,False,,5S4Z
+KB4,"4-(2-chloropyrido[3,2-d]pyrimidin-4-yl)-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.342,False,,6N47
+TU3,"[6-(3-hydroxy-4-methylphenyl)pyrazin-2-yl](3,4,5-trimethoxyphenyl)methanone",Unclassified,1,2,2.0,0.38,False,,6XES
+A1ISD,"(1S,2R,3S,5S,6S,16E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16-tetraen-6-yl 4-(2-{4-[4-({2-[(3S)-2,6-dioxopiperidin-3-yl]-1-oxo-2,3-dihydro-1H-isoindol-4-yl}amino)-4-oxobutyl]-1H-1,2,3-triazol-1-yl}ethyl)benzoate",Unclassified,1,1,1.0,1.094,False,,9H32
+TU2,"[3-fluoro-6-(3-hydroxy-4-methylphenyl)pyridin-2-yl](3,4,5-trimethoxyphenyl)methanone",Unclassified,1,2,2.0,0.397,False,,6XET
+O0J,"N-[4-(2-amino-1,3-thiazol-4-yl)phenyl]acetamide",Unclassified,1,2,2.0,0.233,False,,5S4O
+71P,"~{N}-[(7~{R})-1,2,3-trimethoxy-10-methylsulfanyl-9-oxidanylidene-6,7-dihydro-5~{H}-benzo[a]heptalen-7-yl]ethanamide",Unclassified,1,1,1.0,0.416,False,,5LP6
+GXI,2-chloranyl-7-fluoranyl-N-(4-methoxyphenyl)-N-methyl-quinazolin-4-amine,Unclassified,1,2,2.0,0.318,False,,7XQX
+4EE,"6-(4-ethoxyphenyl)-3-(2-methoxyphenyl)-7H-[1,2,4]triazolo[3,4-b][1,3,4]thiadiazine",Unclassified,1,2,2.0,0.366,False,,4YJ3
+A1D6D,"4-(2-chloranyl-6-fluoranyl-quinazolin-4-yl)-7-methoxy-1,3-dihydroquinoxalin-2-one",Unclassified,1,2,2.0,0.359,False,,8YEM
+JHH,Cyclostreptin,Unclassified,1,2,2.0,0.403,False,,6QTN
+X0M,"N-[(3S)-1,2,3,4-tetrahydroquinolin-3-yl]acetamide",Unclassified,1,1,1.0,0.19,False,,5S5L
+T13,"2,3,4,5,6-pentafluoro-N-(3-fluoro-4-methoxyphenyl)benzenesulfonamide",Drug/Lead,1,2,2.0,0.371,True,DB16103,3HKE
+O9H,"[(1~{R},3~{R})-1-acetyloxy-1-[4-methanoyl-5-(2-phenylmethoxyethyl)-2,3-dihydro-1,3-thiazol-2-yl]-4-methyl-pentan-3-yl]-methyl-azanium",Unclassified,1,1,1.0,0.422,False,,6Y4M
+OH5,"(2~{S},4~{R})-4-azanyl-2-methyl-5-phenyl-pentanoic acid",Unclassified,1,1,1.0,0.207,False,,6Y4M
+TIV,"(3R,4R)-3-(5,6-dihydro-4H-pyrrolo[3,2,1-ij]quinolin-1-yl)-4-(1H-indol-3-yl)pyrrolidine-2,5-dione",Drug/Lead,1,2,2.0,0.369,True,DB12200,5CB4
+GZX,"(1~{S},3~{S},7~{S},10~{R},11~{S},12~{S},16~{R})-8,8,10,12,16-pentamethyl-3-[(~{E})-1-(2-methyl-1,3-thiazol-4-yl)prop-1-en-2-yl]-7,11-bis(oxidanyl)-17-oxa-4-azabicyclo[14.1.0]heptadecane-5,9-dione",Drug/Lead,1,1,1.0,0.507,True,DB04845,7DAF
+S6V,1-[2-(2-oxidanylidenepyrrolidin-1-yl)ethyl]-3-phenyl-urea,Unclassified,1,1,1.0,0.247,False,,5S5K
+K2G,5-chloro-2-(propan-2-yl)pyrimidine-4-carboxamide,Unclassified,1,1,1.0,0.2,False,,5S5B
+3WY,"2-methyl-L-prolyl-N-[(3R,4S,5S)-1-{(2S)-2-[(1R,2R)-3-{[(1S)-1-carboxy-2-phenylethyl]amino}-1-methoxy-2-methyl-3-oxopropyl]pyrrolidin-1-yl}-3-methoxy-5-methyl-1-oxoheptan-4-yl]-N-methyl-L-valinamide",Unclassified,1,2,2.0,0.73,False,,4X20
+UQJ,3-(difluoromethyl)-1-methyl-1H-pyrazole-4-carboxamide,Unclassified,1,1,1.0,0.175,False,,5S5E
+A1IM9,"(2Z,4E)-N-[(S)-[(1R,2E,5S,8E,10Z,17S)-3,11-dimethyl-7,13-bis(oxidanylidene)-6,21-dioxa-19-thiabicyclo[15.3.1]henicosa-2,8,10-trien-5-yl]-oxidanyl-methyl]hexa-2,4-dienamide",Unclassified,1,2,2.0,0.504,False,,9GMY
+STV,"~{N}-(1,3-benzodioxol-5-ylmethyl)ethanesulfonamide",Unclassified,1,2,2.0,0.243,False,,5S5W
+A1D55,"(5~{S},5~{a}~{S},8~{a}~{R},9~{R})-5-(quinolin-6-ylamino)-9-(3,4,5-trimethoxyphenyl)-5~{a},6,8~{a},9-tetrahydro-5~{H}-[2]benzofuro[6,5-f][1,3]benzodioxol-8-one",Unclassified,1,1,1.0,0.541,False,,8WMU
+BKX,"(1S,2R,3R,5R,6R,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl (2S)-2-{methyl[3-(methyldisulfanyl)propanoyl]amino}propanoate (non-preferred name)",Unclassified,1,1,1.0,0.784,False,,7E4Q
+TVP,"(2S)-1-ACETYL-2-METHYL-1,2,3,4-TETRAHYDROQUINOLINE",Unclassified,1,2,2.0,0.189,False,,5S64
+IC1,"3-[(2,4,6-TRIMETHOXY-PHENYL)-METHYLENE]-INDOLIN-2-ONE",Drug/Lead,1,2,2.0,0.311,True,DB03083,7DB9
+A1IBN,"5-[(~{Z})-(3,5-diethyl-4-methoxy-phenyl)diazenyl]-2-methyl-phenol",Unclassified,1,1,1.0,0.298,False,,9F8G
+VVG,N-(2-fluorophenyl)ethanesulfonamide,Unclassified,1,1,1.0,0.203,False,,5S5P
+USI,"~{N}4-(1~{H}-indol-5-ylmethyl)-6-(3-methoxyphenyl)pyrimidine-2,4-diamine",Unclassified,1,2,2.0,0.345,False,,8JJB
+PIN,"PIPERAZINE-N,N'-BIS(2-ETHANESULFONIC ACID)",Unclassified,1,1,1.0,0.302,False,,8YAJ
+NV7,1-[(furan-2-yl)methyl]-4-(methylsulfonyl)piperazine,Unclassified,1,1,1.0,0.244,False,,5S63
+KG0,"(4R)-N-[(1R)-1-[4-(cyclopropylmethoxy)-6-oxidanylidene-pyran-2-yl]butyl]-4-methyl-2-[(E)-C-methyl-N-oxidanyl-carbonimidoyl]-5H-1,3-thiazole-4-carboxamide",Unclassified,1,2,2.0,0.422,False,,7ZYW
+7Q7,"2-(1H-indol-4-yl)-4-(3,4,5-trimethoxyphenyl)-1H-imidazo[4,5-c]pyridine",Unclassified,1,2,2.0,0.4,False,,5H7O
+WZP,2-methyl-1-[4-(propan-2-yl)piperazin-1-yl]propan-1-one,Unclassified,1,2,2.0,0.198,False,,5S55
+W0A,N-[(1H-benzimidazol-2-yl)methyl]butanamide,Unclassified,1,1,1.0,0.217,False,,5S5Y
+W1P,"5-methyl-2-phenyl-2,4-dihydro-3H-pyrazol-3-one",Drug/Lead,1,1,1.0,0.174,True,DB12243,5S52
+NZJ,1-(3-methylbenzene-1-carbonyl)piperidine-4-carboxamide,Unclassified,1,2,2.0,0.246,False,,5S5D
+K0G,N-phenyl-N'-pyridin-3-ylurea,Unclassified,1,2,2.0,0.213,False,,5S5C
+W4F,"2-methoxy-5-[2-(3,4,5-trimethoxyphenyl)ethyl]phenol",Unclassified,1,2,2.0,0.318,False,,8WD0
+PO7,"(6Z)-3-[[2,5-bis(fluoranyl)phenyl]methylidene]-6-[(4-tert-butyl-1H-imidazol-5-yl)methylidene]piperazine-2,5-dione",Unclassified,1,2,2.0,0.372,False,,5XI7
+H1O,"2-(1-methylindol-4-yl)-7-(3,4,5-trimethoxyphenyl)-1~{H}-benzimidazole",Unclassified,1,1,1.0,0.413,False,,7DBA
+EZW,"5-(quinolin-5-yl)naphtho[2,3-b]pyrrolo[1,2-d][1,4]oxazepin-4-yl acetate",Unclassified,1,2,2.0,0.418,False,,6GJ4
+N16,"(3Z,5S)-5-benzyl-3-[1-(phenylamino)ethylidene]pyrrolidine-2,4-dione",Unclassified,1,2,2.0,0.306,False,,3HKD
+S40,3-[(4-cyclopropylphenyl)sulfonylamino]-4-methyl-N-(pyridin-3-ylmethyl)benzamide,Unclassified,1,2,2.0,0.422,False,,6LS4
+I8N,"6-methyl-2-[2-(3,4,5-trimethoxyphenyl)ethyl]-1,3-benzothiazole",Unclassified,1,1,1.0,0.343,False,,7Z02
+WKY,N-(3-methylpyridin-4-yl)acetamide,Unclassified,1,1,1.0,0.15,False,,5S5J
+E70,N-{2-[(4-hydroxyphenyl)amino]pyridin-3-yl}-4-methoxybenzenesulfonamide,Drug/Lead,1,2,2.0,0.371,True,DB12254,3HKC
+WIW,"(5~{S},5~{a}~{R},8~{a}~{R},9~{R})-5-pyrimidin-2-ylsulfanyl-9-(3,4,5-trimethoxyphenyl)-5~{a},6,8~{a},9-tetrahydro-5~{H}-[2]benzofuro[5,6-f][1,3]benzodioxol-8-one",Unclassified,1,1,1.0,0.509,False,,8WMO
+X0S,2-chloro-N-methylbenzene-1-sulfonamide,Unclassified,1,2,2.0,0.206,False,,5S5M
+E9Y,"1-(3,6-dimethyl[1,2]oxazolo[5,4-d]pyrimidin-4-yl)-6-methoxy-1,2,3,4-tetrahydroquinoline",Unclassified,1,2,2.0,0.31,False,,6BS2
+ERX,"2-(4-methylphenyl)-7-(3,4,5-trimethoxyphenyl)pyrazolo[1,5-a]pyrimidine",Unclassified,1,1,1.0,0.375,False,,6LSM
+JVI,"4-[2-(ethylamino)-6,7-dihydro-5H-cyclopenta[d]pyrimidin-4-yl]-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.339,False,,8DIQ
+KLC,"(3~{S},4~{R},8~{S},10~{S},12~{S},14~{S})-14-[(~{Z},4~{R})-4-(hydroxymethyl)hex-2-en-2-yl]-4,12-dimethoxy-9,9-dimethyl-3,8,10-tris(oxidanyl)-1-oxacyclotetradecan-2-one",Unclassified,1,1,1.0,0.461,False,,8A0L
+BKU,"(1S,2S,3S,5R,6S,16E,18E,20S,21R)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl (2S)-2-{methyl[3-methyl-3-(methyldisulfanyl)butanoyl]amino}propanoate (non-preferred name)",Unclassified,1,1,1.0,0.812,False,,7E4Y
+WZM,6-[cyclobutyl(methyl)amino]pyridazine-3-carboxamide,Unclassified,1,1,1.0,0.206,False,,5S53
+FWH,9-methyl-3-[1-(2-methylquinolin-4-yl)ethenyl]carbazole,Unclassified,1,2,2.0,0.348,False,,6H9B
+SOZ,"5-fluoranyl-2-(6-fluoranyl-2-methyl-benzimidazol-1-yl)-~{N}4-[4-(trifluoromethyl)phenyl]pyrimidine-4,6-diamine",Drug/Lead,1,1,1.0,0.42,True,DB18080,8C0F
+S9S,~{N}-[2-(4-fluorophenyl)ethyl]methanesulfonamide,Unclassified,1,1,1.0,0.217,False,,5S5X
+WLS,1-(pyridin-4-yl)-N-[(thiophen-2-yl)methyl]methanamine,Unclassified,1,1,1.0,0.204,False,,5S54
+3WD,"2-methyl-L-alanyl-N-[(3R,4S,5S)-3-methoxy-1-{(2S)-2-[(1R,2R)-1-methoxy-2-methyl-3-oxo-3-{[(1S)-2-phenyl-1-(1,3-thiazol-2-yl)ethyl]amino}propyl]pyrrolidin-1-yl}-5-methyl-1-oxoheptan-4-yl]-N-methyl-L-valinamide",Unclassified,1,2,2.0,0.743,False,,4X1I
+9V5,4-chloranyl-2-nitro-1-(phenylsulfonyl)benzene,Unclassified,1,1,1.0,0.298,False,,5OGC
+HR5,"~{N}-(cyclobutylmethyl)-1,5-dimethyl-pyrazole-4-carboxamide",Unclassified,1,1,1.0,0.207,False,,5S5Q
+UPO,"4-(6,7-dimethoxy-3,4-dihydro-1~{H}-isoquinolin-2-yl)-6-(3-methoxyphenyl)pyrimidin-2-amine",Unclassified,1,1,1.0,0.392,False,,8JJC
+WJ7,"2-bromo-4-fluoro-N,N-dimethylbenzamide",Unclassified,1,1,1.0,0.246,False,,5S62
+HR8,5-chloranyl-2-methoxy-~{N}-(2-methylpropyl)benzamide,Unclassified,1,1,1.0,0.242,False,,5S5V
+X1J,"1-(5-amino-1,3-dihydro-2H-isoindol-2-yl)ethan-1-one",Unclassified,1,1,1.0,0.176,False,,5S65
+XQ4,"(1S,2R,3S,5S,6S,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl (2S)-2-{methyl[3-(methylamino)propanoyl]amino}propanoate (non-preferred name)",Unclassified,1,1,1.0,0.735,False,,7L05
+A1D7A,"4-(2-chloranylthieno[3,2-d]pyrimidin-4-yl)-7-methoxy-1,3-dihydroquinoxalin-2-one",Unclassified,1,2,2.0,0.347,False,,8YU9
+ZI9,"3-[(6-ethynyl-[1,3]thiazolo[5,4-b]pyridin-2-yl)methoxy]-2,6-bis(fluoranyl)benzamide",Unclassified,1,1,1.0,0.345,False,,8HTB
+PWC,"[(1~{S},2~{R},3~{S},5~{S},6~{S},16~{E},18~{E},20~{R},21~{S})-11-chloranyl-12,20-dimethoxy-2,5,9,16-tetramethyl-21-oxidanyl-8,23-bis(oxidanylidene)-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1^{10,14}.0^{3,5}]hexacosa-10(26),11,13,16,18-pentaen-6-yl] 4-[2-(2-azanylhydrazinyl)ethyl]benzoate",Unclassified,1,1,1.0,0.738,False,,8B7C
+96C,"4-(4-ethoxyphenyl)-1-methyl-3-(3,4,5-trimethoxyphenyl)-1H-pyrazole",Unclassified,1,2,2.0,0.368,False,,5Z4U
+7PU,N-[3-[[6-[[3-[bis(fluoranyl)methyl]phenyl]amino]pyrimidin-4-yl]amino]phenyl]cyclopropanecarboxamide,Unclassified,1,1,1.0,0.395,False,,7VMJ
+AF6,N-benzyl-9H-beta-carbolin-3-amine,Unclassified,1,2,2.0,0.273,False,,7CE6
+DLW,(5~{S})-2-[(~{E})-~{N}-(2-ethoxyphenyl)-~{C}-methyl-carbonimidoyl]-3-oxidanyl-5-phenyl-cyclohex-2-en-1-one,Unclassified,1,2,2.0,0.349,False,,6FKJ
+5IX,"(1S,2R,3S,5S,6S,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl phenylacetate",Unclassified,1,1,1.0,0.683,False,,5SB9
+8Z8,"5-chloranyl-7-[(1~{R},5~{S})-3-methoxy-8-azabicyclo[3.2.1]octan-8-yl]-6-[2,4,6-tris(fluoranyl)phenyl]-[1,2,4]triazolo[1,5-a]pyrimidine",Unclassified,1,1,1.0,0.424,False,,5NJH
+A1H01,"(4-fluoranyl-2-methyl-1~{H}-indol-5-yl) 3,4,5-trimethoxybenzenesulfonate",Unclassified,1,2,2.0,0.395,False,,8RIV
+AEX,N-butyl-9H-beta-carbolin-3-amine,Unclassified,1,2,2.0,0.239,False,,7CE8
+PX0,"(~{Z})-11-[[(1~{R},2~{R},3~{S},5~{S},6~{S},16~{E},18~{E},20~{R},21~{S})-11-chloranyl-12,20-dimethoxy-2,5,9,16-tetramethyl-21-oxidanyl-8,23-bis(oxidanylidene)-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1^{10,14}.0^{3,5}]hexacosa-10(26),11,13,16,18-pentaen-6-yl]oxy]-11-oxidanylidene-undec-2-enoic acid",Unclassified,1,1,1.0,0.761,False,,8B7B
+5IJ,"(1S,2R,3S,5S,6S,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl acetate",Unclassified,1,1,1.0,0.607,False,,5SBA
+GP2,PHOSPHOMETHYLPHOSPHONIC ACID GUANOSYL ESTER,Drug/Lead,1,1,1.0,0.441,True,DB03486,7OJZ
+A1H00,"(2-methyl-1~{H}-indol-5-yl) 3,4,5-trimethoxybenzenesulfonate",Unclassified,1,2,2.0,0.377,False,,8RIW
+4FK,"N-{4-[2-(4-fluoroanilino)-1,3-thiazol-4-yl]phenyl}acetamide",Unclassified,1,1,1.0,0.327,False,,5SB6
+M5U,"dimethyl 2,2'-((12Z,122Z,4S,6Z,8E,10E,15S,17Z,19E,21E)-2,13-dioxo-3,14-dioxa-1(4,2),12(2,4)-dioxazolacyclodocosaphane-6,8,10,17,19,21-hexaene-4,15-diyl)(2S,2'S,3S,3'S,4E,4'E)-bis(3-hydroxyhex-4-enoate)",Unclassified,1,1,1.0,0.719,False,,8AHM
+POD,"9-HYDROXY-5-(3,4,5-TRIMETHOXYPHENYL)-5,8,8A,9-TETRAHYDROFURO[3',4':6,7]NAPHTHO[2,3-D][1,3]DIOXOL-6(5AH)-ONE",Drug/Lead,1,2,2.0,0.414,True,DB01179,1SA1
+5IS,"(1S,2R,3S,5S,6S,16E,18E,20R)-11-chloro-6-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18,21-hexaene-8,23-dione",Unclassified,1,1,1.0,0.547,False,,5SB8
+A1D69,"2-chloranyl-~{N}-(4-methoxyphenyl)-~{N}-methyl-thieno[3,2-d]pyrimidin-4-amine",Unclassified,1,2,2.0,0.306,False,,8YUA
+DLK,"2-{1-[(2-Methoxyphenyl)amino]ethylidene}-5-phenyl-1,3-cyclohexanedione",Unclassified,1,2,2.0,0.335,False,,6FKL
+7PL,N-[3-[[6-[[3-(trifluoromethyl)phenyl]amino]pyrimidin-4-yl]amino]phenyl]cyclopropanecarboxamide,Unclassified,1,1,1.0,0.413,False,,7VMK
+A1EPT,10'-methoxyvinblastine,Unclassified,1,1,1.0,0.841,False,,9LNX
+DVX,"[(2R)-2-[3-aminocarbonyl-2,4-bis(fluoranyl)phenoxy]-2-[5-bromanyl-4-[4-(trifluoromethyl)phenyl]-1,3-oxazol-2-yl]ethyl] 3-[2,2-bis(fluoranyl)-10,12-dimethyl-3-aza-1-azonia-2-boranuidatricyclo[7.3.0.0^{3,7}]dodeca-1(12),4,6,8,10-pentaen-4-yl]propanoate",Unclassified,1,1,1.0,0.781,False,,6KVQ
+OM8,"3-[(3-chlorophenyl)methoxy]-2,6-bis(fluoranyl)benzamide",Unclassified,1,1,1.0,0.298,False,,6YD5
+UGI,5-(6-morpholin-4-yl-2-pyrrolidin-1-yl-pyrimidin-4-yl)-4-(trifluoromethyl)pyridin-2-amine,Unclassified,1,1,1.0,0.394,False,,5M8D
+A1EPR,10'-fluorovinblastine,Unclassified,1,1,1.0,0.829,False,,9LNV
+FB7,"5-(2,6-dimorpholin-4-ylpyridin-4-yl)-4-(trifluoromethyl)pyridin-2-amine",Unclassified,1,2,2.0,0.409,False,,5M7G
+G8K,"[2-(1H-indol-4-yl)-1H-imidazol-4-yl](3,4,5-trimethoxyphenyl)methanone",Unclassified,1,2,2.0,0.377,False,,6O5M
+A1D8I,"~{N},2-dimethyl-~{N}-(1-methylindol-5-yl)thieno[3,2-d]pyrimidin-4-amine",Unclassified,1,2,2.0,0.308,False,,8ZB8
+J6L,"8,8-dimethyl-3-(2,4,5-trimethoxyphenyl)pyrano[2,3-f]chromen-4-one",Unclassified,1,1,1.0,0.394,False,,7EMJ
+03S,methanesulfonic acid,Unclassified,1,1,1.0,0.096,False,,5JH7
+G2N,"ethyl [(2R)-5-amino-2-methyl-3-phenyl-1,2-dihydropyrido[3,4-b]pyrazin-7-yl]carbamate",Unclassified,1,2,2.0,0.325,False,,3N2G
+8WU,"(E)-1-(5-methoxy-2,2-dimethyl-chromen-8-yl)-3-(4-methoxy-3-oxidanyl-phenyl)prop-2-en-1-one",Unclassified,1,2,2.0,0.366,False,,5YL2
+GDF,Vinorelbine,Unclassified,1,1,1.0,0.779,False,,7CNN
+AEU,N-[(3-phenoxyphenyl)methyl]-9H-beta-carbolin-3-amine,Unclassified,1,2,2.0,0.365,False,,7CDA
+A1EPS,10'-bromovinblastine,Unclassified,1,1,1.0,0.89,False,,9LNW
+ZI1,"3-[(1R)-1-[5-bromanyl-4-[4-(trifluoromethyl)phenyl]-1,3-oxazol-2-yl]ethoxy]-2,6-bis(fluoranyl)benzamide",Unclassified,1,1,1.0,0.491,False,,6KVP
+8X0,"(E)-1-(5-methoxy-2,2-dimethyl-chromen-8-yl)-3-(4-methoxyphenyl)prop-2-en-1-one",Unclassified,1,2,2.0,0.35,False,,5YLJ
+A1D62,"(11R,16S)-11-(3,5-dichloro-4-methoxyphenyl)-4,7-dioxa-12,14-diazatetracyclo[8.7.0.03,8.012,16]heptadeca-1,3(8),9-triene-13,15-dione",Unclassified,1,2,2.0,0.435,False,,8YRK
+8WR,"(3Z,6Z)-3-[(4-tert-butyl-1H-imidazol-5-yl)methylidene]-6-[[3-(phenylcarbonyl)phenyl]methylidene]piperazine-2,5-dione",Unclassified,1,1,1.0,0.44,False,,5YL4
+DKN,Disorazole Z,Unclassified,1,1,1.0,0.747,False,,6FJM
+Y5M,"7-methoxy-4-(2-methyl-6,7-dihydro-5H-cyclopenta[d]pyrimidin-4-yl)-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.31,False,,6X1F
+J6R,"(2S,4R)-5-(4-fluorophenyl)-2-methyl-4-[[2-[(1R,3R)-4-methyl-3-[5-methylhexyl-[(2S,3S)-3-methyl-2-[[(2R)-1-methylpiperidin-2-yl]carbonylamino]pentanoyl]amino]-1-oxidanyl-pentyl]-1,3-thiazol-4-yl]carbonylamino]pentanoic acid",Unclassified,1,2,2.0,0.788,False,,7EN3
+01G,8-morpholin-4-ylguanosine 5'-(tetrahydrogen triphosphate),Unclassified,1,1,1.0,0.608,False,,2R75
+A1EPQ,"10',11'-difluoro-12'-methoxyvinblastine",Unclassified,1,1,1.0,0.877,False,,9LNL
+J7S,"4-(2-chloropyrido[2,3-d]pyrimidin-4-yl)-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.342,False,,6EG5
+TYR,TYROSINE,Drug/Lead,1,1,1.0,0.181,True,DB00135,4I4T
+3H4,"(1Z,4S,6Z)-1-[(N-{(2Z,4Z,6E,8S)-8-[(2S)-5-methoxy-6-oxo-3,6-dihydro-2H-pyran-2-yl]-6-methylnona-2,4,6-trienoyl}-3-methy l-L-valyl)amino]octa-1,6-dien-4-yl carbamate",Drug/Lead,1,1,1.0,0.572,True,DB13137,4TV9
+G9U,"(6R)-6-[(6-bromanyl-1H-indol-3-yl)methyl]-6,7,8,9-tetrahydrobenzo[7]annulen-5-one",Unclassified,1,2,2.0,0.368,False,,7CPD
+84F,"(3S,4R)-4-(3-hydroxy-4-methoxyphenyl)-3-methyl-1-(3,4,5-trimethoxyphenyl)azetidin-2-one",Unclassified,1,2,2.0,0.373,False,,5XAF
+WV4,N-ethyl-2-fluoro-4-(methylsulfonyl)aniline,Unclassified,1,3,3.0,0.217,False,,5S4M
+OBQ,"(3~{S})-7-azanyl-6-methoxy-3-[(5~{R})-4-methoxy-6-methyl-7,8-dihydro-5~{H}-[1,3]dioxolo[4,5-g]isoquinolin-5-yl]-3~{H}-2-benzofuran-1-one",Unclassified,1,2,2.0,0.398,False,,6Y6D
+GWC,2-chloranyl-5-fluoranyl-N-(4-methoxyphenyl)-N-methyl-quinazolin-4-amine,Unclassified,1,2,2.0,0.318,False,,7XR0
+RME,"N6-(4-methylpyridin-2-yl)-N2-(2-morpholinoethyl)-3-nitropyridine-2,6-diamine",Unclassified,1,2,2.0,0.358,False,,8R6O
+89C,4-[(4-methoxy-3-oxidanyl-phenyl)-methyl-amino]chromen-2-one,Unclassified,1,2,2.0,0.297,False,,5XKH
+6NL,"(2E)-3-(3-hydroxy-4-methoxyphenyl)-1-(7-methoxy-2H-1,3-benzodioxol-5-yl)-2-methylprop-2-en-1-one",Unclassified,1,2,2.0,0.342,False,,5JVD
+JHD,"1-(3,4-dimethoxyphenyl)methanamine",Unclassified,1,2,2.0,0.167,False,,5S4X
+GK9,"1-(2-chlorofuro[3,2-d]pyrimidin-4-yl)-6-methoxy-1,2,3,4-tetrahydroquinoline",Unclassified,1,2,2.0,0.316,False,,6BRY
+2RR,"3-[(4-{1-[2-(4-aminophenyl)-2-oxoethyl]-1H-benzimidazol-2-yl}-1,2,5-oxadiazol-3-yl)amino]propanenitrile",Unclassified,1,2,2.0,0.387,False,,4O2A
+88U,"N-(4-methoxyphenyl)-N,2-dimethyl-quinazolin-4-amine",Drug/Lead,1,2,2.0,0.279,True,DB05585,5XKF
+1PE,PENTAETHYLENE GLYCOL,Unclassified,1,1,1.0,0.238,False,,9F07
+P6G,HEXAETHYLENE GLYCOL,Unclassified,1,1,1.0,0.282,False,,9F07
+WVD,"4-(4-methyl-1,3-thiazole-5-carbonyl)piperazin-2-one",Unclassified,1,1,1.0,0.225,False,,5S4Q
+G9X,"(6R)-6-[(6-chloranyl-1H-indol-3-yl)methyl]-6,7,8,9-tetrahydrobenzo[7]annulen-5-one",Unclassified,1,1,1.0,0.324,False,,7CPQ
+9KS,N-(2-hydroxyphenyl)acetamide,Unclassified,1,1,1.0,0.151,False,,5S4V
+WV1,N-{4-[(1R)-1-aminoethyl]phenyl}cyclopropanecarboxamide,Unclassified,1,1,1.0,0.204,False,,5S4L
+GY2,2-chloranyl-6-fluoranyl-N-(4-methoxyphenyl)-N-methyl-quinazolin-4-amine,Unclassified,1,2,2.0,0.318,False,,7XR1
+Y74,"2-[(3~{S},10~{R},13~{E},16~{S})-10-[(3-chloranyl-4-methoxy-phenyl)methyl]-6,6-dimethyl-2,5,9,12-tetrakis(oxidanylidene)-16-[(1~{S})-1-[(2~{R},3~{R})-3-phenyloxiran-2-yl]ethyl]-1,4-dioxa-8,11-diazacyclohexadec-13-en-3-yl]ethanoic acid",Unclassified,1,1,1.0,0.671,False,,8R67
+NW6,nocodazole,Drug/Lead,1,2,2.0,0.301,True,DB08313,7Z2P
+6ZR,"(3R,4R)-4-(4-methoxy-3-oxidanyl-phenyl)-3-methyl-1-(3,4,5-trimethoxyphenyl)azetidin-2-one",Unclassified,1,1,1.0,0.373,False,,5GON
+A1ISE,"N-[5-(1-{2-[4-({[(1S,2R,3S,5S,6S,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl]oxy}carbonyl)phenyl]ethyl}-1H-1,2,3-triazol-4-yl)pentanoyl]-3-methyl-D-valyl-(4R)-4-hydroxy-N-{[4-(4-methyl-1,3-thiazol-5-yl)phenyl]methyl}-L-prolinamide",Unclassified,1,1,1.0,1.277,False,,9H31
+7BA,Combretastatin A4,Drug/Lead,1,2,2.0,0.316,True,DB14680,5LYJ
+93X,"(3~{R},4~{R})-3-(hydroxymethyl)-4-(4-methoxy-3-oxidanyl-phenyl)-1-(3,4,5-trimethoxyphenyl)azetidin-2-one",Unclassified,1,2,2.0,0.389,False,,5XAG
+RYK,"(5~{R})-5-[(1~{S})-4,5-dimethoxy-1,3-dihydro-2-benzofuran-1-yl]-~{N}-ethyl-4-methoxy-7,8-dihydro-5~{H}-[1,3]dioxolo[4,5-g]isoquinoline-6-carboxamide",Unclassified,1,1,1.0,0.456,False,,7AU5
+3GT,"(3beta,4beta,5beta,10beta,11E,13E)-maytansine",Unclassified,1,1,1.0,0.692,False,,4TV8
+IUK,4-methyl-3-[(4-methylphenyl)sulfonylamino]-~{N}-[(6-methylpyridin-3-yl)methyl]benzamide,Unclassified,1,2,2.0,0.41,False,,7YHN
+WZ7,2-[(cyclopent-3-en-1-yl)amino]pyridine-4-carboxamide,Unclassified,1,1,1.0,0.203,False,,5S4W
+K9I,"(3R,4S,7S,9S,11S)-3,4,11-trihydroxy-7-((R,Z)-4-(hydroxymethyl)hex-2-en-2-yl)-9-methoxy-12,12-dimethyl-6-oxa-1(1,3)-benzenacyclododecaphan-5-one",Unclassified,1,1,1.0,0.465,False,,7ZX2
+R3Q,"[(1~{S},2~{S},3~{R},4~{S},7~{R},9~{S},10~{S},12~{R},15~{S})-4,12-diacetyloxy-10,14,16,16-tetramethyl-1,9,15-tris(oxidanyl)-11-oxidanylidene-6-oxatetracyclo[11.3.1.0^{3,10}.0^{4,7}]heptadec-13-en-2-yl] benzoate",Unclassified,1,1,1.0,0.587,False,,8BDE
+890,4-[(3-azanyl-4-methoxy-phenyl)-methyl-amino]chromen-2-one,Unclassified,1,2,2.0,0.296,False,,5XKG
+WNY,1-[4-(4-chlorophenyl)piperazin-1-yl]ethan-1-one,Unclassified,1,3,3.0,0.239,False,,5S4P
+JV9,"7-methoxy-4-[2-(methylamino)-6,7-dihydro-5H-cyclopenta[d]pyrimidin-4-yl]-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.325,False,,7TTF
+SR6,dolastatin-10,Drug/Lead,1,1,1.0,0.785,True,DB12730,7TR3
+A1D6L,"6-fluoranyl-4-(6-methoxy-3,4-dihydro-2~{H}-quinolin-1-yl)quinazolin-2-amine",Unclassified,1,2,2.0,0.324,False,,8YEU
+NSJ,3-[(thiomorpholin-4-yl)methyl]phenol,Unclassified,1,1,1.0,0.209,False,,5S4Y
+O91,"[2-(4-methylphenyl)-1H-imidazol-4-yl](3,4,5-trimethoxyphenyl)methanone",Unclassified,1,2,2.0,0.352,False,,6PC4
+A1D6E,"6-fluoranyl-4-(6-methoxy-3,4-dihydro-2~{H}-quinolin-1-yl)-~{N}-methyl-quinazolin-2-amine",Unclassified,1,2,2.0,0.338,False,,8YER
+VWA,(1S)-1-(4-fluorophenyl)-N-methylethan-1-amine,Unclassified,1,1,1.0,0.153,False,,5S5S
+MPD,"(4S)-2-METHYL-2,4-PENTANEDIOL",Drug/Lead,1,1,1.0,0.118,True,DB03564,5MN4
+X1G,"N-[(2H-1,3-benzodioxol-5-yl)methyl]-3-methylbutanamide",Unclassified,1,1,1.0,0.235,False,,5S60
+O1M,4-(4-fluorophenyl)piperazine-1-carboxamide,Unclassified,1,1,1.0,0.223,False,,5S5T
+LO9,"7-[(3,5-dimethoxyphenyl)methyl]pyrrolo[3,4-g][1,2]benzoxazole",Unclassified,1,2,2.0,0.308,False,,8A9Z
+NUY,[4-(propan-2-yl)piperazin-1-yl](thiophen-2-yl)methanone,Unclassified,1,1,1.0,0.238,False,,5S58
+HZ0,"(10E,12E)-86-chloro-14-hydroxy-85,14-dimethoxy-33,2,7,10-tetramethyl-12,6-dioxo-7-aza-1(6,4)-oxazinana-3(2,3)-oxirana-8(1,3)-benzenacyclotetradecaphane-10,12-dien-4-yl N-methyl-N-(3-(methylsulfinothioyl)propanoyl)-D-alaninate",Unclassified,1,1,1.0,0.784,False,,7E4R
+X1M,1-(6-methoxypyridin-2-yl)-N-methylmethanamine,Unclassified,1,1,1.0,0.152,False,,5S67
+89U,10-[(4-methoxy-3-oxidanyl-phenyl)methylidene]anthracen-9-one,Unclassified,1,2,2.0,0.328,False,,5XLZ
+RWS,"1-(5-methyl-1,3,4-thiadiazol-2-yl)piperidine",Unclassified,1,1,1.0,0.183,False,,5S51
+89O,"(5S,5aR,8aR,9R)-9-(3,5-dimethoxy-4-oxidanyl-phenyl)-5-oxidanyl-5a,6,8a,9-tetrahydro-5H-[2]benzofuro[6,5-f][1,3]benzodioxol-8-one",Unclassified,1,2,2.0,0.4,False,,5XLT
+3WZ,"2-methyl-L-alanyl-N-[(3R,4S,5S)-1-{(2S)-2-[(1R,2R)-3-{[(1S)-1-carboxy-2-phenylethyl]amino}-1-methoxy-2-methyl-3-oxopropyl]pyrrolidin-1-yl}-3-methoxy-5-methyl-1-oxoheptan-4-yl]-N-methyl-L-valinamide",Unclassified,1,2,2.0,0.704,False,,4X1K
+AWD,~{N}-(4-fluorophenyl)-4-methyl-piperazine-1-carboxamide,Unclassified,1,1,1.0,0.237,False,,5S5Z
+2GE,"N~4~-cyclopropyl-6-(2,3-dichlorophenyl)pyrimidine-2,4-diamine",Unclassified,1,1,1.0,0.295,False,,6QQN
+LNU,"ethyl 13-[(3,5-dimethoxyphenyl)methyl]-3-oxa-4,13-diazatricyclo[8.3.0.0^{2,6}]trideca-1(10),2(6),4,11-tetraene-12-carboxylate",Unclassified,1,1,1.0,0.396,False,,8A9T
+O3G,N-benzyl-1-(4-fluorophenyl)methanamine,Unclassified,1,1,1.0,0.215,False,,5S56
+O9K,"[(1~{R},3~{R})-1-(4-methanoyl-1,3-thiazol-2-yl)-4-methyl-3-(methylamino)pentyl] ethanoate",Unclassified,1,1,1.0,0.284,False,,6Y4N
+O9N,"methyl (2~{S},4~{S})-2,4-bis(azanyl)-5-phenyl-pentanoate",Unclassified,1,1,1.0,0.222,False,,6Y4N
+P6S,benzyl hydrogen carbonate,Unclassified,1,1,1.0,0.152,False,,6Y4N
+A1L8X,"3-methoxy-2-(4-methoxy-3-oxidanyl-phenyl)-5,7-bis(oxidanyl)chromen-4-one",Unclassified,1,1,1.0,0.33,False,,9U6A
+3WV,"N,2-dimethyl-L-alanyl-N-[(3R,4S,5S)-1-{(2S)-2-[(1R,2R)-3-{[(1S)-1-carboxy-2-phenylethyl]amino}-1-methoxy-2-methyl-3-oxopropyl]pyrrolidin-1-yl}-3-methoxy-5-methyl-1-oxoheptan-4-yl]-N-methyl-L-valinamide",Unclassified,1,2,2.0,0.718,False,,4X1Y
+WLG,1-(5-azaspiro[2.5]octan-5-yl)-2-(difluoromethoxy)ethan-1-one,Unclassified,1,1,1.0,0.219,False,,5S5H
+WGY,N-(4-sulfamoylphenyl)propanamide,Unclassified,1,1,1.0,0.228,False,,5S5O
+EX5,Jerantinine B,Unclassified,1,1,1.0,0.44,False,,6GF3
+UQM,N-[4-(2-amino-2-oxoethyl)phenyl]acetamide,Unclassified,1,1,1.0,0.192,False,,5S5F
+A1IND,"(2Z,4E)-N-((S)-((1R,2E,5S,8E,10Z,14E,17S)-3,11-dimethyl-7,13-dioxo-6,19,21-trioxabicyclo[15.3.1]henicosa-2,8,10,14-tetraen-5-yl)(hydroxy)methyl)hexa-2,4-dienamide",Unclassified,1,2,2.0,0.486,False,,9GNU
+H0U,~{N}-[5-(5-cyanothiophen-2-yl)-2-methyl-phenyl]-4-methyl-benzenesulfonamide,Unclassified,1,2,2.0,0.368,False,,7DBD
+WZY,N-(4-methoxyphenyl)glycinamide,Unclassified,1,4,4.0,0.18,False,,5S5A
+H1C,methyl ~{N}-(5-butyl-1~{H}-benzimidazol-2-yl)carbamate,Unclassified,1,1,1.0,0.247,False,,7DBC
+NZO,nocodazole,Drug/Lead,1,2,2.0,0.301,True,DB08313,5CA1
+7AO,"[(3~{Z},5~{S},6~{S},7~{S},8~{R},9~{S},11~{Z},13~{S},14~{S},15~{S},16~{Z},18~{S})-19-[(2~{S},3~{R},4~{S},5~{R})-3,5-dimethyl-4-oxidanyl-6-oxidanylidene-oxan-2-yl]-5,7,9,11,13,15-hexamethyl-8,14,18-tris(oxidanyl)nonadeca-1,3,11,16-tetraen-6-yl] ~{N}-[3-[(3-azidophenyl)carbonylamino]propyl]carbamate",Unclassified,1,2,2.0,0.796,False,,5LXS
+WZS,1-{4-[(2-phenylethyl)amino]piperidin-1-yl}ethan-1-one,Unclassified,1,1,1.0,0.246,False,,5S57
+ACT,ACETATE ION,Drug/Lead,1,1,1.0,0.059,True,DB14511,2RHJ
+7AK,(+)-Discodermolide,Unclassified,1,2,2.0,0.594,False,,5LXT
+ERR,"2-(1-methylindol-5-yl)-7-(3,4,5-trimethoxyphenyl)pyrazolo[1,5-a]pyrimidine",Unclassified,1,1,1.0,0.414,False,,6LSN
+BKL,"(1R,2S,3S,5S,6S,16E,18E,20R,21S)-11-chloro-6,21-dihydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaene-8,23-dione",Unclassified,1,1,1.0,0.565,False,,7E4Z
+WZD,N-[(furan-2-yl)methyl]-1H-benzimidazol-2-amine,Unclassified,1,2,2.0,0.213,False,,5S50
+UR1,3-fluoro-5-methylbenzene-1-sulfonamide,Unclassified,1,3,3.0,0.189,False,,5S59
+GOJ,ethyl 1~{H}-pyrazole-4-carboxylate,Unclassified,1,1,1.0,0.14,False,,5S5U
+LVV,"4-[(4-methylphenyl)methyl]-1,4-thiazinane 1,1-dioxide",Unclassified,1,1,1.0,0.239,False,,5S66
+GVV,~{N}-(4-methyl-2-oxidanyl-phenyl)propanamide,Unclassified,1,1,1.0,0.179,False,,5S5R
+94U,"N-[4-(diethylamino)phenyl]-4H-pyrrolo[2,3-d][1,3]thiazole-5-carboxamide",Unclassified,1,2,2.0,0.314,False,,5YZ3
+AYV,"1-[2-methyl-1,3-bis(oxidanyl)propan-2-yl]-3-phenyl-urea",Unclassified,1,3,3.0,0.224,False,,5S61
+LXL,1-ethyl-3-[2-methoxy-4-(5-methyl-4-{[(1S)-1-(pyridin-3-yl)butyl]amino}pyrimidin-2-yl)phenyl]urea,Unclassified,1,2,2.0,0.435,False,,5CA0
+H1F,"5-phenyl-3-(3,4,5-trimethoxyphenyl)-3,4-dihydropyrazole-2-carbothioamide",Unclassified,1,1,1.0,0.371,False,,7DBB
+N3Z,"~{N}-[(10~{S})-3,4,5-trimethoxy-16-methylidene-14-oxatetracyclo[9.7.0.0^{2,7}.0^{13,17}]octadeca-1(18),2,4,6,11,13(17)-hexaen-10-yl]ethanamide",Unclassified,1,2,2.0,0.395,False,,6TDE
+SZY,N-(4-methylpyridin-3-yl)acetamide,Unclassified,1,1,1.0,0.15,False,,5S5G
+TZT,SOBLIDOTIN,Unclassified,1,1,1.0,0.702,False,,3E22
+7LG,"(2~{S},4~{R})-4-[[2-[(1~{R},3~{R})-1-acetyloxy-3-[hexyl-[(2~{S},3~{S})-3-methyl-2-[[(2~{R})-1-methylpiperidin-2-yl]carbonylamino]pentanoyl]amino]-4-methyl-pentyl]-1,3-thiazol-4-yl]carbonylamino]-5-(4-fluorophenyl)-2-methyl-pentanoic acid",Unclassified,1,2,2.0,0.816,False,,5H74
+W0Y,N-methyl-4-sulfamoylbenzamide,Unclassified,1,2,2.0,0.214,False,,5S5N
+X0G,"4-[(3-cyclopropyl-1,2,4-oxadiazol-5-yl)methyl]morpholine",Unclassified,1,1,1.0,0.209,False,,5S5I
+JEL,"N-[[3-(1,3-benzodioxol-5-yloxy)phenyl]methyl]-9H-pyrido[3,4-b]indol-3-amine",Unclassified,1,2,2.0,0.409,False,,7EXC
+EPD,EPOTHILONE D,Drug/Lead,1,1,1.0,0.492,True,DB01873,7DAD
+YJ4,"4-[2-(ethylamino)pyrido[3,2-d]pyrimidin-4-yl]-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.35,False,,7LZ8
+NV4,"(5R,5aR,8aS,9R)-9-[(4H-1,2,4-triazol-3-yl)sulfanyl]-5-(3,4,5-trimethoxyphenyl)-5,8,8a,9-tetrahydro-2H-furo[3',4':6,7]naphtho[2,3-d][1,3]dioxol-6(5aH)-one",Unclassified,1,2,2.0,0.498,False,,5JCB
+4B6,"N-{4-[2-(2-fluoroanilino)-1,3-thiazol-4-yl]phenyl}acetamide",Unclassified,1,1,1.0,0.327,False,,5SB4
+A9Q,"3-(2,5-Dimethoxybenzyl)-7-sulfamoyloxy-6-methoxy-3,4-dihydroquinazolin-2(1H)-one",Unclassified,1,1,1.0,0.423,False,,5OSK
+7PB,N-[3-[[6-[(3-methoxyphenyl)amino]pyrimidin-4-yl]amino]phenyl]cyclopropanecarboxamide,Unclassified,1,2,2.0,0.375,False,,7VMG
+47F,"N-[4-(2-anilino-1,3-thiazol-4-yl)phenyl]acetamide",Unclassified,1,1,1.0,0.309,False,,5SB3
+DJ9,"2-(1H-indol-6-yl)-4-(3,4,5-trimethoxyphenyl)-1H-imidazo[4,5-c]pyridine",Unclassified,1,1,1.0,0.4,False,,6NNG
+RQK,"(2~{R})-2-oxidanyl-2-[(6~{S},9~{S},12~{S},15~{S},17~{S})-6,10,12,17-tetramethyl-3-methylidene-7-oxidanyl-2,5,8,11,14-pentakis(oxidanylidene)-13-oxa-1,4,7,10-tetrazabicyclo[13.3.0]octadecan-9-yl]ethanamide",Unclassified,1,1,1.0,0.483,False,,7ALR
+GLY,GLYCINE,Drug/Lead,1,1,1.0,0.075,True,DB00145,7ALR
+55Q,"(2R,4R)-4-{[(2-{(1R,3R)-1-(acetyloxy)-4-methyl-3-[methyl(N-{[(2S)-1-methylpiperidin-2-yl]carbonyl}-D-isoleucyl)amino]pentyl}-1,3-thiazol-4-yl)carbonyl]amino}-2-methyl-5-phenylpentanoic acid",Unclassified,1,2,2.0,0.728,False,,4ZOL
+4SL,"N,beta,beta-trimethyl-L-phenylalanyl-N-[(3S,4Z)-5-carboxy-2-methylhex-4-en-3-yl]-N,3-dimethyl-L-valinamide",Unclassified,1,1,1.0,0.474,False,,4ZI7
+9LX,"2-(6-fluoro-3-{[(4-methoxyphenyl)methyl]amino}imidazo[1,2-a]pyridin-2-yl)phenol",Unclassified,1,2,2.0,0.363,False,,5ZXH
+5JS,"(1S,2R,3S,5S,6S,16E,18E,20R)-11-chloro-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18,21-hexaen-6-yl phenylacetate",Unclassified,1,1,1.0,0.665,False,,5SBC
+FW9,"N4-(1,3-benzodioxol-5-ylmethyl)-6-(3-methoxyphenyl)pyrimidine-2,4-diamine",Unclassified,1,2,2.0,0.35,False,,7CEK
+UIY,AB-8939,Drug/Lead,1,2,2.0,0.392,True,DB17115,8CGZ
+5KI,"(1S,2R,3S,5S,6S,16E,18E,20R)-11-chloro-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18,21(25)-hexaen-6-yl acetate",Unclassified,1,1,1.0,0.589,False,,5SBD
+6FS,"N-[2-methoxy-5-({[(E)-2-(2,4,6-trimethoxyphenyl)ethenyl]sulfonyl}methyl)phenyl]glycine",Drug/Lead,1,2,2.0,0.451,True,DB12146,5OV7
+4CJ,"N-{4-[2-(3-fluoroanilino)-1,3-thiazol-4-yl]phenyl}acetamide",Unclassified,1,1,1.0,0.327,False,,5SB5
+71E,DZ 2384,Unclassified,1,1,1.0,0.646,False,,5LOV
+YJ7,"4-(3,6-dimethyl[1,2]oxazolo[5,4-d]pyrimidin-4-yl)-7-methoxy-3,4-dihydroquinoxalin-2(1H)-one",Unclassified,1,2,2.0,0.325,False,,7LZ7
+97O,"6,7,8-trimethoxy-1-(4-methoxyphenyl)-4,5-dihydro-2~{H}-benzo[e]indazole",Unclassified,1,1,1.0,0.366,False,,5Z4P
+5L5,"(1S,2R,3S,5S,6S,16E,18E,20R)-11-chloro-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18,21-hexaen-6-yl hept-6-ynoate",Unclassified,1,1,1.0,0.655,False,,5SBE
+L95,"[(3~{Z},5~{S},6~{S},7~{S},8~{R},9~{S},11~{Z},13~{S},14~{S},15~{S},16~{Z},18~{S})-5,7,9,11,13,15-hexamethyl-19-[(2~{S},3~{R})-3-methyl-6-oxidanylidene-oxan-2-yl]-8,14,18-tris(oxidanyl)nonadeca-3,11,16-trien-6-yl] carbamate",Unclassified,1,2,2.0,0.566,False,,6SES
+Q0F,"[(1~{R},2~{R},3~{S},5~{S},6~{S},16~{E},18~{E},20~{R},21~{S})-11-chloranyl-12,20-dimethoxy-2,5,9,16-tetramethyl-21-oxidanyl-8,23-bis(oxidanylidene)-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1^{10,14}.0^{3,5}]hexacosa-10(26),11,13,16,18-pentaen-6-yl] pent-4-enoate",Unclassified,1,1,1.0,0.647,False,,8B7A
+PG0,2-(2-METHOXYETHOXY)ETHANOL,Unclassified,1,1,1.0,0.12,False,,7AC5
+5JH,"(1R,2R,3S,5S,6S,16E,18E,20R,21S)-11-chloro-21-hydroxy-12,20-dimethoxy-2,5,9,16-tetramethyl-8,23-dioxo-4,24-dioxa-9,22-diazatetracyclo[19.3.1.1~10,14~.0~3,5~]hexacosa-10(26),11,13,16,18-pentaen-6-yl heptanoate",Unclassified,1,1,1.0,0.677,False,,5SBB

@@ -1,16 +1,148 @@
 # tubexyz/lib/schema/types_tubulin.py
-from typing import Dict, Optional, List, Literal, Union, Any
+from typing import Dict, Optional, List, Literal, Tuple, Union, Any
 from enum import Enum
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pydantic import BaseModel, Field
 
 class TubulinFamily(str, Enum):
-    ALPHA   = "alpha"
-    BETA    = "beta"
-    GAMMA   = "gamma"
-    DELTA   = "delta"
-    EPSILON = "epsilon"
+    ALPHA   = "tubulin_alpha"
+    BETA    = "tubulin_beta"
+    GAMMA   = "tubulin_gamma"
+    DELTA   = "tubulin_delta"
+    EPSILON = "tubulin_epsilon"
+
+class MapFamily(str, Enum):
+    """
+    Microtubule Associated Proteins (MAPs) and related enzymes.
+    Values correspond to the filename base.
+    """
+    ATAT1           = "map_atat1"
+    CAMSAP1         = "map_camsap1"
+    CAMSAP2         = "map_camsap2"
+    CAMSAP3         = "map_camsap3"
+    CCP             = "map_ccp_deglutamylase"
+    CFAP53          = "map_cfap53"
+    CKAP5           = "map_ckap5_chtog"
+    CLASP           = "map_clasp"
+    CLIP115         = "map_clip115"
+    CLIP170         = "map_clip170"
+    DOUBLECORTIN    = "map_doublecortin"
+    EB_FAMILY       = "map_eb_family"
+    FAP20           = "map_fap20_cfap20"
+    GCP2_3          = "map_gcp2_3"
+    GCP4            = "map_gcp4"
+    GCP5_6          = "map_gcp5_6"
+    KATANIN         = "map_katanin_p60"
+    KINESIN13       = "map_kinesin13"
+    MAP1_HEAVY      = "map_map1_heavy"
+    MAP1S           = "map_map1s"
+    MAP2            = "map_map2"
+    MAP4            = "map_map4"
+    MAP7            = "map_map7"
+    NME7            = "map_nme7"
+    NME8            = "map_nme8"
+    NUMA            = "map_numa"
+    PACRG           = "map_pacrg"
+    PRC1            = "map_prc1"
+    RIB72           = "map_rib72_efhc"
+    SPAG6           = "map_spag6"
+    SPASTIN         = "map_spastin"
+    STATHMIN        = "map_stathmin"
+    TACC            = "map_tacc"
+    TAU             = "map_tau"
+    TPX2            = "map_tpx2"
+    TTLL_LONG       = "map_ttll_glutamylase_long"
+    TTLL_SHORT      = "map_ttll_glutamylase_short"
+    VASH            = "map_vash_detyrosinase"
+
+# Type alias for any family
+HmmFamily = Union[TubulinFamily, MapFamily]
+
+# --- Ligand Interaction Models ---
+
+class InteractionType(str, Enum):
+
+    UNKNOWN            = "Unknown"
+    IONIC              = "Ionic"
+    CATION_PI          = "Cation-Pi Interaction"
+    PI_STACKING        = "Pi Stacking"
+    HYDROGEN_BOND      = "Hydrogen Bond"
+    HALOGEN_BOND       = "Halogen Bond"
+    HYDROPHOBIC        = "Hydrophobic Contact"
+    METAL_COORDINATION = "Metal Coordination"
+    WEAK_HYDROGEN_BOND = "Weak Hydrogen Bond"
+
+
+class InteractionParticipant(BaseModel):
+    """An atom participating in an interaction."""
+    auth_asym_id: str
+    auth_seq_id : int
+    auth_comp_id: str
+    atom_id     : str
+    is_ligand   : bool
+
+    @classmethod
+    def from_tuple(cls, t: list) -> "InteractionParticipant":
+        return cls(
+            auth_asym_id=t[0],
+            auth_seq_id=t[1],
+            auth_comp_id=t[2],
+            atom_id=t[3],
+            is_ligand=t[4],
+        )
+
+
+class LigandInteraction(BaseModel):
+    """A single interaction between ligand and polymer."""
+    type: str
+    participants: Tuple[InteractionParticipant, InteractionParticipant]
+
+    @classmethod
+    def from_raw(cls, raw: dict) -> "LigandInteraction":
+        return cls(
+            type=raw["type"],
+            participants=(
+                InteractionParticipant.from_tuple(raw["participants"][0]),
+                InteractionParticipant.from_tuple(raw["participants"][1]),
+            ),
+        )
+
+
+class NeighborResidue(BaseModel):
+    """A residue in the ligand's neighborhood."""
+    auth_asym_id: str
+    auth_seq_id: int
+    auth_comp_id: str
+
+    @classmethod
+    def from_tuple(cls, t: list) -> "NeighborResidue":
+        return cls(auth_asym_id=t[0], auth_seq_id=t[1], auth_comp_id=t[2])
+
+
+class LigandNeighborhood(BaseModel):
+    """Complete binding site report for a single ligand instance."""
+    ligand_auth_asym_id: str
+    ligand_auth_seq_id: int
+    ligand_comp_id: str
+    interactions: List[LigandInteraction]
+    neighborhood: List[NeighborResidue]
+
+    @classmethod
+    def from_raw(cls, raw: dict) -> "LigandNeighborhood":
+        ligand = raw["ligand"]
+        return cls(
+            ligand_auth_asym_id=ligand[0],
+            ligand_auth_seq_id=ligand[1],
+            ligand_comp_id=ligand[2],
+            interactions=[LigandInteraction.from_raw(i) for i in raw["interactions"]],
+            neighborhood=[NeighborResidue.from_tuple(n) for n in raw["neighborhood"]],
+        )
+
+
+
+
+
 # --- Enums ---
 class MasterAlignment(BaseModel):
     """Versioned canonical reference MSA for a tubulin family"""

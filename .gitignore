@@ -38,3 +38,8 @@ TUBETL_DATA/**
 TUBETL_DATA
 
 ingestion_logs/*
+
+
+node_modules/**
+node_modules
+

@@ -39,6 +39,17 @@ class TubulinStructureAssetPaths:
         """Directory for split chain files."""
         return os.path.join(self.base_dir, "CHAINS")
     
+    def ligand_neighborhood(self, comp_id: str, auth_asym_id: str) -> str:
+        """Path to a specific ligand neighborhood report."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_{comp_id}_{auth_asym_id}.json")
+
+    def all_ligand_neighborhoods(self) -> list[str]:
+        """List all ligand neighborhood report files."""
+        import glob
+        pattern = os.path.join(self.base_dir, f"{self.rcsb_id}_*_*.json")
+        # Exclude the main profile
+        return [p for p in glob.glob(pattern) if not p.endswith(f"{self.rcsb_id}.json")]
+
     @property
     def sequence_ingestion(self) -> str:
         """Path to the sequence ingestion results JSON."""

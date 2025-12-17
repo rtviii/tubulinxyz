@@ -31,13 +31,19 @@ After everything else is done:
 
 --------------------------------------------
 
-
 1. HMM classification models: alpha, beta, main MIPs/MAPs
 - for mip/maps -- record references
 
+- add classification (major families & mip/maps)
+- search non-canonical sequences in pdb for modifications
 
 2. Standardize mutations, modifications (between morisette and structural)
 - make sure the morisette stuff corresponds to the master alignment
-- search non-canonical sequences in pdb for modifications
 
 3. Ligands interfaces (Nonpolymer)->PolymerInstance
+- how to parse and how to store? 
+
+### fend:
+- msa-viewer
+- interactions for the msa-viewer
+- new colorschme for the molstar preset
