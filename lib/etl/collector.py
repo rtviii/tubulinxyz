@@ -1,7 +1,9 @@
 import asyncio
 import json
 import os
-from typing import  Dict, List, Optional, Tuple, Union
+import subprocess
+import requests
+from typing import Dict, List, Optional, Tuple, Union
 from pathlib import Path
 from datetime import datetime
 from api.config import PROJECT_ROOT
@@ -15,6 +17,7 @@ from lib.etl.assets import (
     query_rcsb_api,
 )
 
+from lib.etl.ligand_extraction import extract_ligands_parallel
 from lib.models.types_tubulin import (
     TubulinStructure,
     PolypeptideEntity,
@@ -30,6 +33,29 @@ from lib.models.types_tubulin import (
 
 from lib.etl.constants import TUBETL_DATA
 
+# Ligands to skip (waters, common ions, buffers, etc.)
+SKIP_LIGANDS = {
+    "HOH",
+    "DOD",
+    "NA",
+    "CL",
+    "K",
+    "MG",
+    "CA",
+    "ZN",
+    "SO4",
+    "PO4",
+    "GOL",
+    "EDO",
+    "ACT",
+    "MES",
+    "TRS",
+    "CIT",
+}
+
+# Path to the extraction script
+EXTRACT_SCRIPT = PROJECT_ROOT / "scripts_and_artifacts" / "extract_ixs.tsx"
+
 
 class TubulinETLCollector:
     rcsb_id: str
@@ -40,33 +66,149 @@ class TubulinETLCollector:
         self.rcsb_id = rcsb_id.upper()
         self.assets = TubulinStructureAssets(self.rcsb_id)
 
-    def _infer_organisms(self, entities: List[Union[PolypeptideEntity, PolynucleotideEntity, NonpolymerEntity]]) -> dict[str, List]:
-            """
-            Aggregate all unique organism IDs/names from the entities to store on the root.
-            """
-            all_src_ids = []
-            all_host_ids = []
-            all_src_names = []
-            all_host_names = []
+    # -------------------------------------------------------------------------
+    # CIF Download
+    # -------------------------------------------------------------------------
 
-            for ent in entities:
-                # Safely check because NonpolymerEntity might not have these fields
-                if hasattr(ent, "src_organism_ids"):
-                    all_src_ids.extend(ent.src_organism_ids)
-                if hasattr(ent, "host_organism_ids"):
-                    all_host_ids.extend(ent.host_organism_ids)
-                if hasattr(ent, "src_organism_names"):
-                    all_src_names.extend(ent.src_organism_names)
-                if hasattr(ent, "host_organism_names"):
-                    all_host_names.extend(ent.host_organism_names)
+    def download_cif(self, overwrite: bool = False) -> Path:
+        """Download CIF file from RCSB PDB if not present."""
+        cif_path = Path(self.assets.paths.cif)
 
-            return {
-                "src_organism_ids": sorted(list(set(all_src_ids))),
-                "src_organism_names": sorted(list(set(all_src_names))),
-                "host_organism_ids": sorted(list(set(all_host_ids))),
-                "host_organism_names": sorted(list(set(all_host_names))),
-            }
+        if cif_path.exists() and not overwrite:
+            print(f"CIF exists: {cif_path}")
+            return cif_path
 
+        cif_path.parent.mkdir(parents=True, exist_ok=True)
+
+        url = f"https://files.rcsb.org/download/{self.rcsb_id}.cif"
+        print(f"Downloading CIF from {url}...")
+
+        resp = requests.get(url, timeout=60)
+        resp.raise_for_status()
+        cif_path.write_text(resp.text)
+
+        print(f"Saved: {cif_path}")
+        return cif_path
+
+    # -------------------------------------------------------------------------
+    # Ligand Extraction
+    # -------------------------------------------------------------------------
+
+    def _run_extraction_script(
+        self,
+        cif_path: Path,
+        comp_id: str,
+        auth_asym_id: str,
+        output_path: Path,
+    ) -> bool:
+        """Run the TypeScript extraction script for a single ligand instance."""
+        cmd = [
+            "npx",
+            "tsx",
+            str(EXTRACT_SCRIPT),
+            str(cif_path),
+            comp_id,
+            auth_asym_id,
+            str(output_path),
+        ]
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                cwd=PROJECT_ROOT,
+            )
+
+            if result.returncode != 0:
+                print(f"  Extraction failed for {comp_id}/{auth_asym_id}:")
+                print(f"  {result.stderr[:500]}")
+                return False
+            return True
+
+        except subprocess.TimeoutExpired:
+            print(f"  Extraction timed out for {comp_id}/{auth_asym_id}")
+            return False
+        except Exception as e:
+            print(f"  Extraction error: {e}")
+            return False
+
+    def extract_ligand_interactions(
+        self,
+        structure: TubulinStructure,
+        overwrite: bool = False,
+    ) -> List[Path]:
+        """
+        Extract interactions for all ligand instances in the structure.
+
+        Returns list of paths to generated report files.
+        """
+        cif_path = Path(self.assets.paths.cif)
+        if not cif_path.exists():
+            print(f"CIF not found, skipping ligand extraction")
+            return []
+
+        generated = []
+
+        for nonpoly in structure.nonpolymers:
+            entity = structure.entities.get(nonpoly.entity_id)
+            if entity is None:
+                continue
+
+            comp_id = entity.chemical_id
+            if comp_id in SKIP_LIGANDS:
+                continue
+
+            auth_asym_id = nonpoly.auth_asym_id
+            output_name = f"{self.rcsb_id}_{comp_id}_{auth_asym_id}.json"
+            output_path = Path(self.assets.paths.base_dir) / output_name
+
+            if output_path.exists() and not overwrite:
+                print(f"  Skipping (exists): {output_name}")
+                generated.append(output_path)
+                continue
+
+            print(f"  Extracting: {comp_id} / {auth_asym_id}")
+
+            if self._run_extraction_script(
+                cif_path, comp_id, auth_asym_id, output_path
+            ):
+                generated.append(output_path)
+
+        return generated
+
+    # -------------------------------------------------------------------------
+    # Existing methods (unchanged)
+    # -------------------------------------------------------------------------
+
+    def _infer_organisms(
+        self,
+        entities: List[
+            Union[PolypeptideEntity, PolynucleotideEntity, NonpolymerEntity]
+        ],
+    ) -> dict[str, List]:
+        all_src_ids = []
+        all_host_ids = []
+        all_src_names = []
+        all_host_names = []
+
+        for ent in entities:
+            if hasattr(ent, "src_organism_ids"):
+                all_src_ids.extend(ent.src_organism_ids)
+            if hasattr(ent, "host_organism_ids"):
+                all_host_ids.extend(ent.host_organism_ids)
+            if hasattr(ent, "src_organism_names"):
+                all_src_names.extend(ent.src_organism_names)
+            if hasattr(ent, "host_organism_names"):
+                all_host_names.extend(ent.host_organism_names)
+
+        return {
+            "src_organism_ids": sorted(list(set(all_src_ids))),
+            "src_organism_names": sorted(list(set(all_src_names))),
+            "host_organism_ids": sorted(list(set(all_host_ids))),
+            "host_organism_names": sorted(list(set(all_host_names))),
+        }
 
     def _classify_tubulin_family(self, desc: str) -> Optional[TubulinFamily]:
         desc = (desc or "").lower()
@@ -101,7 +243,6 @@ class TubulinETLCollector:
         assembly_lookup = self._get_assembly_mappings(all_auth_ids)
 
         for raw in raw_entities:
-            # --- A. Build Entity ---
             entity_id = raw["rcsb_polymer_entity_container_identifiers"]["entity_id"]
             desc = raw.get("rcsb_polymer_entity", {}).get("pdbx_description")
 
@@ -158,7 +299,6 @@ class TubulinETLCollector:
 
             entity_map[entity_id] = entity_obj
 
-            # --- B. Build Instances ---
             identifiers = raw.get("rcsb_polymer_entity_container_identifiers", {})
             auth_asym_ids = identifiers.get("auth_asym_ids") or []
             asym_ids = identifiers.get("asym_ids") or []
@@ -190,69 +330,66 @@ class TubulinETLCollector:
         return entity_map, polypeptides, polynucleotides
 
     def _process_nonpolymers(
-            self, nonpoly_data: dict
-        ) -> Tuple[Dict[str, NonpolymerEntity], List[Nonpolymer]]:
-            entity_map = {}
-            instances = []
+        self, nonpoly_data: dict
+    ) -> Tuple[Dict[str, NonpolymerEntity], List[Nonpolymer]]:
+        entity_map = {}
+        instances = []
 
-            if not nonpoly_data:
-                return {}, []
-            raw_list = nonpoly_data.get("nonpolymer_entities") or []
-            if not raw_list:
-                return {}, []
+        if not nonpoly_data:
+            return {}, []
+        raw_list = nonpoly_data.get("nonpolymer_entities") or []
+        if not raw_list:
+            return {}, []
 
-            comp_ids = list(set(r["pdbx_entity_nonpoly"]["comp_id"] for r in raw_list))
-            chem_info_map = self._fetch_chem_info(comp_ids)
+        comp_ids = list(set(r["pdbx_entity_nonpoly"]["comp_id"] for r in raw_list))
+        chem_info_map = self._fetch_chem_info(comp_ids)
 
-            all_auth_ids = []
-            for raw in raw_list:
-                ids = raw.get("rcsb_nonpolymer_entity_container_identifiers") or {}
-                all_auth_ids.extend(ids.get("auth_asym_ids") or [])
-            assembly_lookup = self._get_assembly_mappings(all_auth_ids)
+        all_auth_ids = []
+        for raw in raw_list:
+            ids = raw.get("rcsb_nonpolymer_entity_container_identifiers") or {}
+            all_auth_ids.extend(ids.get("auth_asym_ids") or [])
+        assembly_lookup = self._get_assembly_mappings(all_auth_ids)
 
-            for raw in raw_list:
-                entity_id = raw["rcsb_nonpolymer_entity_container_identifiers"]["entity_id"]
-                comp_id = raw["pdbx_entity_nonpoly"]["comp_id"]
-                chem = chem_info_map.get(comp_id, {})
+        for raw in raw_list:
+            entity_id = raw["rcsb_nonpolymer_entity_container_identifiers"]["entity_id"]
+            comp_id = raw["pdbx_entity_nonpoly"]["comp_id"]
+            chem = chem_info_map.get(comp_id, {})
 
-                # 1. CAPTURE NONPOLYMER_COMP
-                nonpolymer_comp_data = raw.get("nonpolymer_comp")  # Dict from GQL
+            nonpolymer_comp_data = raw.get("nonpolymer_comp")
 
-                identifiers = raw.get("rcsb_nonpolymer_entity_container_identifiers", {})
-                asym_ids = identifiers.get("asym_ids") or []
+            identifiers = raw.get("rcsb_nonpolymer_entity_container_identifiers", {})
+            asym_ids = identifiers.get("asym_ids") or []
 
-                # TUBE-FIX: Updated keys to match snake_case Pydantic model
-                entity_obj = NonpolymerEntity(
-                    entity_id=entity_id,
-                    chemical_id=comp_id,               # Changed from chemicalId
-                    chemical_name=raw["pdbx_entity_nonpoly"]["name"], # Changed from chemicalName
-                    pdbx_description=raw["rcsb_nonpolymer_entity"]["pdbx_description"],
-                    formula_weight=raw["rcsb_nonpolymer_entity"].get("formula_weight"),
-                    pdbx_strand_ids=asym_ids,
-                    SMILES=chem.get("SMILES"),
-                    SMILES_stereo=chem.get("SMILES_stereo"),
-                    InChI=chem.get("InChI"),
-                    InChIKey=chem.get("InChIKey"),
-                    # 2. ASSIGN IT (Pydantic will parse the dict)
-                    nonpolymer_comp=nonpolymer_comp_data,
-                )
-                entity_map[entity_id] = entity_obj
+            entity_obj = NonpolymerEntity(
+                entity_id=entity_id,
+                chemical_id=comp_id,
+                chemical_name=raw["pdbx_entity_nonpoly"]["name"],
+                pdbx_description=raw["rcsb_nonpolymer_entity"]["pdbx_description"],
+                formula_weight=raw["rcsb_nonpolymer_entity"].get("formula_weight"),
+                pdbx_strand_ids=asym_ids,
+                SMILES=chem.get("SMILES"),
+                SMILES_stereo=chem.get("SMILES_stereo"),
+                InChI=chem.get("InChI"),
+                InChIKey=chem.get("InChIKey"),
+                nonpolymer_comp=nonpolymer_comp_data,
+            )
+            entity_map[entity_id] = entity_obj
 
-                auth_asym_ids = identifiers.get("auth_asym_ids") or []
+            auth_asym_ids = identifiers.get("auth_asym_ids") or []
 
-                for auth_id, asym_id in zip(auth_asym_ids, asym_ids):
-                    asm_id = assembly_lookup.get(auth_id, 0)
-                    instances.append(
-                        Nonpolymer(
-                            parent_rcsb_id=self.rcsb_id,
-                            auth_asym_id=auth_id,
-                            asym_id=asym_id,
-                            entity_id=entity_id,
-                            assembly_id=asm_id,
-                        )
+            for auth_id, asym_id in zip(auth_asym_ids, asym_ids):
+                asm_id = assembly_lookup.get(auth_id, 0)
+                instances.append(
+                    Nonpolymer(
+                        parent_rcsb_id=self.rcsb_id,
+                        auth_asym_id=auth_id,
+                        asym_id=asym_id,
+                        entity_id=entity_id,
+                        assembly_id=asm_id,
                     )
+                )
 
-            return entity_map, instances
+        return entity_map, instances
 
     def _fetch_chem_info(self, comp_ids: List[str]) -> dict:
         if not comp_ids:
@@ -300,10 +437,6 @@ class TubulinETLCollector:
         return mapping
 
     def sequence_ingestion(self, entity: PolypeptideEntity) -> None:
-        """
-        Runs alignment logic ONCE per Entity.
-        Saves results to 'sequence_ingestion.json' and updates Entity object.
-        """
         if not entity.family or entity.family not in [
             TubulinFamily.ALPHA,
             TubulinFamily.BETA,
@@ -339,7 +472,6 @@ class TubulinETLCollector:
                 family=entity.family.value,
             )
 
-            # Map mutations for in-memory object
             pydantic_mutations = []
             for m in result.mutations:
                 pydantic_mutations.append(
@@ -362,31 +494,24 @@ class TubulinETLCollector:
                     )
                 )
 
-            # Store on Entity (for DB builder if it uses this object directly)
             entity.mutations = pydantic_mutations
             entity.alignment_stats = result.stats
 
-            # 3. SAVE TO sequence_ingestion.json (The "Clean" way)
             ingestion_file = Path(self.assets.paths.sequence_ingestion)
-
-            # Create parent directory if it doesn't exist
             ingestion_file.parent.mkdir(parents=True, exist_ok=True)
 
-            # Read existing
             if ingestion_file.exists():
                 with open(ingestion_file, "r") as f:
                     data = json.load(f)
             else:
                 data = {}
 
-            # Update
             data[entity.entity_id] = {
                 "processed_at": datetime.now().isoformat(),
                 "family": profile_type,
-                "data": asdict(result),  # Save the full dataclass result
+                "data": asdict(result),
             }
 
-            # Write
             with open(ingestion_file, "w") as f:
                 json.dump(data, f, indent=2)
 
@@ -396,88 +521,108 @@ class TubulinETLCollector:
                 )
 
         except Exception as e:
-            print(f"⚠️ INGESTION ERROR Entity {entity.entity_id}: {e}")
+            print(f"INGESTION ERROR Entity {entity.entity_id}: {e}")
             import traceback
 
             traceback.print_exc()
 
+    # -------------------------------------------------------------------------
+    # Main entry point
+    # -------------------------------------------------------------------------
+
     async def generate_profile(
-        self, overwrite: bool = False, run_sequence_ingestion: bool = True
-    ) -> TubulinStructure:
-        profile_path = self.assets.paths.profile
-        if os.path.exists(profile_path) and not overwrite:
-            return self.assets.profile()
+            self,
+            overwrite: bool = False,
+            run_sequence_ingestion: bool = True,
+            run_ligand_extraction: bool = True,
+            ligand_extraction_workers: int = 4,
+        ) -> TubulinStructure:
+            profile_path = self.assets.paths.profile
+            if os.path.exists(profile_path) and not overwrite:
+                return self.assets.profile()
 
-        print(f"Generating profile for {self.rcsb_id}...")
+            print(f"Generating profile for {self.rcsb_id}...")
 
-        entry_data = query_rcsb_api(EntryInfoString.replace("$RCSB_ID", self.rcsb_id))[
-            "entry"
-        ]
-        asm_data = query_rcsb_api(
-            AssemblyIdentificationString.replace("$RCSB_ID", self.rcsb_id)
-        )
-        self.asm_maps = [
-            AssemblyInstancesMap.model_validate(a)
-            for a in asm_data.get("entry", {}).get("assemblies", [])
-        ]
+            self.assets._verify_dir_exists()
+            self.download_cif(overwrite=overwrite)
 
-        poly_data = query_rcsb_api(
-            PolymerEntitiesString.replace("$RCSB_ID", self.rcsb_id)
-        )["entry"]
-        poly_entities, polypeptides, polynucleotides = self._process_polymers(poly_data)
+            entry_data = query_rcsb_api(EntryInfoString.replace("$RCSB_ID", self.rcsb_id))["entry"]
+            asm_data = query_rcsb_api(AssemblyIdentificationString.replace("$RCSB_ID", self.rcsb_id))
+            self.asm_maps = [
+                AssemblyInstancesMap.model_validate(a)
+                for a in asm_data.get("entry", {}).get("assemblies", [])
+            ]
 
-        nonpoly_data = query_rcsb_api(
-            NonpolymerEntitiesString.replace("$RCSB_ID", self.rcsb_id)
-        )["entry"]
-        ligand_entities, nonpolymers = self._process_nonpolymers(nonpoly_data)
+            poly_data = query_rcsb_api(PolymerEntitiesString.replace("$RCSB_ID", self.rcsb_id))["entry"]
+            poly_entities, polypeptides, polynucleotides = self._process_polymers(poly_data)
 
-        all_entities = {**poly_entities, **ligand_entities}
+            nonpoly_data = query_rcsb_api(NonpolymerEntitiesString.replace("$RCSB_ID", self.rcsb_id))["entry"]
+            ligand_entities, nonpolymers = self._process_nonpolymers(nonpoly_data)
 
-        # 4. RUN SEQUENCE INGESTION (On Entities)
-        if run_sequence_ingestion:
-            for eid, ent in all_entities.items():
-                if isinstance(ent, PolypeptideEntity):
-                    self.sequence_ingestion(ent)
+            all_entities = {**poly_entities, **ligand_entities}
 
-        organism_info = self._infer_organisms(list(all_entities.values()))
+            if run_sequence_ingestion:
+                for eid, ent in all_entities.items():
+                    if isinstance(ent, PolypeptideEntity):
+                        self.sequence_ingestion(ent)
 
-        citation = (entry_data.get("citation") or [{}])[0]
-        external_refs = entry_data.get("rcsb_external_references", []) or []
+            organism_info = self._infer_organisms(list(all_entities.values()))
 
-        structure = TubulinStructure(
-            rcsb_id                = entry_data["rcsb_id"],
-            expMethod              = entry_data["exptl"][0]["method"],
-            resolution             = (entry_data["rcsb_entry_info"]["resolution_combined"] or [None])[0] or 0.0,
-            deposition_date        = entry_data["rcsb_accession_info"].get("deposit_date"),
-            pdbx_keywords          = entry_data.get("struct_keywords", {}).get("pdbx_keywords"),
-            pdbx_keywords_text     = entry_data.get("struct_keywords", {}).get("text"),
-            rcsb_external_ref_id   = [ref.get("id") for ref in external_refs],
-            rcsb_external_ref_type = [ref.get("type") for ref in external_refs],
-            rcsb_external_ref_link = [ref.get("link") for ref in external_refs],
-            citation_title         = citation.get("title"),
-            citation_year          = citation.get("year"),
-            citation_rcsb_authors  = citation.get("rcsb_authors"),
-            citation_pdbx_doi      = citation.get("pdbx_database_id_DOI"),
-            
-            # --- PASS INFERRED ORGANISMS ---
-            **organism_info,
+            citation = (entry_data.get("citation") or [{}])[0]
+            external_refs = entry_data.get("rcsb_external_references", []) or []
 
-            entities        = all_entities,
-            polypeptides    = polypeptides,
-            polynucleotides = polynucleotides,
-            nonpolymers     = nonpolymers,
-            assembly_map    = self.asm_maps,
-        )
+            structure = TubulinStructure(
+                rcsb_id=entry_data["rcsb_id"],
+                expMethod=entry_data["exptl"][0]["method"],
+                resolution=(entry_data["rcsb_entry_info"]["resolution_combined"] or [None])[0] or 0.0,
+                deposition_date=entry_data["rcsb_accession_info"].get("deposit_date"),
+                pdbx_keywords=entry_data.get("struct_keywords", {}).get("pdbx_keywords"),
+                pdbx_keywords_text=entry_data.get("struct_keywords", {}).get("text"),
+                rcsb_external_ref_id=[ref.get("id") for ref in external_refs],
+                rcsb_external_ref_type=[ref.get("type") for ref in external_refs],
+                rcsb_external_ref_link=[ref.get("link") for ref in external_refs],
+                citation_title=citation.get("title"),
+                citation_year=citation.get("year"),
+                citation_rcsb_authors=citation.get("rcsb_authors"),
+                citation_pdbx_doi=citation.get("pdbx_database_id_DOI"),
+                **organism_info,
+                entities=all_entities,
+                polypeptides=polypeptides,
+                polynucleotides=polynucleotides,
+                nonpolymers=nonpolymers,
+                assembly_map=self.asm_maps,
+            )
 
-        self.assets._verify_dir_exists()
-        
-        # Save profile
-        with open(profile_path, "w") as f:
-            f.write(structure.model_dump_json(indent=4))
+            with open(profile_path, "w") as f:
+                f.write(structure.model_dump_json(indent=4))
+            print(f"Saved: {profile_path}")
 
-        print(f"Saved: {profile_path}")
-        return structure
+            # Ligand extraction - now using the standalone module
+            if run_ligand_extraction:
+                print(f"Extracting ligand interactions...")
+                
+                # Build list of (comp_id, auth_asym_id) from the structure we just built
+                ligand_instances = []
+                for nonpoly in structure.nonpolymers:
+                    entity = structure.entities.get(nonpoly.entity_id)
+                    if entity:
+                        ligand_instances.append((entity.chemical_id, nonpoly.auth_asym_id))
+                
+                results = extract_ligands_parallel(
+                    rcsb_id=self.rcsb_id,
+                    cif_path=Path(self.assets.paths.cif),
+                    ligand_instances=ligand_instances,
+                    output_dir=Path(self.assets.paths.base_dir),
+                    script_path=PROJECT_ROOT / "scripts_and_artifacts" / "extract_ixs.tsx",
+                    project_root=PROJECT_ROOT,
+                    max_workers=ligand_extraction_workers,
+                    overwrite=overwrite,
+                )
+                
+                succeeded = sum(1 for r in results if r.success)
+                print(f"Ligand extraction: {succeeded}/{len(results)} succeeded")
 
+            return structure
 
 
 async def main(rcsb_id: str):

@@ -1,57 +1,63 @@
 """
 Ligand interaction extraction module.
 
-Downloads CIF structures and runs the TypeScript extraction script
-to generate interaction reports for each ligand instance.
+Runs the TypeScript molstar script to extract binding site interactions
+for each ligand instance in a structure.
 """
 
-import json
 import subprocess
-import requests
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from typing import Optional
 
 from lib.etl.constants import TUBETL_DATA
-from lib.etl.assets import TubulinStructureAssets
-from lib.models.types_tubulin import TubulinStructure, LigandNeighborhood
+
+# Ligands to skip (waters, common ions, buffers)
+SKIP_LIGANDS = {
+    "HOH", "DOD",  # water
+    "NA", "CL", "K", "MG", "CA", "ZN", "FE", "MN", "CO", "NI", "CU",  # ions
+    "SO4", "PO4", "NO3",  # common anions
+    "GOL", "EDO", "PEG", "PGE",  # polyols
+    "ACT", "FMT",  # acetate, formate
+    "MES", "TRS", "HEP", "EPE",  # buffers
+    "CIT", "TAR",  # acids
+    "DMS", "DMF",  # solvents
+    "BME", "DTT",  # reducing agents
+}
 
 
-# Ligands to skip (waters, common ions, etc.)
-SKIP_LIGANDS = {"HOH", "DOD", "NA", "CL", "K", "MG", "CA", "ZN", "SO4", "PO4", "GOL", "EDO", "ACT"}
-
-# Path to the extraction script (adjust as needed)
-SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts_and_artifacts" / "extract_ixs.tsx"
-
-
-def download_cif(rcsb_id: str, output_path: Path) -> bool:
-    """Download CIF file from RCSB PDB."""
-    url = f"https://files.rcsb.org/download/{rcsb_id.upper()}.cif"
-    
-    try:
-        resp = requests.get(url, timeout=60)
-        resp.raise_for_status()
-        output_path.write_text(resp.text)
-        print(f"Downloaded: {output_path}")
-        return True
-    except requests.RequestException as e:
-        print(f"Failed to download {rcsb_id}: {e}")
-        return False
+@dataclass
+class ExtractionTarget:
+    """A single ligand instance to extract."""
+    rcsb_id: str
+    comp_id: str
+    auth_asym_id: str
+    cif_path: Path
+    output_path: Path
 
 
-def run_extraction(
-    cif_path: Path,
-    ligand_comp_id: str,
-    auth_asym_id: str,
-    output_path: Path,
-) -> bool:
-    """Run the TypeScript extraction script."""
+@dataclass 
+class ExtractionResult:
+    """Result of a single extraction."""
+    target: ExtractionTarget
+    success: bool
+    error: Optional[str] = None
+
+
+def run_single_extraction(
+    target: ExtractionTarget,
+    script_path: Path,
+    project_root: Path,
+) -> ExtractionResult:
+    """Run extraction for a single ligand instance."""
     cmd = [
         "npx", "tsx",
-        str(SCRIPT_PATH),
-        str(cif_path),
-        ligand_comp_id,
-        auth_asym_id,
-        str(output_path),
+        str(script_path),
+        str(target.cif_path),
+        target.comp_id,
+        target.auth_asym_id,
+        str(target.output_path),
     ]
     
     try:
@@ -60,108 +66,155 @@ def run_extraction(
             capture_output=True,
             text=True,
             timeout=300,
+            cwd=project_root,
         )
         
         if result.returncode != 0:
-            print(f"Extraction failed for {ligand_comp_id}/{auth_asym_id}:")
-            print(result.stderr)
-            return False
-            
-        return True
+            return ExtractionResult(
+                target=target,
+                success=False,
+                error=result.stderr[:500] if result.stderr else "Unknown error",
+            )
+        return ExtractionResult(target=target, success=True)
         
     except subprocess.TimeoutExpired:
-        print(f"Extraction timed out for {ligand_comp_id}/{auth_asym_id}")
-        return False
+        return ExtractionResult(target=target, success=False, error="Timeout")
     except Exception as e:
-        print(f"Extraction error: {e}")
-        return False
+        return ExtractionResult(target=target, success=False, error=str(e))
 
 
-def extract_ligand_interactions(
+def extract_ligands_parallel(
     rcsb_id: str,
+    cif_path: Path,
+    ligand_instances: list[tuple[str, str]],  # [(comp_id, auth_asym_id), ...]
+    output_dir: Path,
+    script_path: Path,
+    project_root: Path,
+    max_workers: int = 4,
     overwrite: bool = False,
-    skip_ligands: Optional[set] = None,
-) -> list[Path]:
+    skip_ligands: Optional[set[str]] = None,
+) -> list[ExtractionResult]:
     """
-    Extract interactions for all ligand instances in a structure.
+    Extract interactions for multiple ligand instances in parallel.
     
     Args:
         rcsb_id: PDB ID
-        overwrite: Re-run extraction even if output exists
-        skip_ligands: Set of comp_ids to skip (defaults to SKIP_LIGANDS)
+        cif_path: Path to the CIF file
+        ligand_instances: List of (comp_id, auth_asym_id) tuples
+        output_dir: Directory to write output files
+        script_path: Path to extract_ixs.tsx
+        project_root: Project root for subprocess cwd
+        max_workers: Number of parallel workers
+        overwrite: Re-extract even if output exists
+        skip_ligands: Set of comp_ids to skip
     
     Returns:
-        List of paths to generated report files
+        List of ExtractionResult objects
     """
-    rcsb_id = rcsb_id.upper()
     skip = skip_ligands if skip_ligands is not None else SKIP_LIGANDS
+    rcsb_id = rcsb_id.upper()
     
+    # Build targets
+    targets = []
+    for comp_id, auth_asym_id in ligand_instances:
+        if comp_id in skip:
+            continue
+        
+        output_path = output_dir / f"{rcsb_id}_{comp_id}_{auth_asym_id}.json"
+        
+        if output_path.exists() and not overwrite:
+            continue
+        
+        targets.append(ExtractionTarget(
+            rcsb_id=rcsb_id,
+            comp_id=comp_id,
+            auth_asym_id=auth_asym_id,
+            cif_path=cif_path,
+            output_path=output_path,
+        ))
+    
+    if not targets:
+        return []
+    
+    print(f"  Extracting {len(targets)} ligand(s) with {max_workers} workers...")
+    
+    results = []
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(
+                run_single_extraction, target, script_path, project_root
+            ): target
+            for target in targets
+        }
+        
+        for future in as_completed(futures):
+            result = future.result()
+            status = "ok" if result.success else f"FAILED: {result.error}"
+            print(f"    {result.target.comp_id}/{result.target.auth_asym_id}: {status}")
+            results.append(result)
+    
+    return results
+
+
+# Convenience function for standalone use
+def extract_for_structure(
+    rcsb_id: str,
+    max_workers: int = 4,
+    overwrite: bool = False,
+) -> list[ExtractionResult]:
+    """
+    Extract all ligand interactions for a structure.
+    
+    Loads the profile to get ligand instances, then runs parallel extraction.
+    """
+    from api.config import PROJECT_ROOT
+    from lib.etl.assets import TubulinStructureAssets
+    
+    rcsb_id = rcsb_id.upper()
     assets = TubulinStructureAssets(rcsb_id)
-    assets._verify_dir_exists()
     
-    # Ensure CIF exists
     cif_path = Path(assets.paths.cif)
     if not cif_path.exists():
-        if not download_cif(rcsb_id, cif_path):
-            raise RuntimeError(f"Could not obtain CIF for {rcsb_id}")
+        raise FileNotFoundError(f"CIF not found: {cif_path}")
     
-    # Load profile to get ligand instances
     profile = assets.profile()
     
-    generated_files = []
-    
-    # Group instances by (comp_id, auth_asym_id)
+    # Gather (comp_id, auth_asym_id) for each nonpolymer instance
+    ligand_instances = []
     for nonpoly in profile.nonpolymers:
         entity = profile.entities.get(nonpoly.entity_id)
         if entity is None:
             continue
-            
-        comp_id = entity.chemical_id
-        
-        if comp_id in skip:
-            continue
-        
-        auth_asym_id = nonpoly.auth_asym_id
-        output_name = f"{rcsb_id}_{comp_id}_{auth_asym_id}.json"
-        output_path = Path(assets.paths.base_dir) / output_name
-        
-        if output_path.exists() and not overwrite:
-            print(f"Skipping (exists): {output_name}")
-            generated_files.append(output_path)
-            continue
-        
-        print(f"Extracting: {rcsb_id} / {comp_id} / {auth_asym_id}")
-        
-        if run_extraction(cif_path, comp_id, auth_asym_id, output_path):
-            generated_files.append(output_path)
+        ligand_instances.append((entity.chemical_id, nonpoly.auth_asym_id))
     
-    return generated_files
+    return extract_ligands_parallel(
+        rcsb_id=rcsb_id,
+        cif_path=cif_path,
+        ligand_instances=ligand_instances,
+        output_dir=Path(assets.paths.base_dir),
+        script_path=PROJECT_ROOT / "scripts_and_artifacts" / "extract_ixs.tsx",
+        project_root=PROJECT_ROOT,
+        max_workers=max_workers,
+        overwrite=overwrite,
+    )
 
-
-def load_neighborhood_report(path: Path) -> list[LigandNeighborhood]:
-    """Load and parse a neighborhood report JSON file."""
-    with open(path) as f:
-        raw = json.load(f)
-    return [LigandNeighborhood.from_raw(item) for item in raw]
-
-
-# --- CLI Entry Point ---
 
 if __name__ == "__main__":
     import sys
     
     if len(sys.argv) < 2:
-        print("Usage: python -m lib.etl.ligand_extraction <RCSB_ID> [--overwrite]")
+        print("Usage: python -m lib.etl.ligand_extraction <RCSB_ID> [--overwrite] [--workers=N]")
         sys.exit(1)
     
     rcsb_id = sys.argv[1]
     overwrite = "--overwrite" in sys.argv
     
-    try:
-        files = extract_ligand_interactions(rcsb_id, overwrite=overwrite)
-        print(f"\nGenerated {len(files)} report(s):")
-        for f in files:
-            print(f"  {f}")
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    workers = 4
+    for arg in sys.argv:
+        if arg.startswith("--workers="):
+            workers = int(arg.split("=")[1])
+    
+    results = extract_for_structure(rcsb_id, max_workers=workers, overwrite=overwrite)
+    
+    succeeded = sum(1 for r in results if r.success)
+    print(f"\nDone: {succeeded}/{len(results)} succeeded")

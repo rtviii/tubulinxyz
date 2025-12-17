@@ -1,4 +1,4 @@
-# tubexyz/lib/schema/types_tubulin.py
+# types_tubulin.py
 from typing import Dict, Optional, List, Literal, Tuple, Union, Any
 from enum import Enum
 from Bio.SeqRecord import SeqRecord
@@ -138,9 +138,6 @@ class LigandNeighborhood(BaseModel):
             interactions=[LigandInteraction.from_raw(i) for i in raw["interactions"]],
             neighborhood=[NeighborResidue.from_tuple(n) for n in raw["neighborhood"]],
         )
-
-
-
 
 
 # --- Enums ---
