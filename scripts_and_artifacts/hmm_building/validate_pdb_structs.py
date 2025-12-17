@@ -31,7 +31,6 @@ DEFAULT_REPORT_PATH = Path("./PDB_Classification_Report.json")
 
 console = Console()
 
-
 @dataclass
 class EntityResult:
     rcsb_id: str
@@ -458,7 +457,6 @@ def main():
         
     else:
         parser.print_help()
-
 
 if __name__ == "__main__":
     main()

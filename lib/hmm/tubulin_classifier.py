@@ -12,46 +12,44 @@ import pyhmmer
 from pyhmmer.easel import Alphabet, TextSequence, DigitalSequenceBlock
 from pyhmmer.plan7 import HMM, Pipeline, TopHits
 from loguru import logger
-
 from lib.models.types_tubulin import TubulinFamily, MapFamily, HmmFamily
 from lib.hmm import get_hmm_path, get_all_hmm_dirs
 
 
 def get_classification_cache_dir() -> Path:
-    # We can stick this in the first HMM dir or a dedicated cache dir
-    # For now, let's put it in data/hmms/cache
-    path = (
-        Path(__file__).parent.parent.parent / "data" / "hmms" / "classification_cache"
-    )
+    path = (Path(__file__).parent.parent.parent / "data" / "hmms" / "classification_cache")
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 @dataclass
 class DomainHit:
-    score: float
+
+    score   : float
     c_evalue: float
     i_evalue: float
     env_from: int
-    env_to: int
-    bias: float
+    env_to  : int
+    bias    : float
 
 
 @dataclass
 class HMMHit:
-    family: HmmFamily
-    score: float
-    evalue: float
-    bias: float
+
+    family : HmmFamily
+    score  : float
+    evalue : float
+    bias   : float
     domains: list[DomainHit] = field(default_factory=list)
 
 
 @dataclass
 class ClassificationResult:
-    rcsb_id: str
-    auth_asym_id: str
+
+    rcsb_id        : str
+    auth_asym_id   : str
     sequence_length: int
-    hits: list[HMMHit] = field(default_factory=list)
+    hits           : list[HMMHit] = field(default_factory=list)
 
     @property
     def best_hit(self) -> Optional[HMMHit]:

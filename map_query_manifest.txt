@@ -1,5 +1,0 @@
-Run Date: 2025-12-15 18:13:24
-Filename | Family_Key | Exact_Query_String | Filters
---------------------------------------------------------------------------------
-map_classical_map_tau.fasta | classical_map_tau | (gene:MAPT OR gene:MAP2 OR gene:MAP4) OR (xref:interpro-IPR001084) | len:200-3000, score>=3
-map_doublecortin.fasta | doublecortin | (gene:DCX OR gene:DCLK1 OR gene:DCLK2) OR (xref:interpro-IPR003533) | len:300-1500, score>=3
