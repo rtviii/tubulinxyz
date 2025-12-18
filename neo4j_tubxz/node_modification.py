@@ -2,7 +2,7 @@
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
-from lib.models.types_tubulin import Modification
+from lib.types import Modification
 
 def node__modification(
     mod: Modification

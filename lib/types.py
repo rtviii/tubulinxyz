@@ -57,7 +57,7 @@ class MapFamily(str, Enum):
     VASH            = "map_vash_detyrosinase"
 
 # Type alias for any family
-HmmFamily = Union[TubulinFamily, MapFamily]
+PolymerClass = Union[TubulinFamily, MapFamily]
 
 # --- Ligand Interaction Models ---
 
@@ -72,7 +72,6 @@ class InteractionType(str, Enum):
     HYDROPHOBIC        = "Hydrophobic Contact"
     METAL_COORDINATION = "Metal Coordination"
     WEAK_HYDROGEN_BOND = "Weak Hydrogen Bond"
-
 
 class InteractionParticipant(BaseModel):
     """An atom participating in an interaction."""
@@ -92,7 +91,6 @@ class InteractionParticipant(BaseModel):
             is_ligand=t[4],
         )
 
-
 class LigandInteraction(BaseModel):
     """A single interaction between ligand and polymer."""
     type: str
@@ -108,7 +106,6 @@ class LigandInteraction(BaseModel):
             ),
         )
 
-
 class NeighborResidue(BaseModel):
     """A residue in the ligand's neighborhood."""
     auth_asym_id: str
@@ -118,7 +115,6 @@ class NeighborResidue(BaseModel):
     @classmethod
     def from_tuple(cls, t: list) -> "NeighborResidue":
         return cls(auth_asym_id=t[0], auth_seq_id=t[1], auth_comp_id=t[2])
-
 
 class LigandNeighborhood(BaseModel):
     """Complete binding site report for a single ligand instance."""
@@ -322,11 +318,10 @@ class PolypeptideEntity(BaseEntity):
     src_organism_ids: List[int] = []
     host_organism_ids: List[int] = []
 
-    family: Optional[TubulinFamily] = None
+    family: Optional[PolymerClass] = None  # Changed from Optional[TubulinFamily]
     uniprot_accessions: List[str] = []
 
-    # Mutations detected vis a vis the Master Alignmnet
-    mutations      : List[Mutation] = []
+    mutations: List[Mutation] = []
     alignment_stats: Dict[str, Any] = {}
 
     def to_SeqRecord(self, rcsb_id: str) -> SeqRecord:
@@ -338,20 +333,15 @@ class PolypeptideEntity(BaseEntity):
         )
 
 class PolynucleotideEntity(BaseEntity):
-    type: Literal["polymer"] = "polymer"
-    polymer_type: str  # "DNA", "RNA", "NA-hybrid"
 
-    one_letter_code: str
+    type               : Literal["polymer"] = "polymer"
+    polymer_type       : str                             
+    one_letter_code    : str
     one_letter_code_can: str
-    sequence_length: int
-
+    sequence_length    : int
     src_organism_names: List[str] = []
-    src_organism_ids: List[int] = []
+    src_organism_ids  : List[int] = []
 
-
-
-
-# --- 2. INSTANCES (The Physical Objects) ---
 
 
 

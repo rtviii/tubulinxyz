@@ -136,7 +136,6 @@ def extract_ligands_parallel(
     if not targets:
         return []
     
-    print(f"  Extracting {len(targets)} ligand(s) with {max_workers} workers...")
     
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -150,7 +149,6 @@ def extract_ligands_parallel(
         for future in as_completed(futures):
             result = future.result()
             status = "ok" if result.success else f"FAILED: {result.error}"
-            print(f"    {result.target.comp_id}/{result.target.auth_asym_id}: {status}")
             results.append(result)
     
     return results

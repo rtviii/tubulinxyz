@@ -7,7 +7,7 @@ import datetime
 from lib.etl.assets import GlobalOps, TubulinStructureAssets
 from lib.etl.libtax import PhylogenyNode, Taxid
 
-from lib.models.types_tubulin import (
+from lib.types import (
     TubulinStructure,
     PolypeptideEntity,
     PolynucleotideEntity,

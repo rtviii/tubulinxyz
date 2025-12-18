@@ -15,7 +15,7 @@ sys.path.insert(0, str(parent_dir))
 
 # --- Imports ---
 from api.schemas import AlignmentRequest, AlignmentResponse
-from api.services.alignment import (
+from api.services.seq_aligner import (
     TubulinAlignmentMapper, 
     TubulinStructureParser,
     TubulinIngestor

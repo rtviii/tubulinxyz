@@ -2,7 +2,7 @@
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
-from lib.models.types_tubulin import NonpolymerEntity, Nonpolymer
+from lib.types import NonpolymerEntity, Nonpolymer
 
 def node__chemical(
     entity: NonpolymerEntity

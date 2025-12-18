@@ -7,7 +7,7 @@ from neo4j import ManagedTransaction, Transaction
 # Adjust imports to match your project structure
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 from lib.etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
-from lib.models.types_tubulin import TubulinFamily
+from lib.types import TubulinFamily
 
 sys.dont_write_bytecode = True
 

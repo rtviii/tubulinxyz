@@ -19,7 +19,7 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from loguru import logger
 
-from lib.models.types_tubulin import TubulinFamily, MapFamily, HmmFamily
+from lib.types import TubulinFamily, MapFamily, PolymerClass
 from lib.hmm import (
     get_muscle_bin, 
     get_fasta_path, 
@@ -70,7 +70,7 @@ def build_hmm_from_msa(name: str, aligned_seqs: list[SeqRecord], alphabet: Alpha
     return hmm
 
 
-def process_family(family: HmmFamily):
+def process_family(family: PolymerClass):
     """Pipeline: Load Fasta -> Align -> Build HMM -> Save Files."""
     fasta_path = get_fasta_path(family)
     afasta_path = get_aligned_fasta_path(family)

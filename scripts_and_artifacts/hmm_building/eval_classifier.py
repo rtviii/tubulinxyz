@@ -13,8 +13,8 @@ from Bio import SeqIO
 from loguru import logger
 
 from lib.hmm import get_raw_fasta_path
-from lib.hmm.tubulin_classifier import TubulinClassifier
-from lib.models.types_tubulin import TubulinFamily
+from lib.hmm.classifier import TubulinClassifier
+from lib.types import TubulinFamily
 
 
 @dataclass

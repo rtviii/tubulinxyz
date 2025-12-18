@@ -4,7 +4,7 @@ Handles path resolution for Tubulin and MAP families.
 """
 from pathlib import Path
 from typing import Union
-from lib.models.types_tubulin import TubulinFamily, MapFamily, HmmFamily
+from lib.types import TubulinFamily, MapFamily, PolymerClass
 
 # --- Base Paths ---
 _PROJECT_ROOT = Path(__file__).parent.parent.parent  # tubulinxyz/
@@ -29,7 +29,7 @@ def get_muscle_bin() -> Path:
     """Path to MUSCLE binary."""
     return _MUSCLE_BIN
 
-def _resolve_family_dirs(family: HmmFamily) -> tuple[Path, Path]:
+def _resolve_family_dirs(family: PolymerClass) -> tuple[Path, Path]:
     """
     Internal helper to route to the correct sequence/hmm folders 
     based on the family type.
@@ -42,7 +42,7 @@ def _resolve_family_dirs(family: HmmFamily) -> tuple[Path, Path]:
     else:
         raise ValueError(f"Unknown family type: {type(family)}")
 
-def get_fasta_path(family: HmmFamily) -> Path:
+def get_fasta_path(family: PolymerClass) -> Path:
     """
     Get path to input FASTA (seed sequences).
     Expected format: data/sequences/{type}/{family_value}.fasta
@@ -52,7 +52,7 @@ def get_fasta_path(family: HmmFamily) -> Path:
     seq_dir.mkdir(parents=True, exist_ok=True)
     return seq_dir / f"{family.value}.fasta"
 
-def get_aligned_fasta_path(family: HmmFamily) -> Path:
+def get_aligned_fasta_path(family: PolymerClass) -> Path:
     """
     Get path to output aligned FASTA.
     Format: data/sequences/{type}/{family_value}.afasta
@@ -61,7 +61,7 @@ def get_aligned_fasta_path(family: HmmFamily) -> Path:
     seq_dir.mkdir(parents=True, exist_ok=True)
     return seq_dir / f"{family.value}.afasta"
 
-def get_hmm_path(family: HmmFamily) -> Path:
+def get_hmm_path(family: PolymerClass) -> Path:
     """
     Get path to HMM file.
     Format: data/hmms/{type}/{family_value}.hmm

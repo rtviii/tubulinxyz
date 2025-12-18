@@ -3,7 +3,7 @@ from typing import Callable, Literal
 from neo4j import ManagedTransaction, Record, Transaction
 from neo4j.graph import Node
 
-from lib.models.types_tubulin import TubulinStructure
+from lib.types import TubulinStructure
 
 def struct_exists(rcsb_id: str) -> Callable[[Transaction | ManagedTransaction], bool]:
     def _(tx: Transaction | ManagedTransaction):

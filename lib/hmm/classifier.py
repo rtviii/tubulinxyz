@@ -12,7 +12,7 @@ import pyhmmer
 from pyhmmer.easel import Alphabet, TextSequence, DigitalSequenceBlock
 from pyhmmer.plan7 import HMM, Pipeline, TopHits
 from loguru import logger
-from lib.models.types_tubulin import TubulinFamily, MapFamily, HmmFamily
+from lib.types import TubulinFamily, MapFamily, PolymerClass
 from lib.hmm import get_hmm_path, get_all_hmm_dirs
 
 
@@ -36,7 +36,7 @@ class DomainHit:
 @dataclass
 class HMMHit:
 
-    family : HmmFamily
+    family : PolymerClass
     score  : float
     evalue : float
     bias   : float
@@ -58,7 +58,7 @@ class ClassificationResult:
         return max(self.hits, key=lambda h: h.score)
 
     @property
-    def assigned_family(self) -> Optional[HmmFamily]:
+    def assigned_family(self) -> Optional[PolymerClass]:
         hit = self.best_hit
         return hit.family if hit else None
 
@@ -97,7 +97,7 @@ class TubulinClassifier:
     def __init__(self, use_cache: bool = True):
         self.use_cache = use_cache
         self.alphabet = Alphabet.amino()
-        self.hmms: Dict[HmmFamily, HMM] = {}
+        self.hmms: Dict[PolymerClass, HMM] = {}
         self._load_hmms()
 
     def _load_hmms(self):
@@ -122,8 +122,6 @@ class TubulinClassifier:
                     self.hmms[family] = hmm
                 except Exception as e:
                     logger.error(f"Error loading {hmm_path}: {e}")
-
-        logger.info(f"Classifier loaded {len(self.hmms)} HMM profiles")
 
     def classify(
         self,
@@ -163,9 +161,10 @@ class TubulinClassifier:
             # Run search against all loaded HMMs
             for family, hmm in self.hmms.items():
                 hits: TopHits = pipeline.search_hmm(hmm, seq_block)
-
+                
+                
                 for hit in hits:
-                    if hit.is_included():  # Only take significant hits
+                    if hit.included:
                         domains = [
                             DomainHit(
                                 score=d.score,

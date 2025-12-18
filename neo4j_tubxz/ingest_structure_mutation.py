@@ -25,7 +25,7 @@ from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node
 
 from neo4j_tubxz.db_driver import Neo4jAdapter
-from lib.models.types_tubulin import AlignmentMapping
+from lib.types import AlignmentMapping
 
 
 def load_sequence_ingestion_data(json_path: str) -> Dict[str, Any]:

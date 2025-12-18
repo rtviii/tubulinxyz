@@ -2,7 +2,7 @@
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node
-from lib.models.types_tubulin import PolypeptideEntity, PolynucleotideEntity, Polypeptide, Polynucleotide
+from lib.types import PolypeptideEntity, PolynucleotideEntity, Polypeptide, Polynucleotide
 
 def node__polypeptide_entity(
     entity: PolypeptideEntity,

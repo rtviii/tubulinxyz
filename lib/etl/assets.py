@@ -6,7 +6,7 @@ from typing import Any
 
 from lib.etl.constants import TUBETL_DATA
 from lib.etl.libtax import PhylogenyNode, Taxid
-from lib.models.types_tubulin import TubulinStructure 
+from lib.types import TubulinStructure 
 
 import os
 import json
@@ -49,6 +49,11 @@ class TubulinStructureAssetPaths:
         pattern = os.path.join(self.base_dir, f"{self.rcsb_id}_*_*.json")
         # Exclude the main profile
         return [p for p in glob.glob(pattern) if not p.endswith(f"{self.rcsb_id}.json")]
+
+    @property
+    def classification_report(self) -> str:
+        """Path to the HMM classification report."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_classification_report.json")
 
     @property
     def sequence_ingestion(self) -> str:

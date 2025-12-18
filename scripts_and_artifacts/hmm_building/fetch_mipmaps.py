@@ -10,14 +10,15 @@ from dataclasses import dataclass, field
 
 @dataclass
 class FamilyConfig:
-    desc: str
-    interpro: list[str] = field(default_factory=list)
-    genes: list[str] = field(default_factory=list)
-    min_len: int = 50
-    max_len: int = 10000
-    reviewed_only: bool = False
-    exclude_fragments: bool = True  # NEW: exclude fragments by default
-    exclude_terms: list[str] = field(default_factory=list)
+
+    desc             : str
+    interpro         : list[str] = field(default_factory=list)
+    genes            : list[str] = field(default_factory=list)
+    min_len          : int = 50
+    max_len          : int = 10000
+    reviewed_only    : bool = False
+    exclude_fragments: bool = True                              # NEW: exclude fragments by default
+    exclude_terms    : list[str] = field(default_factory=list)
 
 
 MAP_FAMILIES: dict[str, FamilyConfig] = {
@@ -68,10 +69,10 @@ MAP_FAMILIES: dict[str, FamilyConfig] = {
     ),
     
     "doublecortin": FamilyConfig(
-        desc="Doublecortin domain family",
-        interpro=["IPR003533"],
-        genes=["DCX", "DCLK1", "DCLK2", "DCLK3"],
-        min_len=350, max_len=750,  # DCX domain proteins, exclude kinase fusions
+        desc     = "Doublecortin domain family",
+        interpro = ["IPR003533"],
+        genes    = ["DCX", "DCLK1", "DCLK2", "DCLK3"],
+        min_len  = 350,                                max_len = 750,   # DCX domain proteins, exclude kinase fusions
     ),
     
     # =========================================================================
@@ -79,10 +80,10 @@ MAP_FAMILIES: dict[str, FamilyConfig] = {
     # =========================================================================
     
     "eb_family": FamilyConfig(
-        desc="EB1/EB3/MAPRE family",
-        interpro=["IPR000357", "IPR017975"],
-        genes=["MAPRE1", "MAPRE2", "MAPRE3", "EB1", "BIM1", "MAL3"],
-        min_len=250, max_len=330,  # EBs are very conserved ~268
+        desc     = "EB1/EB3/MAPRE family",
+        interpro = ["IPR000357", "IPR017975"],
+        genes    = ["MAPRE1", "MAPRE2", "MAPRE3", "EB1", "BIM1", "MAL3"],
+        min_len  = 250,                                                   max_len = 330,   # EBs are very conserved ~268
     ),
     
     # Split TOG domain proteins

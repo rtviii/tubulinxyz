@@ -22,8 +22,8 @@ from rich.table import Table
 from rich.panel import Panel
 from rich import print as rprint
 
-from lib.hmm.tubulin_classifier import TubulinClassifier, ClassificationResult
-from lib.models.types_tubulin import TubulinFamily
+from lib.hmm.classifier import TubulinClassifier, ClassificationResult
+from lib.types import TubulinFamily
 
 # Paths
 TUBETL_DATA = Path("./TUBETL_DATA")

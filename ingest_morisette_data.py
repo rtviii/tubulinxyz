@@ -8,7 +8,7 @@ from neo4j_tubxz.db_driver import Neo4jAdapter
 from neo4j_tubxz.node_mutation import node__mutation, link__mutation_to_master_alignment
 from neo4j_tubxz.node_modification import node__modification, link__modification_to_master_alignment
 from neo4j_tubxz.node_master_alignment import node__master_alignment, get_master_alignment
-from lib.models.types_tubulin import Modification, Mutation, MasterAlignment, TubulinFamily
+from lib.types import Modification, Mutation, MasterAlignment, TubulinFamily
 
 def create_master_alignment(adapter: Neo4jAdapter, fasta_path: str, family: TubulinFamily, version: str):
     """Create or get the master alignment node"""
