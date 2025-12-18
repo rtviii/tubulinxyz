@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from neo4j_tubxz.db_lib_reader import dbqueries, PolymersFilterParams
-from lib.models.types_tubulin import TubulinFamily
+from lib.types import TubulinFamily
 
 router_polymers = APIRouter()
 

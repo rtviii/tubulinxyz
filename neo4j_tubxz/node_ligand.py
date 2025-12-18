@@ -1,86 +1,103 @@
-# tubexyz/neo4j_driver/node_ligand.py
+# neo4j_tubxz/node_ligand.py
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
+from lib.types import NonpolymerEntity, Nonpolymer
 
-from lib.models.types_tubulin import NonpolymericLigand
-# TUBE-UPDATE: Import new tubulin schema
-
-def node__ligand(
-    _ligand: NonpolymericLigand,
-    parent_rcsb_id: str # TUBE-UPDATE: Added for bug fix
+def node__chemical(
+    entity: NonpolymerEntity
 ) -> Callable[[Transaction | ManagedTransaction], Node]:
-    
+    """
+    Merges the Global Chemical Node (shared across ALL PDB structures).
+    Uses the chemical_id (e.g., 'GTP', 'TAX') as the unique key.
+    """
+    props = {
+        "chemical_id": entity.chemical_id,
+        "chemical_name": entity.chemical_name,
+        "SMILES": entity.SMILES,
+        "SMILES_stereo": entity.SMILES_stereo,
+        "InChI": entity.InChI,
+        "InChIKey": entity.InChIKey,
+        # Flatten drugbank info if available
+        "drugbank_id": (
+            entity.nonpolymer_comp.drugbank.drugbank_container_identifiers.drugbank_id
+            if entity.nonpolymer_comp and entity.nonpolymer_comp.drugbank and entity.nonpolymer_comp.drugbank.drugbank_container_identifiers
+            else None
+        )
+    }
+    # Clean None values
+    props = {k: v for k, v in props.items() if v is not None}
+
     def _(tx: Transaction | ManagedTransaction):
-        # Prepare the properties dictionary
-        properties = {
-            "chemicalId"         : _ligand.chemicalId,
-            "chemicalName"       : _ligand.chemicalName,
-            "formula_weight"     : _ligand.formula_weight,
-            "pdbx_description"   : _ligand.pdbx_description,
-            "number_of_instances": _ligand.number_of_instances,
-            "drugbank_id"        : None,
-            "drugbank_description": None,
-            "SMILES"             : _ligand.SMILES,
-            "SMILES_stereo"      : _ligand.SMILES_stereo,
-            "InChI"              : _ligand.InChI,
-            "InChIKey"           : _ligand.InChIKey,
-        }
-
-        # Safe dictionary navigation
-        if _ligand.nonpolymer_comp and _ligand.nonpolymer_comp.drugbank:
-            if _ligand.nonpolymer_comp.drugbank.drugbank_container_identifiers:
-                properties["drugbank_id"] = _ligand.nonpolymer_comp.drugbank.drugbank_container_identifiers.drugbank_id
-            if _ligand.nonpolymer_comp.drugbank.drugbank_info:
-                properties["drugbank_description"] = _ligand.nonpolymer_comp.drugbank.drugbank_info.description
-
-        properties = {k: v for k, v in properties.items() if v is not None}
-
-        # TUBE-UPDATE: Implemented the robust MERGE query from your notes
-        query = """
-        MERGE (ligand:Ligand {chemicalId: $chemicalId})
-        ON CREATE SET
-            ligand += $properties,
-            ligand.seen_in_structures = [$parent_rcsb_id]
-        ON MATCH SET
-            // Only update properties if they are currently null
-            ligand.pdbx_description = COALESCE(ligand.pdbx_description, $properties.pdbx_description),
-            ligand.SMILES = COALESCE(ligand.SMILES, $properties.SMILES),
-            ligand.chemicalName = COALESCE(ligand.chemicalName, $properties.chemicalName),
-            
-            // Append to lists
-            ligand.seen_in_structures = CASE
-                WHEN $parent_rcsb_id IS NOT NULL AND NOT $parent_rcsb_id IN ligand.seen_in_structures
-                THEN ligand.seen_in_structures + $parent_rcsb_id
-                ELSE ligand.seen_in_structures
-            END
-        RETURN ligand
-        """
-        
-        result = tx.run(query, {
-            "chemicalId": _ligand.chemicalId,
-            "properties": properties,
-            "parent_rcsb_id": parent_rcsb_id
-        })
-        return result.single(strict=True)["ligand"]
-
+        return tx.run("""
+            MERGE (c:Chemical {chemical_id: $chemical_id})
+            ON CREATE SET c += $props
+            ON MATCH SET 
+                c.chemical_name = COALESCE(c.chemical_name, $props.chemical_name),
+                c.SMILES = COALESCE(c.SMILES, $props.SMILES),
+                c.InChIKey = COALESCE(c.InChIKey, $props.InChIKey)
+            RETURN c
+        """, {"chemical_id": entity.chemical_id, "props": props}).single(strict=True)['c']
     return _
 
-def link__ligand_to_struct(
-    ligand_node: Node, parent_rcsb_id: str
-) -> Callable[[Transaction | ManagedTransaction], list[list[Node | Relationship]]]:
-    parent_rcsb_id = parent_rcsb_id.upper()
+
+def node__nonpolymer_entity(
+    entity: NonpolymerEntity, 
+    parent_rcsb_id: str
+) -> Callable[[Transaction | ManagedTransaction], Node]:
+    """
+    Merges the Structure-Specific Entity Definition.
+    Links to the Global Chemical node.
+    """
+    props = {
+        "entity_id": entity.entity_id,
+        "parent_rcsb_id": parent_rcsb_id,
+        "pdbx_description": entity.pdbx_description,
+        "formula_weight": entity.formula_weight,
+        "chemical_id": entity.chemical_id 
+    }
 
     def _(tx: Transaction | ManagedTransaction):
-        # TUBE-UPDATE: Renamed to Structure, relationship is CONTAINS
-        return tx.run(
-            """//
-            MATCH (ligand:Ligand) WHERE ELEMENTID(ligand) = $ELEM_ID
-            MATCH (struct:Structure {rcsb_id: $PARENT})
-            MERGE (ligand)<-[contains:CONTAINS]-(struct)
-            RETURN struct, ligand, contains
-            """,
-            {"ELEM_ID": ligand_node.element_id, "PARENT": parent_rcsb_id},
-        ).values("struct", "ligand", "contains")
+        return tx.run("""
+            MERGE (e:Entity:NonpolymerEntity {parent_rcsb_id: $parent_rcsb_id, entity_id: $entity_id})
+            ON CREATE SET e += $props
+            ON MATCH SET e += $props
+            
+            WITH e
+            MATCH (c:Chemical {chemical_id: $chemical_id})
+            MERGE (e)-[:DEFINED_BY_CHEMICAL]->(c)
+            RETURN e
+        """, {
+            "parent_rcsb_id": parent_rcsb_id, 
+            "entity_id": entity.entity_id, 
+            "chemical_id": entity.chemical_id,
+            "props": props
+        }).single(strict=True)['e']
+    return _
 
+
+def node__nonpolymer_instance(
+    instance: Nonpolymer
+) -> Callable[[Transaction | ManagedTransaction], Node]:
+    """
+    Merges the physical instance using internal asym_id as the unique key.
+    """
+    def _(tx: Transaction | ManagedTransaction):
+        return tx.run("""
+            MERGE (i:Instance:NonpolymerInstance {parent_rcsb_id: $rcsb_id, asym_id: $asym_id})
+            ON CREATE SET 
+                i.auth_asym_id = $auth_id,
+                i.assembly_id = $assembly_id
+            
+            WITH i
+            MATCH (e:Entity:NonpolymerEntity {parent_rcsb_id: $rcsb_id, entity_id: $entity_id})
+            MERGE (i)-[:INSTANCE_OF]->(e)
+            RETURN i
+        """, {
+            "rcsb_id": instance.parent_rcsb_id,
+            "asym_id": instance.asym_id,       # TUBE-FIX: Unique Key
+            "auth_id": instance.auth_asym_id,  # TUBE-FIX: Property
+            "assembly_id": instance.assembly_id,
+            "entity_id": instance.entity_id
+        }).single(strict=True)['i']
     return _

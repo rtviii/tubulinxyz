@@ -6,7 +6,7 @@ from typing import Any
 
 from lib.etl.constants import TUBETL_DATA
 from lib.etl.libtax import PhylogenyNode, Taxid
-from lib.models.types_tubulin import TubulinStructure 
+from lib.types import TubulinStructure 
 
 import os
 import json
@@ -39,6 +39,22 @@ class TubulinStructureAssetPaths:
         """Directory for split chain files."""
         return os.path.join(self.base_dir, "CHAINS")
     
+    def ligand_neighborhood(self, comp_id: str, auth_asym_id: str) -> str:
+        """Path to a specific ligand neighborhood report."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_{comp_id}_{auth_asym_id}.json")
+
+    def all_ligand_neighborhoods(self) -> list[str]:
+        """List all ligand neighborhood report files."""
+        import glob
+        pattern = os.path.join(self.base_dir, f"{self.rcsb_id}_*_*.json")
+        # Exclude the main profile
+        return [p for p in glob.glob(pattern) if not p.endswith(f"{self.rcsb_id}.json")]
+
+    @property
+    def classification_report(self) -> str:
+        """Path to the HMM classification report."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_classification_report.json")
+
     @property
     def sequence_ingestion(self) -> str:
         """Path to the sequence ingestion results JSON."""
@@ -206,6 +222,11 @@ NonpolymerEntitiesString = """{
         pdbx_description
         pdbx_number_of_molecules
       }
+      rcsb_nonpolymer_entity_container_identifiers {
+        entity_id
+        asym_ids
+        auth_asym_ids
+      }
       nonpolymer_comp {
         chem_comp {
           id
@@ -237,7 +258,6 @@ NonpolymerEntitiesString = """{
   }
 }
 """
-
 LigandsChemInfo = """{
   chem_comps(comp_ids: $COMP_IDS) {
     chem_comp{

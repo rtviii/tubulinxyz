@@ -1,7 +1,6 @@
 - Tubulin Classification (via hmms)
 - ligand registry (figure out if possible) 
 
-
 # MIP/MAP classification
 
 # The landing page:
@@ -19,8 +18,7 @@ After everything else is done:
 
 - individual chain structural superposition
 
-
-----
+--------------------------------------------
 
 <!-- - db lib reader implement -->
 - create master alignment models and nodes
@@ -30,3 +28,22 @@ After everything else is done:
 - write and test in/del/mut logic  
 - PTM logic
 - Morisette dataset of PTMs
+
+--------------------------------------------
+
+1. HMM classification models: alpha, beta, main MIPs/MAPs
+- for mip/maps -- record references
+
+- add classification (major families & mip/maps)
+- search non-canonical sequences in pdb for modifications
+
+2. Standardize mutations, modifications (between morisette and structural)
+- make sure the morisette stuff corresponds to the master alignment
+
+3. Ligands interfaces (Nonpolymer)->PolymerInstance
+- how to parse and how to store? 
+
+### fend:
+- msa-viewer
+- interactions for the msa-viewer
+- new colorschme for the molstar preset
