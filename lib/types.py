@@ -80,6 +80,7 @@ class InteractionParticipant(BaseModel):
     auth_comp_id: str
     atom_id     : str
     is_ligand   : bool
+    master_index: Optional[int] = None  # Added field, made optional
 
     @classmethod
     def from_tuple(cls, t: list) -> "InteractionParticipant":
@@ -89,7 +90,22 @@ class InteractionParticipant(BaseModel):
             auth_comp_id=t[2],
             atom_id=t[3],
             is_ligand=t[4],
+            # Safely handle both 5-tuples and 6-tuples
+            master_index=t[5] if len(t) > 5 else None 
         )
+    
+    def to_tuple(self) -> list:
+        """Helper to convert back to the list format for JSON storage."""
+        base = [
+            self.auth_asym_id,
+            self.auth_seq_id,
+            self.auth_comp_id,
+            self.atom_id,
+            self.is_ligand
+        ]
+        if self.master_index is not None:
+            base.append(self.master_index)
+        return base
 
 class LigandInteraction(BaseModel):
     """A single interaction between ligand and polymer."""
@@ -111,10 +127,22 @@ class NeighborResidue(BaseModel):
     auth_asym_id: str
     auth_seq_id: int
     auth_comp_id: str
+    master_index: Optional[int] = None # Added
 
     @classmethod
     def from_tuple(cls, t: list) -> "NeighborResidue":
-        return cls(auth_asym_id=t[0], auth_seq_id=t[1], auth_comp_id=t[2])
+        return cls(
+            auth_asym_id=t[0], 
+            auth_seq_id=t[1], 
+            auth_comp_id=t[2],
+            master_index=t[3] if len(t) > 3 else None
+        )
+    
+    def to_tuple(self) -> list:
+        base = [self.auth_asym_id, self.auth_seq_id, self.auth_comp_id]
+        if self.master_index is not None:
+            base.append(self.master_index)
+        return base
 
 class LigandNeighborhood(BaseModel):
     """Complete binding site report for a single ligand instance."""
@@ -437,3 +465,48 @@ class TubulinStructure(RCSBStructureMetadata):
 
 
 # ------
+# Add to lib/types.py
+
+class MutationEntryData(BaseModel):
+    """Mutation entry as stored in sequence ingestion results."""
+    ma_position: int
+    wild_type: str
+    observed: str
+    pdb_auth_id: int
+
+
+class ProcessedChainData(BaseModel):
+    """Result of sequence alignment/ingestion for a single entity."""
+    pdb_id: str
+    chain_id: str
+    tubulin_class: str
+    sequence: str
+    
+    # ma_to_auth_map[ma_idx] = auth_seq_id (or -1 if missing)
+    ma_to_auth_map: List[int]
+    
+    # observed_to_ma_map[obs_idx] = MA position (1-based) or -2 for insertions
+    observed_to_ma_map: List[int]
+    
+    mutations: List[MutationEntryData]
+    stats: Dict[str, Any]
+
+
+class SequenceIngestionEntry(BaseModel):
+    """A single entity's ingestion record."""
+    processed_at: str
+    family: str
+    data: ProcessedChainData
+    
+    def build_auth_to_ma_map(self) -> Dict[int, int]:
+        """
+        Build reverse lookup: auth_seq_id -> MA index (1-based).
+        
+        The ma_to_auth_map stores: ma_to_auth_map[ma_idx] = auth_seq_id
+        We invert this to get: auth_seq_id -> ma_idx + 1
+        """
+        auth_to_ma: Dict[int, int] = {}
+        for ma_idx, auth_id in enumerate(self.data.ma_to_auth_map):
+            if auth_id != -1:
+                auth_to_ma[auth_id] = ma_idx + 1  # MA positions are 1-based
+        return auth_to_ma

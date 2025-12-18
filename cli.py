@@ -47,7 +47,7 @@ def get_all_structs_in_db(driver: Driver) -> list[str]:
         with driver.session() as session:
             results = session.run(query)
             struct_ids = [record["rcsb_id"] for record in results]
-            console.print(f"Found [bold yellow]{len(struct_ids)}[/bold yellow] structures in database.")
+            console.print(f"Found [bold yellow]{len(struct_ids)}[/cold yellow] structures in database.")
             return struct_ids
     except Exception as e:
         console.print(f"[bold red]Error querying database:[/bold red] {e}")
@@ -101,7 +101,7 @@ def collect_one(
             return
 
         profile = asyncio.run(collector.generate_profile(overwrite=overwrite))
-        console.print(f"[bold green]Successfully collected and saved profile:[/bold green] {profile.rcsb_id}")
+        # console.print(f"[bold green]Successfully collected and saved profile:[/bold green] {profile.rcsb_id}")
         console.print(f"Profile saved at: {collector.assets.paths.profile}")
     
     except Exception as e:
