@@ -209,6 +209,9 @@ class TubulinAlignmentMapper:
     def __init__(self, master_profile_path: str, muscle_binary: str):
         self.master_profile_path = Path(master_profile_path)
         self.muscle_binary = muscle_binary
+        self.consensus = ConsensusCalculator(master_profile_path)  # ADD THIS
+        self.ref_len = len(self.consensus.consensus_sequence)       # ADD THIS
+
 
         if not Path(self.muscle_binary).exists():
             print(f"WARNING: MUSCLE binary not found at {self.muscle_binary}")
@@ -247,6 +250,48 @@ class TubulinAlignmentMapper:
             finally:
                 Path(seq_temp).unlink(missing_ok=True)
                 Path(output_file.name).unlink(missing_ok=True)
+
+
+    def align_sequence_with_mapping(
+            self, 
+            sequence_id: str, 
+            sequence: str, 
+            auth_seq_ids: Optional[List[int]] = None
+        ) -> Tuple[str, List[int]]:
+            """
+            Align sequence and return (aligned_sequence, ma_to_auth_mapping).
+            
+            The mapping is: mapping[ma_index] = auth_seq_id (or -1 if gap)
+            """
+            # Generate implicit auth_ids if not provided
+            if auth_seq_ids is None:
+                auth_seq_ids = list(range(1, len(sequence) + 1))
+            
+            # Run alignment
+            aln_master, aln_target = self.align_sequence(sequence_id, sequence)
+            
+            # Build the mapping
+            ma_to_auth: List[int] = [-1] * self.ref_len
+            
+            master_index = 0      # 0-based index into consensus
+            target_res_index = 0  # index into sequence/auth_seq_ids
+            
+            for m_char, t_char in zip(aln_master, aln_target):
+                if m_char == "-":
+                    # Gap in master = insertion in target
+                    if t_char != "-":
+                        target_res_index += 1
+                elif t_char == "-":
+                    # Gap in target = deletion/missing
+                    master_index += 1
+                else:
+                    # Match
+                    if master_index < self.ref_len:
+                        ma_to_auth[master_index] = auth_seq_ids[target_res_index]
+                    master_index += 1
+                    target_res_index += 1
+            
+            return aln_target, ma_to_auth
 
     def _extract_aligned_pair(
         self, output_file: str, sequence_id: str
