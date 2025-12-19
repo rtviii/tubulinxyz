@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Optional
 
 router_annotations = APIRouter()
 
+
 @router_annotations.get("/mutations/{family}/{version}/{position}")
 async def get_mutations_at_position(
     family: str,

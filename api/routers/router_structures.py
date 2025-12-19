@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Query, HTTPException
 from typing import Optional, List
 
+from lib.types import TubulinStructure
 from neo4j_tubxz.db_lib_reader import db_reader
 from neo4j_tubxz.models import (
     FilterFacets,
@@ -122,10 +123,30 @@ def get_families():
     return db_reader.get_tubulin_families()
 
 
-@router_structures.get("/{rcsb_id}")
+# Add this to api/routers/router_structures.py
+
+import json
+from pathlib import Path
+from api.config import PROJECT_ROOT
+from lib.etl.assets import TubulinStructureAssets
+
+@router_structures.get("/{rcsb_id}", response_model=TubulinStructure) # <--- Added response_model
 def get_structure(rcsb_id: str):
     """Get full structure details."""
     result = db_reader.get_structure(rcsb_id)
     if not result:
         raise HTTPException(404, f"Structure {rcsb_id} not found")
     return result
+
+@router_structures.get("/{rcsb_id}/profile", response_model=TubulinStructure) # <--- Added response_model
+async def get_structure_profile(rcsb_id: str):
+    """Fetches the pre-calculated TubulinStructure JSON profile from disk."""
+    assets = TubulinStructureAssets(rcsb_id.upper())
+    profile_path = Path(assets.paths.profile)
+    
+    if not profile_path.exists():
+        raise HTTPException(status_code=404, detail=f"Profile for {rcsb_id} not collected yet.")
+    
+    with open(profile_path, 'r') as f:
+        # Pydantic will validate the JSON against TubulinStructure here
+        return json.load(f)
