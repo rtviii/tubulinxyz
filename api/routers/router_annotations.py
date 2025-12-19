@@ -1,7 +1,6 @@
 # api/routers/router_annotations.py (NEW FILE)
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Dict, Any, Optional
-from neo4j_tubxz.db_lib_reader import dbqueries
 
 router_annotations = APIRouter()
 
