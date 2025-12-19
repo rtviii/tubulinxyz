@@ -35,23 +35,6 @@ def get_db_driver() -> Driver:
         console.print(f"[bold red]Failed to create Neo4j driver:[/bold red] {e}")
         raise typer.Exit(code=1)
 
-def get_all_structs_in_db(driver: Driver) -> list[str]:
-    """
-    Fetches a list of all rcsb_id strings from Structure nodes in Neo4j.
-    (This function was missing from your provided adapter, so we add it here).
-    """
-    console.print("Querying database for existing structure IDs...", style="cyan")
-    query = "MATCH (s:Structure) RETURN s.rcsb_id AS rcsb_id"
-    
-    try:
-        with driver.session() as session:
-            results = session.run(query)
-            struct_ids = [record["rcsb_id"] for record in results]
-            console.print(f"Found [bold yellow]{len(struct_ids)}[/cold yellow] structures in database.")
-            return struct_ids
-    except Exception as e:
-        console.print(f"[bold red]Error querying database:[/bold red] {e}")
-        raise typer.Exit(code=1)
 
 def get_db_adapter() -> Neo4jAdapter:
     """Initializes and returns the Neo4jAdapter."""
@@ -189,14 +172,37 @@ def upload_one(
         traceback.print_exc()
         raise typer.Exit(code=1)
 
+def get_all_structs_in_db(driver: Driver) -> list[str]:
+    """
+    Fetches a list of all rcsb_id strings from Structure nodes in Neo4j.
+    """
+    console.print("Querying database for existing structure IDs...", style="cyan")
+    query = "MATCH (s:Structure) RETURN s.rcsb_id AS rcsb_id"
+    
+    try:
+        with driver.session() as session:
+            results = session.run(query)
+            struct_ids = [record["rcsb_id"] for record in results]
+            console.print(f"Found [bold yellow]{len(struct_ids)}[/bold yellow] structures in database.")
+            return struct_ids
+    except Exception as e:
+        console.print(f"[bold red]Error querying database:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 @app.command(name="upload-missing")
-def upload_missing():
+def upload_missing(
+    workers: Annotated[int, typer.Option("--workers", "-w", help="Number of parallel workers")] = 8
+):
     """
     Finds all structures on disk that are missing from the Neo4j database,
-    then uploads them all.
+    then uploads them all in parallel.
     """
     console.print("Finding local profiles missing from the database...", style="cyan")
     db_driver = None
+    
     try:
         local_profiles = set(GlobalOps.list_profiles())
         if not local_profiles:
@@ -209,27 +215,37 @@ def upload_missing():
         missing_from_db = sorted(list(local_profiles - db_profiles))
 
         if not missing_from_db:
-            console.print("✨ [bold green]Database is fully synced with local profiles![/bold green]")
+            console.print("[bold green]Database is fully synced with local profiles![/bold green]")
             return
 
-        console.print(f"Found [bold yellow]{len(missing_from_db)}[/bold yellow] structures on disk to upload.")
+        console.print(f"Found [bold yellow]{len(missing_from_db)}[/bold yellow] structures to upload with {workers} workers.")
         
         success_count = 0
         fail_count = 0
         failed_ids = []
-        adapter = get_db_adapter() # Init adapter once
 
-        for rcsb_id in missing_from_db:
-            console.print(f"--- Uploading [bold magenta]{rcsb_id}[/bold magenta]... ---")
+        def upload_one_structure(rcsb_id: str) -> tuple[str, bool, str]:
+            """Returns (rcsb_id, success, error_msg)"""
             try:
-                # Use disable_exists_check=True to ensure it runs the upsert
+                adapter = get_db_adapter()  # Each thread gets its own adapter
                 adapter.add_total_structure(rcsb_id, disable_exists_check=True)
-                console.print(f"[green]Successfully uploaded {rcsb_id}[/green]")
-                success_count += 1
+                return (rcsb_id, True, "")
             except Exception as e:
-                console.print(f"[bold red]!!! Failed to upload {rcsb_id}:[/bold red] {e}")
-                fail_count += 1
-                failed_ids.append(rcsb_id)
+                return (rcsb_id, False, str(e))
+
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = {executor.submit(upload_one_structure, rid): rid for rid in missing_from_db}
+            
+            for future in as_completed(futures):
+                rcsb_id, success, error_msg = future.result()
+                if success:
+                    console.print(f"[green]Uploaded {rcsb_id}[/green]")
+                    success_count += 1
+                else:
+                    console.print(f"[red]Failed {rcsb_id}:[/red]", markup=True)
+                    console.print(error_msg, markup=False)
+                    fail_count += 1
+                    failed_ids.append(rcsb_id)
 
         console.print("\n--- [bold]Upload Complete[/bold] ---")
         console.print(f"[green]Successful:[/green] {success_count}")
@@ -238,7 +254,10 @@ def upload_missing():
             console.print(f"[red]Failed IDs:[/red] {', '.join(failed_ids)}")
 
     except Exception as e:
-        console.print(f"[bold red]An error occurred during the upload-missing operation:[/bold red] {e}")
+        console.print("[bold red]An error occurred during the upload-missing operation:[/bold red]")
+        console.print(str(e), markup=False)
+        import traceback
+        traceback.print_exc()
         raise typer.Exit(code=1)
     finally:
         if db_driver:

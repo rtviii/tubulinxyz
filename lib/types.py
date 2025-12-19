@@ -145,7 +145,6 @@ class NeighborResidue(BaseModel):
         return base
 
 class LigandNeighborhood(BaseModel):
-    """Complete binding site report for a single ligand instance."""
     ligand_auth_asym_id: str
     ligand_auth_seq_id: int
     ligand_comp_id: str
@@ -153,14 +152,21 @@ class LigandNeighborhood(BaseModel):
     neighborhood: List[NeighborResidue]
 
     @classmethod
-    def from_raw(cls, raw: dict) -> "LigandNeighborhood":
-        ligand = raw["ligand"]
+    def from_raw(cls, raw: Any) -> "LigandNeighborhood":
+        # If it's the raw list from Molstar (TSX), take the first entry
+        if isinstance(raw, list):
+            if not raw:
+                raise ValueError("Empty ligand data list.")
+            raw = raw[0]
+            
+        # The schema uses the "ligand" key which is [auth_asym_id, auth_seq_id, comp_id]
+        ligand_info = raw["ligand"]
         return cls(
-            ligand_auth_asym_id=ligand[0],
-            ligand_auth_seq_id=ligand[1],
-            ligand_comp_id=ligand[2],
-            interactions=[LigandInteraction.from_raw(i) for i in raw["interactions"]],
-            neighborhood=[NeighborResidue.from_tuple(n) for n in raw["neighborhood"]],
+            ligand_auth_asym_id = ligand_info[0],
+            ligand_auth_seq_id  = ligand_info[1],
+            ligand_comp_id      = ligand_info[2],
+            interactions        = [LigandInteraction.from_raw(i) for i in raw["interactions"]],
+            neighborhood        = [NeighborResidue.from_tuple(n) for n in raw["neighborhood"]],
         )
 
 
