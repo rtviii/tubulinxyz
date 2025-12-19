@@ -8,6 +8,7 @@ from lib.etl.assets import GlobalOps, TubulinStructureAssets
 from lib.etl.libtax import PhylogenyNode, Taxid
 
 from lib.types import (
+    LigandNeighborhood,
     TubulinStructure,
     PolypeptideEntity,
     PolynucleotideEntity,
@@ -20,6 +21,7 @@ from lib.types import (
 )
 
 # New Node Logic Imports
+from neo4j_tubxz.node_interaction import node__ligand_interactions
 from neo4j_tubxz.node_ligand import (
     node__chemical,
     node__nonpolymer_entity,
@@ -39,7 +41,7 @@ from neo4j_tubxz.node_master_alignment import (
     node__master_alignment,
 )
 from neo4j_tubxz.node_phylogeny import link__phylogeny, node__phylogeny
-from neo4j_tubxz.node_mutation import node__mutation, link__mutation_to_master_alignment
+from neo4j_tubxz.node_mutation import node__mutation
 
 from neo4j_tubxz.node_structure import (
     link__structure_to_lineage_member,
@@ -178,49 +180,54 @@ class Neo4jAdapter:
             return session.execute_read(struct_exists(rcsb_id))
 
     def process_entity_mutations(
-            self, 
-            entity: PolypeptideEntity, 
-            entity_node_element_id: str,
-            parent_rcsb_id: str
-        ):
-            """
-            Process mutations stored on the Entity.
-            Links: Entity -> HAS_MUTATION -> Mutation -> ANNOTATES -> MasterAlignment
-            """
-            if not entity.mutations or not entity.family:
-                return
-                
-            with self.driver.session() as s:
-                # TUBE-FIX: Pass family and version strings, not a Pydantic model
-                ma_version = "v1.0"
-                ma_node = s.execute_write(
-                    node__master_alignment(entity.family, ma_version)
-                )
-                
-                # Create mutation nodes and link them
-                for mut in entity.mutations:
-                    mut_node = s.execute_write(node__mutation(mut))
+                self, 
+                entity: PolypeptideEntity, 
+                entity_node_element_id: str,
+                parent_rcsb_id: str
+            ):
+                if not entity.mutations:
+                    return
                     
-                    # Link Mutation to MasterAlignment (Definition)
-                    s.execute_write(
-                        link__mutation_to_master_alignment(mut_node, ma_node)
-                    )
-                    
-                    # Link Entity to Mutation (Occurrence)
-                    s.execute_write(
-                        lambda tx: tx.run("""
+                with self.driver.session() as s:
+                    for mut in entity.mutations:
+                        # MERGE mutation node (Global)
+                        mut_node = s.execute_write(node__mutation(mut))
+                        
+                        # Link Entity instance to the Mutation
+                        s.execute_write(lambda tx: tx.run("""
                             MATCH (m:Mutation) WHERE ELEMENTID(m) = $mut_id
-                            MATCH (e:Entity) WHERE ELEMENTID(e) = $ent_id
+                            MATCH (e:Entity)   WHERE ELEMENTID(e) = $ent_id
                             MERGE (e)-[:HAS_MUTATION]->(m)
-                            """, 
-                            {
+                            """, {
                                 "mut_id": mut_node.element_id,
                                 "ent_id": entity_node_element_id
-                            }
-                        )
-                    )
+                            }))
 
     # --- Main ETL Function ---
+
+
+    # Inside Neo4jAdapter class in db_lib_builder.py
+
+    from lib.types import LigandNeighborhood
+
+    def process_ligand_interactions(self, rcsb_id: str):
+        """Iterates through ligand files and pushes them to Neo4j."""
+        assets = TubulinStructureAssets(rcsb_id)
+        neighborhood_files = assets.paths.all_ligand_neighborhoods()
+        
+        with self.driver.session() as s:
+            for filepath in neighborhood_files:
+                try:
+                    with open(filepath, 'r') as f:
+                        raw_data = json.load(f)
+                        # The updated LigandNeighborhood.from_raw handles the array/dict distinction
+                        neighborhood = LigandNeighborhood.from_raw(raw_data)
+                        s.execute_write(node__ligand_interactions(rcsb_id, neighborhood))
+                except Exception as e:
+                    print(f"  ⚠️ Error processing interactions in {filepath}: {e}")
+
+    # Then update add_total_structure to call it at the end:
+    # ... inside add_total_structure ...
 
     def add_total_structure(self, rcsb_id: str, disable_exists_check: bool = False):
         rcsb_id = rcsb_id.upper()
@@ -301,7 +308,9 @@ class Neo4jAdapter:
                     i_node = s.execute_write(node__nonpolymer_instance(instance))
                     s.execute_write(link__instance_to_structure(i_node, S.rcsb_id))
 
-        print(f"✓ Successfully initialized structure {rcsb_id}\n")
+        print(f"  Processing Ligand Interactions...")
+        self.process_ligand_interactions(rcsb_id)
+        
         return structure_node
 
     def delete_structure(self, rcsb_id: str, dry_run: bool = False) -> dict[str, int]:

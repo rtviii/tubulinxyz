@@ -44,11 +44,21 @@ class TubulinStructureAssetPaths:
         return os.path.join(self.base_dir, f"{self.rcsb_id}_{comp_id}_{auth_asym_id}.json")
 
     def all_ligand_neighborhoods(self) -> list[str]:
-        """List all ligand neighborhood report files."""
-        import glob
-        pattern = os.path.join(self.base_dir, f"{self.rcsb_id}_*_*.json")
-        # Exclude the main profile
-        return [p for p in glob.glob(pattern) if not p.endswith(f"{self.rcsb_id}.json")]
+            """List only ligand neighborhood report files, excluding metadata."""
+            import glob
+            # Specifically look for the [ID]_[COMP]_[ASYM].json pattern
+            pattern = os.path.join(self.base_dir, f"{self.rcsb_id}_*_*.json")
+            
+            excluded_suffixes = [
+                f"{self.rcsb_id}.json", 
+                "_classification_report.json", 
+                "sequence_ingestion.json"
+            ]
+            
+            return [
+                p for p in glob.glob(pattern) 
+                if not any(p.endswith(s) for s in excluded_suffixes)
+            ]
 
     @property
     def classification_report(self) -> str:

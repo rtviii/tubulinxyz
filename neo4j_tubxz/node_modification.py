@@ -1,4 +1,3 @@
-# tubexyz/neo4j_driver/node_modification.py
 from typing import Callable
 from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
@@ -11,26 +10,20 @@ def node__modification(
     mod_props = mod.model_dump()
     
     def _(tx: Transaction | ManagedTransaction):
+        # Assuming you want a unique constraint on master_index, uniprot_id, and type for modifications
         return tx.run("""
-            CREATE (m:Modification)
-            SET m = $properties
+            MERGE (m:Modification {
+                master_index: $master_index, 
+                uniprot_id:   $uniprot_id, 
+                modification_type: $modification_type
+            })
+            ON CREATE SET m += $properties
+            ON MATCH SET m += $properties
             RETURN m
-            """, {"properties": mod_props}).single(strict=True)['m']
-    return _
-
-def link__modification_to_master_alignment(
-    modification_node: Node,
-    master_aln_node: Node
-) -> Callable[[Transaction | ManagedTransaction], Relationship]:
-    """Links a modification to the master alignment it references"""
-    def _(tx: Transaction | ManagedTransaction):
-        return tx.run("""
-            MATCH (m:Modification) WHERE ELEMENTID(m) = $m_elem_id
-            MATCH (a:MasterAlignment) WHERE ELEMENTID(a) = $a_elem_id
-            MERGE (m)-[r:ANNOTATES_POSITION_IN]->(a)
-            RETURN r
             """, {
-                "m_elem_id": modification_node.element_id,
-                "a_elem_id": master_aln_node.element_id,
-            }).single(strict=True)['r']
+                "master_index":      mod_props['master_index'],
+                "uniprot_id":        mod_props['uniprot_id'],
+                "modification_type": mod_props['modification_type'],
+                "properties":        mod_props
+            }).single(strict=True)['m']
     return _
