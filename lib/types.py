@@ -56,7 +56,6 @@ class MapFamily(str, Enum):
     TTLL_SHORT      = "map_ttll_glutamylase_short"
     VASH            = "map_vash_detyrosinase"
 
-# Type alias for any family
 PolymerClass = Union[TubulinFamily, MapFamily]
 
 # --- Ligand Interaction Models ---
@@ -469,9 +468,6 @@ class TubulinStructure(RCSBStructureMetadata):
 
 
 
-
-# ------
-# Add to lib/types.py
 
 class MutationEntryData(BaseModel):
     """Mutation entry as stored in sequence ingestion results."""

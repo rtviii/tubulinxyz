@@ -1,27 +1,45 @@
-from fastapi import APIRouter
-from typing import List
-import sys
-from pathlib import Path
+# api/routers/router_polymers.py
+from fastapi import APIRouter, Query, HTTPException
+from typing import Optional, List
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
-from neo4j_tubxz.db_lib_reader import dbqueries, PolymersFilterParams
-from lib.types import TubulinFamily
+from neo4j_tubxz.db_lib_reader import db_reader
+from neo4j_tubxz.models import PolypeptideEntityFilters, PolypeptideListResponse
 
 router_polymers = APIRouter()
 
-@router_polymers.post("/list")
-def list_polymers(filters: PolymersFilterParams):
-    proteins, total_structs, total_polys, next_cursor = dbqueries.list_polymers_filtered(filters)
-    
-    return {
-        "proteins": proteins,
-        "total_count": total_polys,
-        "total_paren_structures_count": total_structs,
-        "next_cursor": next_cursor,
-        "has_more": next_cursor is not None
-    }
 
-@router_polymers.get("/families", response_model=List[str])
-def get_tubulin_families():
-    return [f.value for f in TubulinFamily]
+@router_polymers.get("", response_model=PolypeptideListResponse)
+def list_polymers(
+    cursor: Optional[str] = Query(None),
+    limit: int = Query(25, ge=1, le=500),
+    # Structure-level
+    resolution_min: Optional[float] = Query(None, alias="resMin"),
+    resolution_max: Optional[float] = Query(None, alias="resMax"),
+    year_min: Optional[int] = Query(None, alias="yearMin"),
+    year_max: Optional[int] = Query(None, alias="yearMax"),
+    source_organism_ids: Optional[List[int]] = Query(None, alias="sourceTaxa"),
+    # Entity-level
+    family: Optional[List[str]] = Query(None),
+    uniprot_accession: Optional[str] = Query(None, alias="uniprot"),
+    sequence_contains: Optional[str] = Query(None, alias="motif"),
+    sequence_length_min: Optional[int] = Query(None, alias="seqLenMin"),
+    sequence_length_max: Optional[int] = Query(None, alias="seqLenMax"),
+    has_mutations: Optional[bool] = Query(None, alias="hasMutations"),
+):
+    """List polypeptide entities with filters and pagination."""
+    filters = PolypeptideEntityFilters(
+        cursor=cursor,
+        limit=limit,
+        resolution_min=resolution_min,
+        resolution_max=resolution_max,
+        year_min=year_min,
+        year_max=year_max,
+        source_organism_ids=source_organism_ids,
+        family=family,
+        uniprot_accession=uniprot_accession,
+        sequence_contains=sequence_contains,
+        sequence_length_min=sequence_length_min,
+        sequence_length_max=sequence_length_max,
+        has_mutations=has_mutations,
+    )
+    return db_reader.list_polypeptide_entities(filters)
