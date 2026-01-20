@@ -3,8 +3,8 @@
 Pydantic models for API request/response contracts.
 These define the typed interface between frontend and backend.
 """
-from typing import Optional, List, Generic, TypeVar
-from pydantic import BaseModel, Field
+from typing import Any, Optional, List, Generic, TypeVar
+from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
 
@@ -38,6 +38,8 @@ class StructureFilters(BaseModel):
     Filter parameters for Structure queries.
     All filters are optional and cumulative (AND logic).
     """
+    class Config:
+        populate_by_name = True
     # Pagination
     cursor: Optional[str] = Field(
         default=None,
@@ -81,8 +83,29 @@ class StructureFilters(BaseModel):
     # Taxonomy filters (via PhylogenyNode relationships)
     source_organism_ids: Optional[List[int]] = Field(
         default=None,
-        description="NCBI taxonomy IDs for source organisms (includes descendants)"
+        alias="sourceTaxa", # This allows the backend to accept 'sourceTaxa' from the URL
+        description="NCBI taxonomy IDs for source organisms"
+
     )
+
+
+    @field_validator("source_organism_ids", mode="before")
+    @classmethod
+    def decode_comma_list(cls, v: Any):
+        if isinstance(v, str):
+            # Split "27592,9823" into [27592, 9823]
+            return [int(x.strip()) for x in v.split(",") if x.strip()]
+        return v
+
+    @field_validator("rcsb_ids", "exp_method", "polymerization_state", "has_ligand_ids", "has_polymer_family", mode="before")
+    @classmethod
+    def decode_strings(cls, v: Any):
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+
+
+
     host_organism_ids: Optional[List[int]] = Field(
         default=None,
         description="NCBI taxonomy IDs for host organisms (includes descendants)"

@@ -366,11 +366,13 @@ class PolypeptideEntityQueryBuilder:
     """
     
     def __init__(self, filters):
+
         from neo4j_tubxz.models import PolypeptideEntityFilters
-        self.filters: PolypeptideEntityFilters = filters
-        self._where_clauses: List[str] = []
-        self._struct_where_clauses: List[str] = []
-        self._params: Dict[str, Any] = {"limit": filters.limit}
+
+        self.filters               : PolypeptideEntityFilters = filters
+        self._where_clauses        : List[str]                = []
+        self._struct_where_clauses: List[str]                 = []
+        self._params               : Dict[str, Any]           = {"limit": filters.limit}
     
     def build(self) -> Tuple[str, Dict[str, Any]]:
         self._process_filters()

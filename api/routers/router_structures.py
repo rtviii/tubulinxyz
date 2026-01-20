@@ -26,49 +26,63 @@ def get_taxonomy_tree(tax_type: str = "source"):
 
 
 def parse_list_param(value: Optional[List[str]]) -> Optional[List[str]]:
-    """Handle both repeated params and comma-separated values."""
     if not value:
         return None
-    # If it's a single string with commas, split it
-    if len(value) == 1 and "," in value[0]:
-        return value[0].split(",")
-    return value
+    result = []
+    for item in value:
+        if "," in item:
+            result.extend([x.strip() for x in item.split(",") if x.strip()])
+        else:
+            result.append(item.strip())
+    return result if result else None
 
+def parse_int_list(value: Optional[List[str]]) -> Optional[List[int]]:
+    """Handle both repeated params and comma-separated values for integers."""
+    raw = parse_list_param(value)
+    if raw:
+        try:
+            return [int(x) for x in raw if x.strip()]
+        except ValueError:
+            raise HTTPException(400, "Taxonomy IDs must be integers")
+    return None
 
 @router_structures.get("", response_model=StructureListResponse)
 def list_structures(
-    cursor: Optional[str] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
-    search: Optional[str] = Query(None),
-    rcsb_ids: Optional[List[str]] = Query(None, alias="ids"),
-    resolution_min: Optional[float] = Query(None, alias="resMin"),
-    resolution_max: Optional[float] = Query(None, alias="resMax"),
-    year_min: Optional[int] = Query(None, alias="yearMin"),
-    year_max: Optional[int] = Query(None, alias="yearMax"),
-    exp_method: Optional[List[str]] = Query(None, alias="expMethod"),
-    polymerization_state: Optional[List[str]] = Query(None, alias="polyState"),
-    source_organism_ids: Optional[List[int]] = Query(None, alias="sourceTaxa"),
-    host_organism_ids: Optional[List[int]] = Query(None, alias="hostTaxa"),
-    has_ligand_ids: Optional[List[str]] = Query(None, alias="ligands"),
-    has_polymer_family: Optional[List[str]] = Query(None, alias="family"),
-    has_uniprot: Optional[List[str]] = Query(None, alias="uniprot"),
-    has_mutations: Optional[bool] = Query(None, alias="hasMutations"),
-    mutation_family: Optional[str] = Query(None, alias="mutationFamily"),
-    mutation_position_min: Optional[int] = Query(None, alias="mutationPosMin"),
-    mutation_position_max: Optional[int] = Query(None, alias="mutationPosMax"),
-    mutation_from: Optional[str] = Query(None, alias="mutationFrom"),
-    mutation_to: Optional[str] = Query(None, alias="mutationTo"),
-    mutation_phenotype: Optional[str] = Query(None, alias="mutationPhenotype"),
-):
+cursor               : Optional[str] = Query(None),
+limit                : int = Query(100, ge=1, le=500),
+search               : Optional[str] = Query(None),
+rcsb_ids             : Optional[List[str]] = Query(None, alias="ids"),
+resolution_min       : Optional[float] = Query(None, alias="resMin"),
+resolution_max       : Optional[float] = Query(None, alias="resMax"),
+year_min             : Optional[int] = Query(None, alias="yearMin"),
+year_max             : Optional[int] = Query(None, alias="yearMax"),
+exp_method           : Optional[List[str]] = Query(None, alias="expMethod"),
+polymerization_state : Optional[List[str]] = Query(None, alias="polyState"),
+source_organism_ids  : Optional[List[str]] = Query(None, alias="sourceTaxa"),
+host_organism_ids    : Optional[List[str]] = Query(None, alias="hostTaxa"),
+has_ligand_ids       : Optional[List[str]] = Query(None, alias="ligands"),
+has_polymer_family   : Optional[List[str]] = Query(None, alias="family"),
+has_uniprot          : Optional[List[str]] = Query(None, alias="uniprot"),
+has_mutations        : Optional[bool] = Query(None, alias="hasMutations"),
+mutation_family      : Optional[str] = Query(None, alias="mutationFamily"),
+mutation_position_min: Optional[int] = Query(None, alias="mutationPosMin"),
+mutation_position_max: Optional[int] = Query(None, alias="mutationPosMax"),
+mutation_from        : Optional[str] = Query(None, alias="mutationFrom"),
+mutation_to          : Optional[str] = Query(None, alias="mutationTo"),
+mutation_phenotype   : Optional[str] = Query(None, alias="mutationPhenotype"),
+)                    : 
     """List structures with cumulative filters and keyset pagination."""
 
     # Parse comma-separated list params
-    parsed_families = parse_list_param(has_polymer_family)
+    parsed_families   = parse_list_param(has_polymer_family)
     parsed_poly_state = parse_list_param(polymerization_state)
     parsed_exp_method = parse_list_param(exp_method)
-    parsed_ligands = parse_list_param(has_ligand_ids)
-    parsed_uniprot = parse_list_param(has_uniprot)
-    parsed_ids = parse_list_param(rcsb_ids)
+    parsed_ligands    = parse_list_param(has_ligand_ids)
+    parsed_uniprot    = parse_list_param(has_uniprot)
+    parsed_ids        = parse_list_param(rcsb_ids)
+
+    parsed_source_taxa = parse_int_list(source_organism_ids)
+    parsed_host_taxa   = parse_int_list(host_organism_ids)
 
     filters = StructureFilters(
         cursor=cursor,
@@ -85,8 +99,8 @@ def list_structures(
         polymerization_state=[PolymerizationState(s) for s in parsed_poly_state]
         if parsed_poly_state
         else None,
-        source_organism_ids   = source_organism_ids,
-        host_organism_ids     = host_organism_ids,
+        source_organism_ids   = parsed_source_taxa, # Use parsed versions
+        host_organism_ids      = parsed_host_taxa,   # Use parsed versions
         has_ligand_ids        = parsed_ligands,
         has_polymer_family    = parsed_families,
         has_uniprot           = parsed_uniprot,

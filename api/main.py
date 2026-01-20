@@ -9,7 +9,6 @@ from api.routers import (
     router_polymers,
     router_ligands,
     router_msa,
-    router_grid,
 )
 
 from api.routers.router_annotations import router_annotations
@@ -32,7 +31,6 @@ app.include_router(router_structures, prefix="/structures", tags=["Structures"])
 app.include_router(router_polymers, prefix="/polymers", tags=["Polymers"])
 app.include_router(router_ligands, prefix="/ligands", tags=["Ligands"])
 app.include_router(router_msa, prefix="/msa", tags=["MSA Alignment"])
-app.include_router(router_grid, prefix="/grid", tags=["Grid"])
 app.include_router(router_annotations, prefix="/annotations", tags=["Annotations"])
 
 @app.get("/", include_in_schema=False)
