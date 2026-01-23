@@ -9,8 +9,10 @@ from lib.etl.collector import TubulinETLCollector
 from lib.etl.assets import GlobalOps, TubulinStructureAssets
 from lib.etl.constants import NEO4J_URI, NEO4J_USER, NEO4J_CURRENTDB, NEO4J_PASSWORD
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
-from neo4j_tubxz.db_lib_reader import Neo4jReader, StructureFilterParams, PolymersFilterParams
-from rich.table import Table  # <--- ADD THIS IMPORT
+from neo4j_tubxz.db_lib_reader import Neo4jReader
+from rich.table import Table
+
+from neo4j_tubxz.models import StructureFilters  # <--- ADD THIS IMPORT
 
 
 
@@ -343,11 +345,11 @@ def list_structures(
     reader = Neo4jReader()
     
     # Build params
-    filters = StructureFilterParams(
+    filters = StructureFilters(
         limit=limit,
         search=search,
-        year=(min_year, None) if min_year else None,
-        source_taxa=[source_taxid] if source_taxid else None
+        year_min=min_year if min_year else None,
+        sourceTaxa=[source_taxid] if source_taxid else None
     )
     
     try:
@@ -369,32 +371,6 @@ def list_structures(
         if next_cursor:
             console.print(f"[dim]Next cursor: {next_cursor}[/dim]")
             
-    except Exception as e:
-        console.print(f"[bold red]Error:[/bold red] {e}")
-
-@app.command(name="list-proteins")
-def list_proteins(
-    limit: int = 20,
-    family: Optional[str] = None,
-    motif: Optional[str] = None
-):
-    """
-    Search tubulin proteins specifically.
-    """
-    reader = Neo4jReader()
-    filters = PolymersFilterParams(
-        limit=limit,
-        family=[family] if family else None,
-        has_motif=motif
-    )
-
-    try:
-        proteins, total, _ = reader.list_polymers_filtered(filters)
-        console.print(f"Found [bold]{total}[/bold] proteins.")
-        
-        for p in proteins:
-            console.print(f"[magenta]{p['parent_rcsb_id']}[/magenta].[yellow]{p['auth_asym_id']}[/yellow] -> Family: {p.get('family')} | Len: {p.get('entity_poly_seq_length')}")
-
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {e}")
 

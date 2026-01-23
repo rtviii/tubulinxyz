@@ -18,7 +18,6 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 
 // --- Compact Output Types ---
-
 // [auth_asym_id, auth_seq_id, auth_comp_id]
 type ResidueTuple = [string, number, string];
 
