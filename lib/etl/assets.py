@@ -19,6 +19,7 @@ class TubulinStructureAssetPaths:
     def __init__(self, rcsb_id: str) -> None:
         self.rcsb_id = rcsb_id.upper()
 
+
     @property
     def base_dir(self) -> str:
         """The main directory for this structure's assets."""
@@ -69,6 +70,26 @@ class TubulinStructureAssetPaths:
     def sequence_ingestion(self) -> str:
         """Path to the sequence ingestion results JSON."""
         return os.path.join(self.base_dir, "sequence_ingestion.json")
+
+    @property
+    def observed_master_maps(self) -> str:
+        """Path to the observed/master index mappings file."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_observed_and_master_index_maps.json")
+    
+    @property
+    def ligand_neighborhoods_file(self) -> str:
+        """Path to the simplified ligand neighborhoods file."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_ligand_neighborhoods.json")
+    
+    @property
+    def mutations_indels_file(self) -> str:
+        """Path to mutations, insertions, deletions file."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_mutations_insertions_deletions.json")
+    
+    @property
+    def molstar_raw_extraction(self) -> str:
+        """Path to raw Molstar extraction (intermediate file)."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_molstar_raw.json")
 
 class TubulinStructureAssets:
     """Manager for accessing and verifying tubulin structure assets."""

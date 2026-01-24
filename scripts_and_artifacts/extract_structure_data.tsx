@@ -2,15 +2,9 @@
 
 import { CIF } from 'molstar/lib/mol-io/reader/cif';
 import { trajectoryFromMmCIF } from 'molstar/lib/mol-model-formats/structure/mmcif';
-import { Model, Structure, StructureElement, StructureProperties, StructureSelection, QueryContext, Unit } from 'molstar/lib/mol-model/structure';
+import { Structure, StructureElement, StructureProperties, StructureSelection, QueryContext, Unit } from 'molstar/lib/mol-model/structure';
 import { MolScriptBuilder as MS } from 'molstar/lib/mol-script/language/builder';
 import { compile } from 'molstar/lib/mol-script/runtime/query/compiler';
-import { InteractionsProvider } from 'molstar/lib/mol-model-props/computed/interactions';
-import { interactionTypeLabel } from 'molstar/lib/mol-model-props/computed/interactions/common';
-import { Features } from 'molstar/lib/mol-model-props/computed/interactions/features';
-import { SyncRuntimeContext } from 'molstar/lib/mol-task/execution/synchronous';
-import { AssetManager } from 'molstar/lib/mol-util/assets';
-import { OrderedSet } from 'molstar/lib/mol-data/int';
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -32,23 +26,23 @@ interface ObservedSequenceData {
     residues: ObservedResidue[];
 }
 
-type ParticipantTuple = [string, number, string, string, boolean];
-
-interface Interaction {
-    type: string;
-    participants: [ParticipantTuple, ParticipantTuple];
+interface NeighborhoodResidue {
+    auth_asym_id: string;
+    observed_index: number;
+    comp_id: string;
 }
 
-interface LigandNeighborhood {
-    ligand: [string, number, string];
-    interactions: Interaction[];
-    neighborhood: [string, number, string][];
+interface SimplifiedLigandNeighborhood {
+    ligand_comp_id: string;
+    ligand_auth_asym_id: string;
+    ligand_auth_seq_id: number;
+    neighborhood_residues: NeighborhoodResidue[];
 }
 
 interface ExtractionResult {
     rcsb_id: string;
     sequences: ObservedSequenceData[];
-    ligand_neighborhoods: LigandNeighborhood[];
+    ligand_neighborhoods: SimplifiedLigandNeighborhood[];
 }
 
 // ============================================================
@@ -73,8 +67,23 @@ function toOneLetter(compId: string): string | null {
     return STANDARD_AA[upper] ?? MODIFIED_AA[upper] ?? null;
 }
 
+function isProteinResidue(compId: string): boolean {
+    return toOneLetter(compId) !== null;
+}
+
 // ============================================================
-// Structure Loading (no plugin needed)
+// Skip Lists
+// ============================================================
+
+const SKIP_LIGANDS = new Set([
+    'HOH', 'DOD', 'WAT', 'NA', 'CL', 'K', 'MG', 'CA', 'ZN', 'FE',
+    'MN', 'CO', 'NI', 'CU', 'SO4', 'PO4', 'NO3', 'CO3', 'GOL', 'EDO',
+    'PEG', 'PGE', 'ACT', 'FMT', 'MES', 'TRS', 'HEP', 'EPE', 'CIT',
+    'TAR', 'DMS', 'DMF', 'BME', 'DTT'
+]);
+
+// ============================================================
+// Structure Loading
 // ============================================================
 
 async function loadStructureFromCif(cifContent: string): Promise<Structure> {
@@ -83,15 +92,9 @@ async function loadStructureFromCif(cifContent: string): Promise<Structure> {
         throw new Error(`CIF parsing failed: ${parsed.message}`);
     }
 
-    const cifFile = parsed.result;
-    const block = cifFile.blocks[0];
-
+    const block = parsed.result.blocks[0];
     const trajectory = await trajectoryFromMmCIF(block).run();
-
-    // Just use the representative model directly
-    const structure = Structure.ofModel(trajectory.representative);
-
-    return structure;
+    return Structure.ofModel(trajectory.representative);
 }
 
 // ============================================================
@@ -149,15 +152,8 @@ function extractObservedSequences(structure: Structure): ObservedSequenceData[] 
 }
 
 // ============================================================
-// Ligand Extraction
+// Ligand Neighborhood Extraction
 // ============================================================
-
-const SKIP_LIGANDS = new Set([
-    'HOH', 'DOD', 'WAT', 'NA', 'CL', 'K', 'MG', 'CA', 'ZN', 'FE',
-    'MN', 'CO', 'NI', 'CU', 'SO4', 'PO4', 'NO3', 'CO3', 'GOL', 'EDO',
-    'PEG', 'PGE', 'ACT', 'FMT', 'MES', 'TRS', 'HEP', 'EPE', 'CIT',
-    'TAR', 'DMS', 'DMF', 'BME', 'DTT'
-]);
 
 interface LigandInstance {
     compId: string;
@@ -179,7 +175,7 @@ function findLigandInstances(structure: Structure): LigandInstance[] {
 
             const compId = StructureProperties.atom.auth_comp_id(loc);
 
-            if (toOneLetter(compId) !== null) continue;
+            if (isProteinResidue(compId)) continue;
             if (SKIP_LIGANDS.has(compId.toUpperCase())) continue;
 
             const authAsymId = StructureProperties.chain.auth_asym_id(loc);
@@ -196,28 +192,10 @@ function findLigandInstances(structure: Structure): LigandInstance[] {
     return ligands;
 }
 
-function getAtomInfoFromFeature(
-    structure: Structure,
-    unit: Unit,
-    featureIndex: number,
-    features: Features
-): { auth_asym_id: string; auth_seq_id: number; auth_comp_id: string; atom_id: string } {
-    const atomIndex = features.members[features.offsets[featureIndex]];
-    const elementIndex = unit.elements[atomIndex];
-    const loc = StructureElement.Location.create(structure, unit, elementIndex);
-
-    return {
-        auth_asym_id: StructureProperties.chain.auth_asym_id(loc),
-        auth_seq_id: StructureProperties.residue.auth_seq_id(loc),
-        auth_comp_id: StructureProperties.atom.auth_comp_id(loc),
-        atom_id: StructureProperties.atom.label_atom_id(loc)
-    };
-}
-
-async function extractLigandNeighborhood(
+function extractLigandNeighborhood(
     structure: Structure,
     ligand: LigandInstance
-): Promise<LigandNeighborhood | null> {
+): SimplifiedLigandNeighborhood | null {
     try {
         const ligandQuery = MS.struct.generator.atomGroups({
             'residue-test': MS.core.logic.and([
@@ -241,102 +219,12 @@ async function extractLigandNeighborhood(
             return null;
         }
 
-        let ligandUnitId: number | null = null;
-        let ligandIndices: OrderedSet | null = null;
-
-        for (const unit of neighborhoodStructure.units) {
-            const atomIndices: number[] = [];
-            const loc = StructureElement.Location.create(neighborhoodStructure, unit, unit.elements[0]);
-
-            for (let i = 0; i < unit.elements.length; i++) {
-                loc.element = unit.elements[i];
-                if (StructureProperties.chain.auth_asym_id(loc) === ligand.authAsymId &&
-                    StructureProperties.residue.auth_seq_id(loc) === ligand.authSeqId &&
-                    StructureProperties.atom.auth_comp_id(loc) === ligand.compId) {
-                    atomIndices.push(i);
-                }
-            }
-
-            if (atomIndices.length > 0) {
-                ligandUnitId = unit.id;
-                ligandIndices = OrderedSet.ofSortedArray(atomIndices.sort((a, b) => a - b));
-                break;
-            }
-        }
-
-        if (ligandUnitId === null || ligandIndices === null) {
-            return null;
-        }
-
-        const ctx = { runtime: SyncRuntimeContext, assetManager: new AssetManager() };
-        const interactionParams = {
-            providers: {
-                'ionic': { name: 'on', params: { distanceMax: 5.0 } },
-                'cation-pi': { name: 'on', params: { distanceMax: 6.0 } },
-                'pi-stacking': { name: 'on', params: { distanceMax: 5.5, offsetMax: 2.0, angleDevMax: 30 } },
-                'hydrogen-bonds': { name: 'on', params: { distanceMax: 3.5, angleMax: 45, water: false, sulfurDistanceMax: 4.1 } },
-                'halogen-bonds': { name: 'on', params: { distanceMax: 4.0, angleMax: 30 } },
-                'hydrophobic': { name: 'on', params: { distanceMax: 4.0 } },
-                'metal-coordination': { name: 'on', params: { distanceMax: 2.5 } },
-                'weak-hydrogen-bonds': { name: 'on', params: { distanceMax: 3.5, angleMax: 45 } },
-            }
-        };
-
-        await InteractionsProvider.attach(ctx, neighborhoodStructure, interactionParams, true);
-        const interactions = InteractionsProvider.get(neighborhoodStructure).value;
-
-        const resultInteractions: Interaction[] = [];
-        const seen = new Set<string>();
-
-        if (interactions) {
-            const { contacts, unitsFeatures } = interactions;
-
-            const isAtomInLigand = (unitId: number, featureIndex: number, features: Features): boolean => {
-                if (unitId !== ligandUnitId) return false;
-                const atomIndex = features.members[features.offsets[featureIndex]];
-                return OrderedSet.has(ligandIndices!, atomIndex);
-            };
-
-            for (const bond of contacts.edges) {
-                const unitA = neighborhoodStructure.unitMap.get(bond.unitA);
-                const unitB = neighborhoodStructure.unitMap.get(bond.unitB);
-                if (!unitA || !unitB) continue;
-
-                const featuresA = unitsFeatures.get(bond.unitA);
-                const featuresB = unitsFeatures.get(bond.unitB);
-                if (!featuresA || !featuresB) continue;
-
-                const isALigand = isAtomInLigand(bond.unitA, bond.indexA, featuresA);
-                const isBLigand = isAtomInLigand(bond.unitB, bond.indexB, featuresB);
-
-                if ((isALigand && !isBLigand) || (!isALigand && isBLigand)) {
-                    const atomA = getAtomInfoFromFeature(neighborhoodStructure, unitA, bond.indexA, featuresA);
-                    const atomB = getAtomInfoFromFeature(neighborhoodStructure, unitB, bond.indexB, featuresB);
-
-                    const keyParts = [
-                        `${atomA.auth_asym_id}:${atomA.auth_seq_id}:${atomA.atom_id}`,
-                        `${atomB.auth_asym_id}:${atomB.auth_seq_id}:${atomB.atom_id}`
-                    ].sort();
-                    const key = `${bond.props.type}:${keyParts[0]}:${keyParts[1]}`;
-
-                    if (!seen.has(key)) {
-                        seen.add(key);
-                        resultInteractions.push({
-                            type: interactionTypeLabel(bond.props.type),
-                            participants: [
-                                [atomA.auth_asym_id, atomA.auth_seq_id, atomA.auth_comp_id, atomA.atom_id, isALigand],
-                                [atomB.auth_asym_id, atomB.auth_seq_id, atomB.auth_comp_id, atomB.atom_id, isBLigand]
-                            ]
-                        });
-                    }
-                }
-            }
-        }
-
-        const neighborhoodResidues: [string, number, string][] = [];
+        const neighborhoodResidues: NeighborhoodResidue[] = [];
         const seenRes = new Set<string>();
 
         for (const unit of neighborhoodStructure.units) {
+            if (!Unit.isAtomic(unit)) continue;
+
             const loc = StructureElement.Location.create(neighborhoodStructure, unit, unit.elements[0]);
 
             for (let i = 0; i < unit.elements.length; i++) {
@@ -348,24 +236,39 @@ async function extractLigandNeighborhood(
 
                 if (authAsymId === ligand.authAsymId &&
                     authSeqId === ligand.authSeqId &&
-                    compId === ligand.compId) continue;
-
-                const key = `${authAsymId}:${authSeqId}:${compId}`;
-                if (!seenRes.has(key)) {
-                    seenRes.add(key);
-                    neighborhoodResidues.push([authAsymId, authSeqId, compId]);
+                    compId === ligand.compId) {
+                    continue;
                 }
+
+                if (!isProteinResidue(compId)) continue;
+
+                const key = `${authAsymId}:${authSeqId}`;
+                if (seenRes.has(key)) continue;
+                seenRes.add(key);
+
+                neighborhoodResidues.push({
+                    auth_asym_id: authAsymId,
+                    observed_index: authSeqId,
+                    comp_id: compId
+                });
             }
         }
 
+        neighborhoodResidues.sort((a, b) => {
+            const chainCmp = a.auth_asym_id.localeCompare(b.auth_asym_id);
+            if (chainCmp !== 0) return chainCmp;
+            return a.observed_index - b.observed_index;
+        });
+
         return {
-            ligand: [ligand.authAsymId, ligand.authSeqId, ligand.compId],
-            interactions: resultInteractions,
-            neighborhood: neighborhoodResidues
+            ligand_comp_id: ligand.compId,
+            ligand_auth_asym_id: ligand.authAsymId,
+            ligand_auth_seq_id: ligand.authSeqId,
+            neighborhood_residues: neighborhoodResidues
         };
 
     } catch (e) {
-        console.error(`Error extracting ligand ${ligand.compId}_${ligand.authAsymId}: ${e}`);
+        console.error(`Error extracting neighborhood for ${ligand.compId}_${ligand.authAsymId}: ${e}`);
         return null;
     }
 }
@@ -380,6 +283,7 @@ async function runExtraction(cifPath: string, rcsbId: string, outputPath: string
         const fileContent = await fs.readFile(cifPath, 'utf8');
 
         const structure = await loadStructureFromCif(fileContent);
+        console.error(`  Loaded structure with ${structure.units.length} units`);
 
         console.error(`Extracting sequences...`);
         const sequences = extractObservedSequences(structure);
@@ -389,12 +293,12 @@ async function runExtraction(cifPath: string, rcsbId: string, outputPath: string
         const ligandInstances = findLigandInstances(structure);
         console.error(`  Found ${ligandInstances.length} ligand instances`);
 
-        const ligandNeighborhoods: LigandNeighborhood[] = [];
+        const ligandNeighborhoods: SimplifiedLigandNeighborhood[] = [];
         for (const lig of ligandInstances) {
-            const neighborhood = await extractLigandNeighborhood(structure, lig);
-            if (neighborhood) {
+            const neighborhood = extractLigandNeighborhood(structure, lig);
+            if (neighborhood && neighborhood.neighborhood_residues.length > 0) {
                 ligandNeighborhoods.push(neighborhood);
-                console.error(`    ${lig.compId}_${lig.authAsymId}: ${neighborhood.interactions.length} interactions`);
+                console.error(`    ${lig.compId}_${lig.authAsymId}: ${neighborhood.neighborhood_residues.length} nearby residues`);
             }
         }
 

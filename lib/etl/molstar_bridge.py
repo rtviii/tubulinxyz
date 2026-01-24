@@ -1,7 +1,5 @@
 """
 Bridge to Molstar TypeScript extraction scripts.
-
-Handles subprocess calls and result parsing.
 """
 
 import json
@@ -14,10 +12,8 @@ from lib.types import (
     MolstarExtractionResult,
     ObservedSequenceData,
     ObservedResidue,
-    LigandNeighborhood,
-    LigandInteraction,
-    NeighborResidue,
-    InteractionParticipant,
+    SimplifiedLigandNeighborhood,
+    NeighborhoodResidue,
 )
 
 
@@ -31,25 +27,24 @@ def run_molstar_extraction(
 ) -> Optional[MolstarExtractionResult]:
     """
     Run the unified Molstar extraction script.
-    
-    Returns MolstarExtractionResult on success, None on failure.
     """
-    # Use local tsx binary to ensure it sees local node_modules
+    # Use local tsx binary
     local_tsx = project_root / "node_modules" / ".bin" / "tsx"
-    
+
     if local_tsx.exists():
         cmd = [str(local_tsx), str(script_path)]
     else:
-        # Fallback to npx, but this may fail if molstar isn't globally installed
-        logger.warning("Local tsx not found, falling back to npx (may fail)")
+        logger.warning("Local tsx not found, falling back to npx")
         cmd = ["npx", "tsx", str(script_path)]
-    
-    cmd.extend([
-        str(cif_path),
-        rcsb_id.upper(),
-        str(output_path),
-    ])
-    
+
+    cmd.extend(
+        [
+            str(cif_path),
+            rcsb_id.upper(),
+            str(output_path),
+        ]
+    )
+
     try:
         result = subprocess.run(
             cmd,
@@ -58,13 +53,15 @@ def run_molstar_extraction(
             timeout=timeout,
             cwd=project_root,
         )
-        
+
         if result.returncode != 0:
-            logger.error(f"Molstar extraction failed for {rcsb_id}: {result.stderr[:500]}")
+            logger.error(
+                f"Molstar extraction failed for {rcsb_id}: {result.stderr[:500]}"
+            )
             return None
-        
+
         return parse_extraction_result(output_path)
-        
+
     except subprocess.TimeoutExpired:
         logger.error(f"Molstar extraction timed out for {rcsb_id}")
         return None
@@ -77,11 +74,11 @@ def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResu
     """Parse the JSON output from Molstar extraction."""
     if not output_path.exists():
         return None
-    
+
     try:
         with open(output_path) as f:
             raw = json.load(f)
-        
+
         # Parse sequences
         sequences = [
             ObservedSequenceData(
@@ -95,53 +92,35 @@ def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResu
                         one_letter=r["one_letter"],
                     )
                     for r in seq["residues"]
-                ]
+                ],
             )
             for seq in raw.get("sequences", [])
         ]
-        
-        # Parse ligand neighborhoods
-        neighborhoods = []
-        for lig in raw.get("ligand_neighborhoods", []):
-            ligand_info = lig["ligand"]
-            
-            interactions = []
-            for ix in lig.get("interactions", []):
-                interactions.append(
-                    LigandInteraction(
-                        type=ix["type"],
-                        participants=(
-                            InteractionParticipant.from_tuple(ix["participants"][0]),
-                            InteractionParticipant.from_tuple(ix["participants"][1]),
-                        )
+
+        # Parse simplified ligand neighborhoods
+        neighborhoods = [
+            SimplifiedLigandNeighborhood(
+                ligand_comp_id=lig["ligand_comp_id"],
+                ligand_auth_asym_id=lig["ligand_auth_asym_id"],
+                ligand_auth_seq_id=lig["ligand_auth_seq_id"],
+                neighborhood_residues=[
+                    NeighborhoodResidue(
+                        auth_asym_id=r["auth_asym_id"],
+                        observed_index=r["observed_index"],
+                        comp_id=r["comp_id"],
                     )
-                )
-            
-            neighborhood_residues = [
-                NeighborResidue(
-                    auth_asym_id=n[0],
-                    auth_seq_id=n[1],
-                    auth_comp_id=n[2],
-                )
-                for n in lig.get("neighborhood", [])
-            ]
-            
-            neighborhoods.append(
-                LigandNeighborhood(
-                    ligand_auth_asym_id=ligand_info[0],
-                    ligand_auth_seq_id=ligand_info[1],
-                    ligand_comp_id=ligand_info[2],
-                    interactions=interactions,
-                    neighborhood=neighborhood_residues,
-                )
+                    for r in lig.get("neighborhood_residues", [])
+                ],
             )
-        
+            for lig in raw.get("ligand_neighborhoods", [])
+        ]
+
         return MolstarExtractionResult(
             rcsb_id=raw["rcsb_id"],
             sequences=sequences,
             ligand_neighborhoods=neighborhoods,
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to parse extraction result from {output_path}: {e}")
         return None

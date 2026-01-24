@@ -1,7 +1,5 @@
 """
 Sequence alignment against family Master Alignments.
-
-Refactored from lib/seq_aligner.py to accept observed sequences with auth_seq_ids.
 """
 
 import json
@@ -15,7 +13,15 @@ from typing import List, Dict, Any, Optional, Tuple
 from Bio import AlignIO
 from loguru import logger
 
-from lib.types import TubulinFamily, ObservedSequenceData, MutationEntryData
+from lib.types import (
+    TubulinFamily,
+    ObservedSequenceData,
+    IndexMappingData,
+    MutationRecord,
+    InsertionRecord,
+    DeletionRecord,
+    MutationsAndIndels,
+)
 
 
 @dataclass
@@ -24,15 +30,18 @@ class AlignmentResult:
     
     family: TubulinFamily
     sequence: str
+    auth_asym_id: str
+    entity_id: str
     
-    # ma_to_auth[ma_idx] = auth_seq_id or -1 if gap
-    ma_to_auth_map: List[int]
+    # Structured index mapping
+    index_mapping: IndexMappingData
     
-    # auth_to_ma[auth_seq_id] = ma_index (1-based) - for augmentation
-    auth_to_ma: Dict[int, int]
+    # Mutations and indels
+    mutations: List[MutationRecord]
+    insertions: List[InsertionRecord]
+    deletions: List[DeletionRecord]
     
-    mutations: List[MutationEntryData]
-    
+    # Stats
     stats: Dict[str, Any]
 
 
@@ -88,14 +97,6 @@ class SequenceAligner:
     ) -> Optional[AlignmentResult]:
         """
         Align an observed sequence to the family MSA.
-        
-        Args:
-            observed: Observed sequence data with auth_seq_ids
-            family: The tubulin family
-            identifier: Identifier for logging (e.g., "6WVR_1")
-        
-        Returns:
-            AlignmentResult or None on failure
         """
         sequence = observed.sequence
         auth_seq_ids = observed.auth_seq_ids
@@ -114,13 +115,15 @@ class SequenceAligner:
             family=family,
             sequence=sequence,
             auth_seq_ids=auth_seq_ids,
+            auth_asym_id=observed.auth_asym_id,
+            entity_id=observed.entity_id,
             aln_master=aln_master,
             aln_target=aln_target,
             identifier=identifier,
         )
     
     def _run_muscle(self, seq_id: str, sequence: str) -> Tuple[str, str]:
-        """Run MUSCLE profile alignment, return (aligned_master, aligned_target)."""
+        """Run MUSCLE profile alignment."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".fasta", delete=False) as seq_file:
             seq_file.write(f">{seq_id}\n{sequence}\n")
             seq_temp = Path(seq_file.name)
@@ -136,7 +139,7 @@ class SequenceAligner:
                 "-in2", str(seq_temp),
                 "-out", str(out_temp),
             ]
-            result = subprocess.run(cmd, check=True, capture_output=True)
+            subprocess.run(cmd, check=True, capture_output=True)
             
             alignment = AlignIO.read(str(out_temp), "fasta")
             
@@ -155,6 +158,8 @@ class SequenceAligner:
         family: TubulinFamily,
         sequence: str,
         auth_seq_ids: List[int],
+        auth_asym_id: str,
+        entity_id: str,
         aln_master: str,
         aln_target: str,
         identifier: str,
@@ -162,61 +167,89 @@ class SequenceAligner:
         """Build AlignmentResult from alignment strings."""
         ref_len = self.consensus.length
         
-        ma_to_auth: List[int] = [-1] * ref_len
-        auth_to_ma: Dict[int, int] = {}
-        mutations: List[MutationEntryData] = []
+        # Build mappings
+        observed_to_master: Dict[int, Optional[int]] = {}
+        master_to_observed: Dict[int, Optional[int]] = {i+1: None for i in range(ref_len)}
+        
+        mutations: List[MutationRecord] = []
+        insertions: List[InsertionRecord] = []
+        deletions: List[DeletionRecord] = []
         
         master_idx = 0      # 0-based index into consensus
         target_idx = 0      # index into sequence/auth_seq_ids
-        insertions = 0
         
         for m_char, t_char in zip(aln_master, aln_target):
             if m_char == "-":
                 # Gap in master = insertion in target
-                if t_char != "-":
-                    insertions += 1
+                if t_char != "-" and target_idx < len(auth_seq_ids):
+                    auth_id = auth_seq_ids[target_idx]
+                    observed_to_master[auth_id] = None  # No MA position
+                    insertions.append(InsertionRecord(
+                        observed_index=auth_id,
+                        residue=t_char,
+                    ))
                     target_idx += 1
+                    
             elif t_char == "-":
-                # Gap in target = missing residue
+                # Gap in target = deletion/missing residue
+                ma_pos = master_idx + 1
+                expected = self.consensus.get_residue(master_idx)
+                if expected not in ("-", "?"):
+                    deletions.append(DeletionRecord(
+                        master_index=ma_pos,
+                        expected_residue=expected,
+                    ))
                 master_idx += 1
+                
             else:
                 # Match position
                 if master_idx < ref_len and target_idx < len(auth_seq_ids):
                     auth_id = auth_seq_ids[target_idx]
-                    ma_to_auth[master_idx] = auth_id
-                    auth_to_ma[auth_id] = master_idx + 1  # 1-based MA index
+                    ma_pos = master_idx + 1  # 1-based
+                    
+                    observed_to_master[auth_id] = ma_pos
+                    master_to_observed[ma_pos] = auth_id
                     
                     # Check for mutation
                     wild_type = self.consensus.get_residue(master_idx)
                     if wild_type not in ("-", "?") and t_char != wild_type:
-                        mutations.append(
-                            MutationEntryData(
-                                ma_position=master_idx + 1,
-                                wild_type=wild_type,
-                                observed=t_char,
-                                pdb_auth_id=auth_id,
-                            )
-                        )
+                        mutations.append(MutationRecord(
+                            master_index=ma_pos,
+                            observed_index=auth_id,
+                            wild_type=wild_type,
+                            observed=t_char,
+                        ))
                 
                 master_idx += 1
                 target_idx += 1
         
-        coverage = sum(1 for x in ma_to_auth if x != -1)
+        # Build index mapping
+        index_mapping = IndexMappingData(
+            observed_to_master=observed_to_master,
+            master_to_observed=master_to_observed,
+        )
+        
+        coverage = sum(1 for v in master_to_observed.values() if v is not None)
         
         stats = {
-            "alignment_length": len(aln_target.replace("-", "")),
+            "alignment_length": len(sequence),
+            "master_alignment_length": ref_len,
             "ma_coverage": coverage,
-            "ma_coverage_pct": round(100 * coverage / ref_len, 1),
-            "insertions": insertions,
-            "total_mutations": len(mutations),
+            "ma_coverage_pct": round(100 * coverage / ref_len, 1) if ref_len > 0 else 0,
+            "insertions": len(insertions),
+            "deletions": len(deletions),
+            "mutations": len(mutations),
         }
         
         return AlignmentResult(
             family=family,
             sequence=sequence,
-            ma_to_auth_map=ma_to_auth,
-            auth_to_ma=auth_to_ma,
+            auth_asym_id=auth_asym_id,
+            entity_id=entity_id,
+            index_mapping=index_mapping,
             mutations=mutations,
+            insertions=insertions,
+            deletions=deletions,
             stats=stats,
         )
 
