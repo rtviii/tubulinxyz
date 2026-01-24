@@ -1,5 +1,6 @@
 # types_tubulin.py
 from typing import Dict, Optional, List, Literal, Tuple, Union, Any
+
 from enum import Enum
 from pydantic import BaseModel, Field, computed_field
 from enum import Enum
@@ -7,46 +8,78 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pydantic import BaseModel, Field
 
-class IndexMappingData(BaseModel):
+
+class VariantType(str, Enum):
+    SUBSTITUTION = "substitution"
+    INSERTION = "insertion"
+    DELETION = "deletion"
+
+
+class SequenceVariant(BaseModel):
     """
-    Bidirectional mapping between observed (auth_seq_id) and master alignment indices.
+    A sequence variant detected by alignment to the family consensus.
     
-    - observed_to_master: keyed by auth_seq_id -> MA index (1-based), or None if insertion
-    - master_to_observed: keyed by MA index (1-based) -> auth_seq_id, or None if gap
+    Covers substitutions, insertions, and deletions in one type.
     """
+    type: VariantType
+    
+    # For substitutions and deletions: the MA position (1-based)
+    # For insertions: None (no MA position exists)
+    master_index: Optional[int] = None
+    
+    # For substitutions and insertions: the auth_seq_id in the structure
+    # For deletions: None (residue doesn't exist in structure)
+    observed_index: Optional[int] = None
+    
+    # For substitutions: wild_type -> observed
+    # For insertions: observed only (wild_type is None)
+    # For deletions: wild_type only (observed is None)
+    wild_type: Optional[str] = None
+    observed: Optional[str] = None
+    
+    @classmethod
+    def substitution(cls, master_index: int, observed_index: int, wild_type: str, observed: str):
+        return cls(
+            type=VariantType.SUBSTITUTION,
+            master_index=master_index,
+            observed_index=observed_index,
+            wild_type=wild_type,
+            observed=observed,
+        )
+    
+    @classmethod
+    def insertion(cls, observed_index: int, residue: str):
+        return cls(
+            type=VariantType.INSERTION,
+            observed_index=observed_index,
+            observed=residue,
+        )
+    
+    @classmethod
+    def deletion(cls, master_index: int, expected: str):
+        return cls(
+            type=VariantType.DELETION,
+            master_index=master_index,
+            wild_type=expected,
+        )
+
+
+# ============================================================
+# Index Mapping 
+# ============================================================
+
+class IndexMappingData(BaseModel):
+    """Bidirectional mapping between observed (auth_seq_id) and master alignment indices."""
     observed_to_master: Dict[int, Optional[int]]  # auth_seq_id -> MA index (1-based) or None
     master_to_observed: Dict[int, Optional[int]]  # MA index (1-based) -> auth_seq_id or None
     
-    @classmethod
-    def from_alignment(
-        cls,
-        ma_to_auth_list: List[int],  # ma_to_auth[ma_idx] = auth_seq_id or -1
-        auth_to_ma_dict: Dict[int, int],  # auth_seq_id -> ma_idx (1-based)
-    ) -> "IndexMappingData":
-        """Build from alignment result."""
-        # master_to_observed: MA index (1-based) -> auth_seq_id or None
-        master_to_observed = {}
-        for ma_idx, auth_id in enumerate(ma_to_auth_list):
-            ma_pos = ma_idx + 1  # 1-based
-            master_to_observed[ma_pos] = auth_id if auth_id != -1 else None
-        
-        # observed_to_master: auth_seq_id -> MA index (1-based) or None
-        observed_to_master = {
-            auth_id: ma_idx for auth_id, ma_idx in auth_to_ma_dict.items()
-        }
-        
-        return cls(
-            observed_to_master=observed_to_master,
-            master_to_observed=master_to_observed,
-        )
-    
     def get_master_index(self, auth_seq_id: int) -> Optional[int]:
-        """Get MA index for an observed residue."""
         return self.observed_to_master.get(auth_seq_id)
     
     def get_observed_index(self, master_index: int) -> Optional[int]:
-        """Get auth_seq_id for an MA position."""
         return self.master_to_observed.get(master_index)
+
+
 
 
 class TubulinFamily(str, Enum):
@@ -195,6 +228,31 @@ class NeighborResidue(BaseModel):
         if self.master_index is not None:
             base.append(self.master_index)
         return base
+
+class BindingSiteResidue(BaseModel):
+    """A residue in a ligand's binding site."""
+    auth_asym_id: str
+    observed_index: int        # auth_seq_id
+    comp_id: str               # 3-letter residue code
+    master_index: Optional[int] = None  # 1-based MA index, if mapped
+
+
+
+class LigandBindingSite(BaseModel):
+    """
+    Binding site for a single ligand instance.
+    
+    Stored in the profile under structure.ligand_binding_sites
+    """
+    ligand_comp_id: str
+    ligand_auth_asym_id: str
+    ligand_auth_seq_id: int
+    residues: List[BindingSiteResidue]
+    
+    @property
+    def residue_count(self) -> int:
+        return len(self.residues)
+
 
 
 class LigandNeighborhood(BaseModel):
@@ -395,7 +453,7 @@ class NonpolymerEntity(BaseEntity):
 
 
 class PolypeptideEntity(BaseModel):
-    """Polypeptide entity with optional index mappings."""
+    """Polypeptide entity with optional index mappings and variants."""
     type: Literal["polymer"] = "polymer"
     polymer_type: Literal["Protein"] = "Protein"
     entity_id: str
@@ -411,24 +469,30 @@ class PolypeptideEntity(BaseModel):
     src_organism_ids: List[int] = []
     host_organism_ids: List[int] = []
 
-    family: Optional[Union[TubulinFamily, MapFamily]] = None
+    family: Optional[Union["TubulinFamily", "MapFamily"]] = None
     uniprot_accessions: List[str] = []
 
-    # Index mappings (populated for classified tubulin chains)
+    # Index mappings (for classified tubulin chains)
     index_mapping: Optional[IndexMappingData] = None
+    
+    # Sequence variants (for classified tubulin chains)
+    variants: List[SequenceVariant] = []
     
     # Alignment stats
     alignment_stats: Dict[str, Any] = {}
+    
+    @property
+    def substitutions(self) -> List[SequenceVariant]:
+        return [v for v in self.variants if v.type == VariantType.SUBSTITUTION]
+    
+    @property
+    def insertions(self) -> List[SequenceVariant]:
+        return [v for v in self.variants if v.type == VariantType.INSERTION]
+    
+    @property
+    def deletions(self) -> List[SequenceVariant]:
+        return [v for v in self.variants if v.type == VariantType.DELETION]
 
-    def to_SeqRecord(self, rcsb_id: str):
-        from Bio.SeqRecord import SeqRecord
-        from Bio.Seq import Seq
-        return SeqRecord(
-            seq=Seq(self.one_letter_code_can),
-            id=f"{rcsb_id}_{self.entity_id}",
-            description=self.pdbx_description or "",
-            name=f"{rcsb_id}_entity_{self.entity_id}",
-        )
 
 
 
@@ -526,6 +590,8 @@ class TubulinStructure(RCSBStructureMetadata):
     nonpolymers: List[Nonpolymer]
 
     assembly_map: Optional[List[AssemblyInstancesMap]] = None
+    ligand_binding_sites: List[LigandBindingSite] = []
+    
     polymerization_state: Optional[
         Literal["monomer", "dimer", "oligomer", "filament", "unknown"]
     ] = None
@@ -614,47 +680,41 @@ class SimplifiedLigandNeighborhood(BaseModel):
 # ============================================================
 
 class ObservedResidue(BaseModel):
-    """A single residue as observed in the structure coordinates."""
     auth_seq_id: int
     label_seq_id: int
-    comp_id: str        # 3-letter code (e.g., "ALA", "MSE")
-    one_letter: str     # Converted to standard amino acid
+    comp_id: str
+    one_letter: str
 
 
 class ObservedSequenceData(BaseModel):
-    """Observed sequence data for a single chain, extracted from coordinates."""
     auth_asym_id: str
     entity_id: str
     residues: List[ObservedResidue]
     
     @property
     def sequence(self) -> str:
-        """The one-letter sequence string."""
         return "".join(r.one_letter for r in self.residues)
     
     @property
     def auth_seq_ids(self) -> List[int]:
-        """List of auth_seq_ids in order."""
         return [r.auth_seq_id for r in self.residues]
+
+
+
 
 
 class MolstarExtractionResult(BaseModel):
     """Complete extraction result from Molstar for a structure."""
     rcsb_id: str
     sequences: List[ObservedSequenceData]
-    ligand_neighborhoods: List[SimplifiedLigandNeighborhood]
+    ligand_neighborhoods: List[LigandBindingSite]  # Renamed from SimplifiedLigandNeighborhood
     
     def get_sequence_for_chain(self, auth_asym_id: str) -> Optional[ObservedSequenceData]:
         for seq in self.sequences:
             if seq.auth_asym_id == auth_asym_id:
                 return seq
         return None
-    
-    def get_sequence_for_entity(self, entity_id: str) -> Optional[ObservedSequenceData]:
-        for seq in self.sequences:
-            if seq.entity_id == entity_id:
-                return seq
-        return None
+
 
 
 # ============================================================
@@ -757,3 +817,16 @@ class ClassificationReport(BaseModel):
     generated_at: str
     summary: Dict[str, int]  # {"total": N, "classified": M, "tubulin": X, "map": Y}
     entities: Dict[str, EntityClassificationResult]  # entity_id -> result
+
+class VariantsFile(BaseModel):
+    """File: {RCSB_ID}_variants.json"""
+    rcsb_id: str
+    generated_at: str
+    entities: Dict[str, List[SequenceVariant]]  # entity_id -> variants
+
+
+class LigandBindingSitesFile(BaseModel):
+    """File: {RCSB_ID}_ligand_binding_sites.json"""
+    rcsb_id: str
+    generated_at: str
+    binding_sites: List[LigandBindingSite]

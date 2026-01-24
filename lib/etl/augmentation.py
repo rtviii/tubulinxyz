@@ -11,6 +11,12 @@ from lib.types import (
 )
 from lib.etl.sequence_alignment import AlignmentResult
 
+from typing import Dict, List
+from loguru import logger
+
+from lib.types import LigandBindingSite
+from lib.etl.sequence_alignment import AlignmentResult
+
 
 def augment_ligand_neighborhoods(
     neighborhoods: List[SimplifiedLigandNeighborhood],
@@ -59,3 +65,28 @@ def extract_map_interfaces(
 ) -> Dict[str, List[dict]]:
     """Stub for MAP interface extraction."""
     return {}
+
+
+
+def augment_binding_sites(
+    binding_sites: List[LigandBindingSite],
+    chain_alignments: Dict[str, AlignmentResult],
+) -> List[LigandBindingSite]:
+    """
+    Augment binding sites with master alignment indices.
+    """
+    augmented_count = 0
+    
+    for site in binding_sites:
+        for residue in site.residues:
+            alignment = chain_alignments.get(residue.auth_asym_id)
+            if alignment:
+                ma_idx = alignment.index_mapping.get_master_index(residue.observed_index)
+                if ma_idx is not None:
+                    residue.master_index = ma_idx
+                    augmented_count += 1
+    
+    if augmented_count > 0:
+        logger.debug(f"  Augmented {augmented_count} binding site residues with master indices")
+    
+    return binding_sites

@@ -12,8 +12,8 @@ from lib.types import (
     MolstarExtractionResult,
     ObservedSequenceData,
     ObservedResidue,
-    SimplifiedLigandNeighborhood,
-    NeighborhoodResidue,
+    LigandBindingSite,
+    BindingSiteResidue,
 )
 
 
@@ -25,10 +25,6 @@ def run_molstar_extraction(
     project_root: Path,
     timeout: int = 600,
 ) -> Optional[MolstarExtractionResult]:
-    """
-    Run the unified Molstar extraction script.
-    """
-    # Use local tsx binary
     local_tsx = project_root / "node_modules" / ".bin" / "tsx"
 
     if local_tsx.exists():
@@ -37,21 +33,11 @@ def run_molstar_extraction(
         logger.warning("Local tsx not found, falling back to npx")
         cmd = ["npx", "tsx", str(script_path)]
 
-    cmd.extend(
-        [
-            str(cif_path),
-            rcsb_id.upper(),
-            str(output_path),
-        ]
-    )
+    cmd.extend([str(cif_path), rcsb_id.upper(), str(output_path)])
 
     try:
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=project_root,
+            cmd, capture_output=True, text=True, timeout=timeout, cwd=project_root
         )
 
         if result.returncode != 0:
@@ -71,7 +57,6 @@ def run_molstar_extraction(
 
 
 def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResult]:
-    """Parse the JSON output from Molstar extraction."""
     if not output_path.exists():
         return None
 
@@ -79,7 +64,6 @@ def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResu
         with open(output_path) as f:
             raw = json.load(f)
 
-        # Parse sequences
         sequences = [
             ObservedSequenceData(
                 auth_asym_id=seq["auth_asym_id"],
@@ -97,14 +81,14 @@ def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResu
             for seq in raw.get("sequences", [])
         ]
 
-        # Parse simplified ligand neighborhoods
-        neighborhoods = [
-            SimplifiedLigandNeighborhood(
+        # Parse as LigandBindingSite (renamed from SimplifiedLigandNeighborhood)
+        binding_sites = [
+            LigandBindingSite(
                 ligand_comp_id=lig["ligand_comp_id"],
                 ligand_auth_asym_id=lig["ligand_auth_asym_id"],
                 ligand_auth_seq_id=lig["ligand_auth_seq_id"],
-                neighborhood_residues=[
-                    NeighborhoodResidue(
+                residues=[
+                    BindingSiteResidue(
                         auth_asym_id=r["auth_asym_id"],
                         observed_index=r["observed_index"],
                         comp_id=r["comp_id"],
@@ -118,7 +102,7 @@ def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResu
         return MolstarExtractionResult(
             rcsb_id=raw["rcsb_id"],
             sequences=sequences,
-            ligand_neighborhoods=neighborhoods,
+            ligand_neighborhoods=binding_sites,
         )
 
     except Exception as e:

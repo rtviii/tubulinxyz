@@ -35,6 +35,7 @@ interface BindingSiteResult {
     neighborhood: ResidueTuple[];
 }
 
+
 // --- Internal Types (for processing) ---
 
 interface ResidueInfo {

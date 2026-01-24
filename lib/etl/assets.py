@@ -60,6 +60,16 @@ class TubulinStructureAssetPaths:
                 p for p in glob.glob(pattern) 
                 if not any(p.endswith(s) for s in excluded_suffixes)
             ]
+
+    @property
+    def variants_file(self) -> str:
+        """Path to variants (substitutions/insertions/deletions) file."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_variants.json")
+    
+    @property
+    def binding_sites_file(self) -> str:
+        """Path to ligand binding sites file."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_ligand_binding_sites.json")
     @property
     def classification_report(self) -> str:
         """Path to the HMM classification report."""

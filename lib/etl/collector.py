@@ -23,7 +23,7 @@ from lib.etl.assets import (
 
 
 from lib.etl.classification import classify_sequence, build_entity_classification_result, is_map_family
-from lib.types import ClassificationReport, EntityClassificationResult
+from lib.types import ClassificationReport, EntityClassificationResult, SequenceVariant
 from datetime import datetime
 from lib.etl.molstar_bridge import run_molstar_extraction
 from lib.etl.classification import classify_sequence, is_tubulin_family
@@ -179,14 +179,15 @@ class TubulinETLCollector:
         logger.debug(f"  Classification: {classified_count}/{total_count} entities "
                      f"({tubulin_count} tubulin, {map_count} MAP)")
         
+# Phase 3: Replace the alignment section
+
         # ========================================
         # Phase 3: Sequence Alignment
         # ========================================
         logger.info("Phase 3: Aligning tubulin sequences")
         
         chain_alignments: Dict[str, AlignmentResult] = {}
-        all_mutations_indels: List[MutationsAndIndels] = []
-        index_maps_by_entity: Dict[str, dict] = {}
+        all_variants: Dict[str, List[SequenceVariant]] = {}
         
         for entity_id, family in entity_families.items():
             if not is_tubulin_family(family):
@@ -205,78 +206,64 @@ class TubulinETLCollector:
                 if result:
                     chain_alignments[observed.auth_asym_id] = result
                     
-                    # Store index mapping in entity
+                    # Store in entity
                     entity = poly_entities[entity_id]
                     if isinstance(entity, PolypeptideEntity):
                         entity.index_mapping = result.index_mapping
+                        entity.variants = result.variants
                         entity.alignment_stats = result.stats
                     
                     # Collect for separate file
-                    index_maps_by_entity[entity_id] = result.index_mapping.model_dump()
+                    all_variants[entity_id] = result.variants
                     
-                    # Collect mutations/indels
-                    if result.mutations or result.insertions or result.deletions:
-                        all_mutations_indels.append(MutationsAndIndels(
-                            entity_id=entity_id,
-                            auth_asym_id=observed.auth_asym_id,
-                            family=family.value,
-                            mutations=result.mutations,
-                            insertions=result.insertions,
-                            deletions=result.deletions,
-                        ))
-                    
-                    coverage = result.stats.get("ma_coverage", 0)
-                    logger.debug(f"  Entity {entity_id}: {coverage} residues mapped, "
-                                 f"{len(result.mutations)} mutations")
+                    logger.debug(
+                        f"  Entity {entity_id}: {result.stats['ma_coverage']} residues mapped, "
+                        f"{len(result.substitutions)} sub, {len(result.insertions)} ins, {len(result.deletions)} del"
+                    )
                 
             except Exception as e:
                 logger.warning(f"  Entity {entity_id}: Alignment failed - {e}")
                 continue
         
-        # Write index maps file
-        if index_maps_by_entity:
-            maps_file = ObservedMasterIndexMaps(
+        # Write variants file
+        if all_variants:
+            from lib.types import VariantsFile
+            variants_file = VariantsFile(
                 rcsb_id=self.rcsb_id,
                 generated_at=datetime.now().isoformat(),
-                entities={k: poly_entities[k].index_mapping for k in index_maps_by_entity 
-                         if poly_entities[k].index_mapping},
+                entities=all_variants,
             )
-            with open(self.assets.paths.observed_master_maps, "w") as f:
-                f.write(maps_file.model_dump_json(indent=2))
-            logger.debug(f"  Wrote index maps to {self.assets.paths.observed_master_maps}")
-        
-        # Write mutations/indels file
-        if all_mutations_indels:
-            mutations_file = MutationsIndelsFile(
-                rcsb_id=self.rcsb_id,
-                generated_at=datetime.now().isoformat(),
-                entities=all_mutations_indels,
-            )
-            with open(self.assets.paths.mutations_indels_file, "w") as f:
-                f.write(mutations_file.model_dump_json(indent=2))
-            logger.debug(f"  Wrote mutations/indels to {self.assets.paths.mutations_indels_file}")
-        
+            with open(self.assets.paths.variants_file, "w") as f:
+                f.write(variants_file.model_dump_json(indent=2))
+            logger.debug(f"  Wrote variants to {self.assets.paths.variants_file}")
+
+
+# Phase 4: Replace augmentation section
+
         # ========================================
-        # Phase 4: Augmentation
+        # Phase 4: Augmenting extracted data
         # ========================================
         logger.info("Phase 4: Augmenting extracted data")
         
-        augmented_neighborhoods = augment_ligand_neighborhoods(
-            neighborhoods=molstar_result.ligand_neighborhoods,
+        from lib.etl.augmentation import augment_binding_sites
+        
+        augmented_binding_sites = augment_binding_sites(
+            binding_sites=molstar_result.ligand_neighborhoods,
             chain_alignments=chain_alignments,
         )
         
-        # Write ligand neighborhoods file
-        if augmented_neighborhoods:
-            neighborhoods_file = LigandNeighborhoodsFile(
+        # Write binding sites file
+        if augmented_binding_sites:
+            from lib.types import LigandBindingSitesFile
+            sites_file = LigandBindingSitesFile(
                 rcsb_id=self.rcsb_id,
                 generated_at=datetime.now().isoformat(),
-                neighborhoods=augmented_neighborhoods,
+                binding_sites=augmented_binding_sites,
             )
-            with open(self.assets.paths.ligand_neighborhoods_file, "w") as f:
-                f.write(neighborhoods_file.model_dump_json(indent=2))
-            logger.debug(f"  Wrote {len(augmented_neighborhoods)} ligand neighborhoods")
-        
+            with open(self.assets.paths.binding_sites_file, "w") as f:
+                f.write(sites_file.model_dump_json(indent=2))
+            logger.debug(f"  Wrote {len(augmented_binding_sites)} binding sites")
+
         # ========================================
         # Phase 5: Assemble and Persist
         # ========================================
@@ -311,6 +298,7 @@ class TubulinETLCollector:
             polypeptides=polypeptides,
             polynucleotides=polynucleotides,
             nonpolymers=nonpolymers,
+            ligand_binding_sites=augmented_binding_sites,
             assembly_map=self.asm_maps,
         )
         

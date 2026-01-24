@@ -33,16 +33,33 @@ class AlignmentResult:
     auth_asym_id: str
     entity_id: str
 
-    # Structured index mapping
     index_mapping: IndexMappingData
 
-    # Mutations and indels
     mutations: List[MutationRecord]
     insertions: List[InsertionRecord]
     deletions: List[DeletionRecord]
 
-    # Stats
     stats: Dict[str, Any]
+
+    @property
+    def variants(self) -> List:
+        """Bridge to SequenceVariant format for collector compatibility."""
+        from lib.types import SequenceVariant
+        result = []
+        for m in self.mutations:
+            result.append(SequenceVariant.substitution(
+                m.master_index, m.observed_index, m.wild_type, m.observed
+            ))
+        for i in self.insertions:
+            result.append(SequenceVariant.insertion(i.observed_index, i.residue))
+        for d in self.deletions:
+            result.append(SequenceVariant.deletion(d.master_index, d.expected_residue))
+        return result
+
+    @property
+    def substitutions(self) -> List[MutationRecord]:
+        """Alias for mutations (collector uses this name in logging)."""
+        return self.mutations
 
 
 class ConsensusCalculator:
@@ -151,12 +168,12 @@ class SequenceAligner:
             subprocess.run(cmd, check=True, capture_output=True)
 
             alignment = AlignIO.read(str(out_temp), "fasta")
-
             target_record = next((r for r in alignment if r.id == seq_id), None)
             if not target_record:
                 raise ValueError(f"Sequence {seq_id} not found in alignment output")
 
             return str(alignment[0].seq), str(target_record.seq)
+
 
         finally:
             seq_temp.unlink(missing_ok=True)
@@ -272,23 +289,15 @@ class SequenceAligner:
 
 
 def get_aligner_for_family(family: TubulinFamily, project_root: Path) -> SequenceAligner:
+    muscle_path = project_root / "muscle3.8.1"
     family_file_map = {
-        TubulinFamily.ALPHA: "tubulin_alpha",
-        TubulinFamily.BETA: "tubulin_beta",
-        TubulinFamily.GAMMA: "tubulin_gamma",
-        TubulinFamily.DELTA: "tubulin_delta",
-        TubulinFamily.EPSILON: "tubulin_epsilon",
+        TubulinFamily.ALPHA  : "/Users/rtviii/dev/tubulinxyz/data/alpha_tubulin/alpha_tubulin.afasta",
+        TubulinFamily.BETA   : "/Users/rtviii/dev/tubulinxyz/data/beta_tubulin/beta_tubulin.afasta",
     }
     
-    file_name = family_file_map.get(family)
-    if not file_name:
+    # This path should match your actual files:
+    msa_path    = family_file_map.get(family)
+    if not msa_path:
         raise ValueError(f"No MSA configured for family: {family}")
     
-    # This path should match your actual files:
-    msa_path = project_root / "data" / "sequences" / "tubulin" / f"{file_name}.afasta"
-    muscle_path = project_root / "muscle3.8.1"
-    
-    if not msa_path.exists():
-        raise FileNotFoundError(f"MSA not found: {msa_path}")
-    
-    return SequenceAligner(msa_path, muscle_path)
+    return SequenceAligner(Path( msa_path ), muscle_path)
