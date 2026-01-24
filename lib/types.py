@@ -246,17 +246,17 @@ class MutationType(str, Enum):
 
 
 class ModificationType(str, Enum):
-    ACETYLATION = "acetylation"
+    ACETYLATION     = "acetylation"
     PHOSPHORYLATION = "phosphorylation"
-    METHYLATION = "methylation"
-    UBIQUITINATION = "ubiquitination"
-    SUMOYLATION = "sumoylation"
-    PALMITOYLATION = "palmitoylation"
-    NITROSYLATION = "nitrosylation"
-    GLUTAMYLATION = "glutamylation"
-    GLYCYLATION = "glycylation"
-    TYROSINATION = "tyrosination"
-    DETYROSINATION = "detyrosination"
+    METHYLATION     = "methylation"
+    UBIQUITINATION  = "ubiquitination"
+    SUMOYLATION     = "sumoylation"
+    PALMITOYLATION  = "palmitoylation"
+    NITROSYLATION   = "nitrosylation"
+    GLUTAMYLATION   = "glutamylation"
+    GLYCYLATION     = "glycylation"
+    TYROSINATION    = "tyrosination"
+    DETYROSINATION  = "detyrosination"
 
 
 # --- Support Models ---
@@ -552,10 +552,10 @@ class MutationEntryData(BaseModel):
 
 class MutationRecord(BaseModel):
     """A point mutation detected by alignment to consensus."""
-    master_index: int          # 1-based MA position
-    observed_index: int        # auth_seq_id in structure
-    wild_type: str             # Consensus residue
-    observed: str              # Actual residue in structure
+    master_index  : int  # 1-based MA position
+    observed_index: int  # auth_seq_id in structure
+    wild_type     : str  # Consensus residue
+    observed      : str  # Actual residue in structure
     
     
 class InsertionRecord(BaseModel):
@@ -734,3 +734,26 @@ class SequenceIngestionEntry(BaseModel):
         """Get reverse lookup: auth_seq_id -> MA index (1-based)."""
         return self.data.get_auth_to_ma()
 
+# Add to lib/types.py
+
+class EntityClassificationResult(BaseModel):
+    """Classification result for a single entity."""
+    entity_id: str
+    auth_asym_ids: List[str]
+    sequence_length: int
+    assigned_family: Optional[str]
+    best_hit_score: Optional[float] = None
+    best_hit_evalue: Optional[float] = None
+    all_hits: List[Dict[str, Any]] = []  # For debugging/analysis
+
+
+class ClassificationReport(BaseModel):
+    """
+    File: {RCSB_ID}_classification_report.json
+    
+    Summary of HMM classification for all polypeptide entities.
+    """
+    rcsb_id: str
+    generated_at: str
+    summary: Dict[str, int]  # {"total": N, "classified": M, "tubulin": X, "map": Y}
+    entities: Dict[str, EntityClassificationResult]  # entity_id -> result

@@ -60,7 +60,6 @@ class TubulinStructureAssetPaths:
                 p for p in glob.glob(pattern) 
                 if not any(p.endswith(s) for s in excluded_suffixes)
             ]
-
     @property
     def classification_report(self) -> str:
         """Path to the HMM classification report."""

@@ -20,6 +20,11 @@ from lib.etl.assets import (
     TubulinStructureAssets,
     query_rcsb_api,
 )
+
+
+from lib.etl.classification import classify_sequence, build_entity_classification_result, is_map_family
+from lib.types import ClassificationReport, EntityClassificationResult
+from datetime import datetime
 from lib.etl.molstar_bridge import run_molstar_extraction
 from lib.etl.classification import classify_sequence, is_tubulin_family
 from lib.etl.sequence_alignment import get_aligner_for_family, AlignmentResult
@@ -104,22 +109,75 @@ class TubulinETLCollector:
         logger.info("Phase 2: Classifying chains")
         
         entity_families: Dict[str, Optional[PolymerClass]] = {}
+        classification_results: Dict[str, EntityClassificationResult] = {}
+        
+        tubulin_count = 0
+        map_count = 0
+        classified_count = 0
+        total_count = 0
         
         for entity_id, entity in poly_entities.items():
             if not isinstance(entity, PolypeptideEntity):
                 continue
             
+            total_count += 1
+            
             observed = observed_by_entity.get(entity_id)
             if not observed:
                 logger.warning(f"  {entity_id}: No observed sequence")
+                classification_results[entity_id] = EntityClassificationResult(
+                    entity_id=entity_id,
+                    auth_asym_ids=entity.pdbx_strand_ids,
+                    sequence_length=entity.sequence_length,
+                    assigned_family=None,
+                )
                 continue
+            logger.debug(f"  Entity {entity_id}: sequence length = {len(observed.sequence)}, first 50 chars: {observed.sequence[:50]}")
+    
             
-            family = classify_sequence(observed, self.rcsb_id)
+            family, hmm_result = classify_sequence(observed, self.rcsb_id)
             entity_families[entity_id] = family
             entity.family = family
             
+            # Build classification result for report
+            classification_results[entity_id] = build_entity_classification_result(
+                entity_id=entity_id,
+                auth_asym_ids=entity.pdbx_strand_ids,
+                sequence_length=len(observed.sequence),
+                hmm_result=hmm_result,
+            )
+            
+            if family:
+                classified_count += 1
+                if is_tubulin_family(family):
+                    tubulin_count += 1
+                elif is_map_family(family):
+                    map_count += 1
+            
             status = family.value if family else "unclassified"
-            logger.debug(f"  Entity {entity_id}: {status}")
+            marker = "+" if family else "-"
+            score_str = f" (score={hmm_result.best_hit.score:.1f})" if hmm_result.best_hit else ""
+            logger.debug(f"  Entity {entity_id}: {status}{score_str} {marker}")
+        
+        # Write classification report
+        classification_report = ClassificationReport(
+            rcsb_id=self.rcsb_id,
+            generated_at=datetime.now().isoformat(),
+            summary={
+                "total": total_count,
+                "classified": classified_count,
+                "unclassified": total_count - classified_count,
+                "tubulin": tubulin_count,
+                "map": map_count,
+            },
+            entities=classification_results,
+        )
+        
+        with open(self.assets.paths.classification_report, "w") as f:
+            f.write(classification_report.model_dump_json(indent=2))
+        
+        logger.debug(f"  Classification: {classified_count}/{total_count} entities "
+                     f"({tubulin_count} tubulin, {map_count} MAP)")
         
         # ========================================
         # Phase 3: Sequence Alignment
@@ -326,6 +384,10 @@ class TubulinETLCollector:
             )
             
             if poly_type == "Protein":
+                # Filter out None values from organism data
+                src_organisms = raw.get("rcsb_entity_source_organism") or []
+                host_organisms = raw.get("rcsb_entity_host_organism") or []
+                
                 ent = PolypeptideEntity(
                     entity_id=entity_id,
                     pdbx_description=raw.get("rcsb_polymer_entity", {}).get("pdbx_description"),
@@ -335,11 +397,23 @@ class TubulinETLCollector:
                     sequence_length=raw["entity_poly"]["rcsb_sample_sequence_length"],
                     src_organism_ids=[
                         o.get("ncbi_taxonomy_id")
-                        for o in raw.get("rcsb_entity_source_organism", []) or []
+                        for o in src_organisms
+                        if o.get("ncbi_taxonomy_id") is not None
                     ],
                     src_organism_names=[
                         o.get("scientific_name")
-                        for o in raw.get("rcsb_entity_source_organism", []) or []
+                        for o in src_organisms
+                        if o.get("scientific_name") is not None
+                    ],
+                    host_organism_ids=[
+                        o.get("ncbi_taxonomy_id")
+                        for o in host_organisms
+                        if o.get("ncbi_taxonomy_id") is not None
+                    ],
+                    host_organism_names=[
+                        o.get("scientific_name")
+                        for o in host_organisms
+                        if o.get("scientific_name") is not None
                     ],
                     uniprot_accessions=[
                         u.get("rcsb_id") for u in (raw.get("uniprots") or []) if u.get("rcsb_id")
@@ -493,18 +567,3 @@ async def main(rcsb_id: str):
 if __name__ == "__main__":
     import sys
     asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else "6WVR"))
-# ```
-
-# ---
-
-# ## Summary of Output Files
-
-# After processing a structure like `9YMG`, you'll get:
-# ```
-# TUBETL_DATA/9YMG/
-# ├── 9YMG.cif                                    # Raw structure file
-# ├── 9YMG.json                                   # Main profile (with index_mapping in entities)
-# ├── 9YMG_molstar_raw.json                       # Intermediate extraction (can delete)
-# ├── 9YMG_observed_and_master_index_maps.json    # Clean index mappings per entity
-# ├── 9YMG_ligand_neighborhoods.json              # Simplified neighborhoods with master indices
-# └── 9YMG_mutations_insertions_deletions.json    # All mutations/indels
