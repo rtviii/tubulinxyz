@@ -290,14 +290,17 @@ class SequenceAligner:
 
 def get_aligner_for_family(family: TubulinFamily, project_root: Path) -> SequenceAligner:
     muscle_path = project_root / "muscle3.8.1"
+    
     family_file_map = {
         TubulinFamily.ALPHA  : "/Users/rtviii/dev/tubulinxyz/data/alpha_tubulin/alpha_tubulin.afasta",
         TubulinFamily.BETA   : "/Users/rtviii/dev/tubulinxyz/data/beta_tubulin/beta_tubulin.afasta",
+        TubulinFamily.GAMMA  : "/Users/rtviii/dev/tubulinxyz/data/gamma_tubulin/tubulin_gamma_clean.afasta",
+        TubulinFamily.DELTA  : "/Users/rtviii/dev/tubulinxyz/data/delta_tubulin/tubulin_delta_clean.afasta",
+        TubulinFamily.EPSILON: "/Users/rtviii/dev/tubulinxyz/data/epsilon_tubulin/tubulin_epsilon_clean.afasta",
     }
     
-    # This path should match your actual files:
-    msa_path    = family_file_map.get(family)
+    msa_path = family_file_map.get(family)
     if not msa_path:
         raise ValueError(f"No MSA configured for family: {family}")
     
-    return SequenceAligner(Path( msa_path ), muscle_path)
+    return SequenceAligner(Path(msa_path), muscle_path)
