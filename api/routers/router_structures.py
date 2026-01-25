@@ -1,8 +1,11 @@
 # api/routers/router_structures.py
 from fastapi import APIRouter, Query, HTTPException
 from typing import Optional, List
+import json
+from pathlib import Path
 
 from lib.types import TubulinStructure
+from lib.etl.assets import TubulinStructureAssets
 from neo4j_tubxz.db_lib_reader import db_reader
 from neo4j_tubxz.models import (
     FilterFacets,
@@ -10,11 +13,10 @@ from neo4j_tubxz.models import (
     StructureListResponse,
     ExpMethod,
     PolymerizationState,
+    VariantTypeFilter,
 )
 
 router_structures = APIRouter()
-
-# api/routers/router_structures.py - add this endpoint
 
 
 @router_structures.get("/taxonomy-tree/{tax_type}")
@@ -36,6 +38,7 @@ def parse_list_param(value: Optional[List[str]]) -> Optional[List[str]]:
             result.append(item.strip())
     return result if result else None
 
+
 def parse_int_list(value: Optional[List[str]]) -> Optional[List[int]]:
     """Handle both repeated params and comma-separated values for integers."""
     raw = parse_list_param(value)
@@ -46,43 +49,47 @@ def parse_int_list(value: Optional[List[str]]) -> Optional[List[int]]:
             raise HTTPException(400, "Taxonomy IDs must be integers")
     return None
 
+
 @router_structures.get("", response_model=StructureListResponse)
 def list_structures(
-cursor               : Optional[str] = Query(None),
-limit                : int = Query(100, ge=1, le=500),
-search               : Optional[str] = Query(None),
-rcsb_ids             : Optional[List[str]] = Query(None, alias="ids"),
-resolution_min       : Optional[float] = Query(None, alias="resMin"),
-resolution_max       : Optional[float] = Query(None, alias="resMax"),
-year_min             : Optional[int] = Query(None, alias="yearMin"),
-year_max             : Optional[int] = Query(None, alias="yearMax"),
-exp_method           : Optional[List[str]] = Query(None, alias="expMethod"),
-polymerization_state : Optional[List[str]] = Query(None, alias="polyState"),
-source_organism_ids  : Optional[List[str]] = Query(None, alias="sourceTaxa"),
-host_organism_ids    : Optional[List[str]] = Query(None, alias="hostTaxa"),
-has_ligand_ids       : Optional[List[str]] = Query(None, alias="ligands"),
-has_polymer_family   : Optional[List[str]] = Query(None, alias="family"),
-has_uniprot          : Optional[List[str]] = Query(None, alias="uniprot"),
-has_mutations        : Optional[bool] = Query(None, alias="hasMutations"),
-mutation_family      : Optional[str] = Query(None, alias="mutationFamily"),
-mutation_position_min: Optional[int] = Query(None, alias="mutationPosMin"),
-mutation_position_max: Optional[int] = Query(None, alias="mutationPosMax"),
-mutation_from        : Optional[str] = Query(None, alias="mutationFrom"),
-mutation_to          : Optional[str] = Query(None, alias="mutationTo"),
-mutation_phenotype   : Optional[str] = Query(None, alias="mutationPhenotype"),
-)                    : 
+    cursor: Optional[str] = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    search: Optional[str] = Query(None),
+    rcsb_ids: Optional[List[str]] = Query(None, alias="ids"),
+    resolution_min: Optional[float] = Query(None, alias="resMin"),
+    resolution_max: Optional[float] = Query(None, alias="resMax"),
+    year_min: Optional[int] = Query(None, alias="yearMin"),
+    year_max: Optional[int] = Query(None, alias="yearMax"),
+    exp_method: Optional[List[str]] = Query(None, alias="expMethod"),
+    polymerization_state: Optional[List[str]] = Query(None, alias="polyState"),
+    source_organism_ids: Optional[List[str]] = Query(None, alias="sourceTaxa"),
+    host_organism_ids: Optional[List[str]] = Query(None, alias="hostTaxa"),
+    has_ligand_ids: Optional[List[str]] = Query(None, alias="ligands"),
+    has_polymer_family: Optional[List[str]] = Query(None, alias="family"),
+    has_uniprot: Optional[List[str]] = Query(None, alias="uniprot"),
+    # Variant filters
+    has_variants: Optional[bool] = Query(None, alias="hasVariants"),
+    variant_family: Optional[str] = Query(None, alias="variantFamily"),
+    variant_type: Optional[str] = Query(None, alias="variantType"),
+    variant_position_min: Optional[int] = Query(None, alias="variantPosMin"),
+    variant_position_max: Optional[int] = Query(None, alias="variantPosMax"),
+    variant_wild_type: Optional[str] = Query(None, alias="variantWildType"),
+    variant_observed: Optional[str] = Query(None, alias="variantObserved"),
+    variant_source: Optional[str] = Query(None, alias="variantSource"),
+    variant_phenotype: Optional[str] = Query(None, alias="variantPhenotype"),
+):
     """List structures with cumulative filters and keyset pagination."""
 
     # Parse comma-separated list params
-    parsed_families   = parse_list_param(has_polymer_family)
+    parsed_families = parse_list_param(has_polymer_family)
     parsed_poly_state = parse_list_param(polymerization_state)
     parsed_exp_method = parse_list_param(exp_method)
-    parsed_ligands    = parse_list_param(has_ligand_ids)
-    parsed_uniprot    = parse_list_param(has_uniprot)
-    parsed_ids        = parse_list_param(rcsb_ids)
+    parsed_ligands = parse_list_param(has_ligand_ids)
+    parsed_uniprot = parse_list_param(has_uniprot)
+    parsed_ids = parse_list_param(rcsb_ids)
 
     parsed_source_taxa = parse_int_list(source_organism_ids)
-    parsed_host_taxa   = parse_int_list(host_organism_ids)
+    parsed_host_taxa = parse_int_list(host_organism_ids)
 
     filters = StructureFilters(
         cursor=cursor,
@@ -99,24 +106,25 @@ mutation_phenotype   : Optional[str] = Query(None, alias="mutationPhenotype"),
         polymerization_state=[PolymerizationState(s) for s in parsed_poly_state]
         if parsed_poly_state
         else None,
-        source_organism_ids   = parsed_source_taxa, # Use parsed versions
-        host_organism_ids      = parsed_host_taxa,   # Use parsed versions
-        has_ligand_ids        = parsed_ligands,
-        has_polymer_family    = parsed_families,
-        has_uniprot           = parsed_uniprot,
-        has_mutations         = has_mutations,
-        mutation_family       = mutation_family,
-        mutation_position_min = mutation_position_min,
-        mutation_position_max = mutation_position_max,
-        mutation_from         = mutation_from,
-        mutation_to           = mutation_to,
-        mutation_phenotype    = mutation_phenotype,
+        source_organism_ids=parsed_source_taxa,
+        host_organism_ids=parsed_host_taxa,
+        has_ligand_ids=parsed_ligands,
+        has_polymer_family=parsed_families,
+        has_uniprot=parsed_uniprot,
+        has_variants=has_variants,
+        variant_family=variant_family,
+        variant_type=VariantTypeFilter(variant_type) if variant_type else None,
+        variant_position_min=variant_position_min,
+        variant_position_max=variant_position_max,
+        variant_wild_type=variant_wild_type,
+        variant_observed=variant_observed,
+        variant_source=variant_source,
+        variant_phenotype=variant_phenotype,
     )
 
     return db_reader.list_structures(filters)
 
 
-# Update the facets endpoint to have a response model
 @router_structures.get("/facets", response_model=FilterFacets)
 def get_facets():
     """Get available filter options for UI dropdowns."""
@@ -137,14 +145,7 @@ def get_families():
     return db_reader.get_tubulin_families()
 
 
-# Add this to api/routers/router_structures.py
-
-import json
-from pathlib import Path
-from api.config import PROJECT_ROOT
-from lib.etl.assets import TubulinStructureAssets
-
-@router_structures.get("/{rcsb_id}", response_model=TubulinStructure) # <--- Added response_model
+@router_structures.get("/{rcsb_id}")
 def get_structure(rcsb_id: str):
     """Get full structure details."""
     result = db_reader.get_structure(rcsb_id)
@@ -152,15 +153,17 @@ def get_structure(rcsb_id: str):
         raise HTTPException(404, f"Structure {rcsb_id} not found")
     return result
 
-@router_structures.get("/{rcsb_id}/profile", response_model=TubulinStructure) # <--- Added response_model
+
+@router_structures.get("/{rcsb_id}/profile", response_model=TubulinStructure)
 async def get_structure_profile(rcsb_id: str):
     """Fetches the pre-calculated TubulinStructure JSON profile from disk."""
     assets = TubulinStructureAssets(rcsb_id.upper())
     profile_path = Path(assets.paths.profile)
-    
+
     if not profile_path.exists():
-        raise HTTPException(status_code=404, detail=f"Profile for {rcsb_id} not collected yet.")
-    
-    with open(profile_path, 'r') as f:
-        # Pydantic will validate the JSON against TubulinStructure here
+        raise HTTPException(
+            status_code=404, detail=f"Profile for {rcsb_id} not collected yet."
+        )
+
+    with open(profile_path, "r") as f:
         return json.load(f)

@@ -4,6 +4,7 @@ Database reader with typed query methods.
 Uses the query builders for filter logic.
 """
 
+import json
 import sys
 from typing import Optional, List, Dict, Any
 from neo4j import ManagedTransaction, Transaction
@@ -19,6 +20,16 @@ from neo4j_tubxz.models import (
     StructureSummary,
     PolypeptideEntitySummary,
     LigandSummary,
+    FilterFacets,
+    FacetValue,
+    LigandFacet,
+    RangeValue,
+    VariantsByFamily,
+    CommonVariant,
+    VariantPositionRange,
+    LigandNeighborhood,
+    BindingSiteResidue,
+    PolymerNeighborhoodsResponse,
 )
 from neo4j_tubxz.structure_query_builder import (
     StructureQueryBuilder,
@@ -228,6 +239,72 @@ class Neo4jReader:
             return session.execute_read(run_query)
 
     # -------------------------------------------------------------------------
+    # Ligand Neighborhoods
+    # -------------------------------------------------------------------------
+
+    def get_ligand_neighborhoods_for_polymer(
+        self, rcsb_id: str, auth_asym_id: str
+    ) -> PolymerNeighborhoodsResponse:
+        """
+        Get all ligands in the neighborhood of a polymer chain with their nearby residues.
+        """
+        query = """
+        MATCH (ni:NonpolymerInstance)-[r:NEAR_POLYMER]->(pi:PolypeptideInstance)
+        WHERE pi.parent_rcsb_id = $rcsb_id AND pi.auth_asym_id = $auth_asym_id
+        MATCH (ni)-[:INSTANCE_OF]->(ne:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c:Chemical)
+        RETURN 
+            c.chemical_id AS ligand_id,
+            c.chemical_name AS ligand_name,
+            ni.auth_asym_id AS ligand_auth_asym_id,
+            r.residues_json AS residues_json,
+            r.residue_count AS residue_count,
+            c.drugbank_id AS drugbank_id
+        ORDER BY c.chemical_id
+        """
+
+        with self.adapter.driver.session() as session:
+
+            def run_query(tx: Transaction):
+                records = list(
+                    tx.run(
+                        query,
+                        {"rcsb_id": rcsb_id.upper(), "auth_asym_id": auth_asym_id},
+                    )
+                )
+
+                neighborhoods = []
+                total_residues = 0
+
+                for r in records:
+                    residues_json = r["residues_json"]
+                    residues = []
+                    if residues_json:
+                        raw_residues = json.loads(residues_json)
+                        residues = [BindingSiteResidue(**res) for res in raw_residues]
+
+                    neighborhoods.append(
+                        LigandNeighborhood(
+                            ligand_id=r["ligand_id"],
+                            ligand_name=r["ligand_name"],
+                            ligand_auth_asym_id=r["ligand_auth_asym_id"],
+                            residues=residues,
+                            residue_count=r["residue_count"] or 0,
+                            drugbank_id=r["drugbank_id"],
+                        )
+                    )
+                    total_residues += r["residue_count"] or 0
+
+                return PolymerNeighborhoodsResponse(
+                    rcsb_id=rcsb_id.upper(),
+                    auth_asym_id=auth_asym_id,
+                    neighborhoods=neighborhoods,
+                    total_ligands=len(neighborhoods),
+                    total_residues=total_residues,
+                )
+
+            return session.execute_read(run_query)
+
+    # -------------------------------------------------------------------------
     # Facet/Aggregation Queries (for filter UI dropdowns)
     # -------------------------------------------------------------------------
 
@@ -395,101 +472,132 @@ class Neo4jReader:
 
             return session.execute_read(run_query)
 
-    def get_filter_facets(self) -> Dict[str, Any]:
+    def get_filter_facets(self) -> FilterFacets:
         """
         Get available filter options for the UI.
         Returns counts for each facet value.
         """
-        query = """
-        MATCH (s:Structure)
-        WITH count(s) AS total_structures,
-            min(s.citation_year) AS min_year,
-            max(s.citation_year) AS max_year,
-            min(s.resolution) AS min_res,
-            max(s.resolution) AS max_res
-
-        // Experimental methods
-        CALL {
-            MATCH (s:Structure)
-            WHERE s.expMethod IS NOT NULL
-            RETURN s.expMethod AS value, count(*) AS count
-        }
-        WITH total_structures, min_year, max_year, min_res, max_res,
-            collect({value: value, count: count}) AS exp_methods
-
-        // Tubulin families
-        CALL {
-            MATCH (e:PolypeptideEntity)
-            WHERE e.family IS NOT NULL
-            RETURN e.family AS value, count(DISTINCT e.parent_rcsb_id) AS count
-        }
-        WITH total_structures, min_year, max_year, min_res, max_res, exp_methods,
-            collect({value: value, count: count}) AS tubulin_families
-
-        // Top ligands by structure count
-        CALL {
-            MATCH (c:Chemical)<-[:DEFINED_BY_CHEMICAL]-(ne:NonpolymerEntity)<-[:DEFINES_ENTITY]-(s:Structure)
-            WITH c, count(DISTINCT s) AS cnt
-            ORDER BY cnt DESC
-            LIMIT 50
-            RETURN c.chemical_id AS chemical_id, c.chemical_name AS chemical_name, cnt AS count
-        }
-        WITH total_structures, min_year, max_year, min_res, max_res,
-            exp_methods, tubulin_families,
-            collect({chemical_id: chemical_id, chemical_name: chemical_name, count: count}) AS top_ligands
-
-        // Variant stats by family
-        CALL {
-            MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
-            WITH e.family AS family, count(DISTINCT v) AS variant_count, count(DISTINCT e.parent_rcsb_id) AS structure_count
-            WHERE family IS NOT NULL
-            RETURN family, variant_count, structure_count
-        }
-        WITH total_structures, min_year, max_year, min_res, max_res,
-            exp_methods, tubulin_families, top_ligands,
-            collect({family: family, variant_count: variant_count, structure_count: structure_count}) AS variants_by_family
-
-        // Common variants (top 30 substitutions)
-        CALL {
-            MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
-            WITH e.family AS family, v.type AS variant_type, v.master_index AS position, v.wild_type AS wild_type, v.observed AS observed, count(*) AS cnt
-            ORDER BY cnt DESC
-            LIMIT 30
-            RETURN family, variant_type, position, wild_type, observed, cnt
-        }
-        WITH total_structures, min_year, max_year, min_res, max_res,
-            exp_methods, tubulin_families, top_ligands, variants_by_family,
-            collect({family: family, variant_type: variant_type, position: position, wild_type: wild_type, observed: observed, count: cnt}) AS common_variants
-
-        // Variant position ranges by family
-        CALL {
-            MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
-            WHERE e.family IS NOT NULL AND v.master_index IS NOT NULL
-            WITH e.family AS family, min(v.master_index) AS min_pos, max(v.master_index) AS max_pos
-            RETURN family, min_pos, max_pos
-        }
-        WITH total_structures, min_year, max_year, min_res, max_res,
-            exp_methods, tubulin_families, top_ligands, variants_by_family, common_variants,
-            collect({family: family, min_position: min_pos, max_position: max_pos}) AS variant_position_ranges
-
-        RETURN {
-            total_structures: total_structures,
-            exp_methods: exp_methods,
-            tubulin_families: tubulin_families,
-            year_range: {min: min_year, max: max_year},
-            resolution_range: {min: min_res, max: max_res},
-            top_ligands: top_ligands,
-            variants_by_family: variants_by_family,
-            common_variants: common_variants,
-            variant_position_ranges: variant_position_ranges
-        } AS facets
-        """
-
         with self.adapter.driver.session() as session:
 
             def run_query(tx: Transaction):
-                result = tx.run(query).single()
-                return result["facets"] if result else {}
+                # Base counts
+                base_result = tx.run("""
+                    MATCH (s:Structure)
+                    RETURN count(s) AS total_structures,
+                           min(s.citation_year) AS min_year,
+                           max(s.citation_year) AS max_year,
+                           min(s.resolution) AS min_res,
+                           max(s.resolution) AS max_res
+                """).single()
+
+                total_structures = base_result["total_structures"]
+                year_range = RangeValue(
+                    min=base_result["min_year"], max=base_result["max_year"]
+                )
+                resolution_range = RangeValue(
+                    min=base_result["min_res"], max=base_result["max_res"]
+                )
+
+                # Experimental methods
+                exp_methods = [
+                    FacetValue(value=r["value"], count=r["count"])
+                    for r in tx.run("""
+                        MATCH (s:Structure)
+                        WHERE s.expMethod IS NOT NULL
+                        RETURN s.expMethod AS value, count(*) AS count
+                        ORDER BY count DESC
+                    """)
+                ]
+
+                # Tubulin families
+                tubulin_families = [
+                    FacetValue(value=r["value"], count=r["count"])
+                    for r in tx.run("""
+                        MATCH (e:PolypeptideEntity)
+                        WHERE e.family IS NOT NULL
+                        RETURN e.family AS value, count(DISTINCT e.parent_rcsb_id) AS count
+                        ORDER BY count DESC
+                    """)
+                ]
+
+                # Top ligands
+                top_ligands = [
+                    LigandFacet(
+                        chemical_id=r["chemical_id"],
+                        chemical_name=r["chemical_name"],
+                        count=r["count"],
+                    )
+                    for r in tx.run("""
+                        MATCH (c:Chemical)<-[:DEFINED_BY_CHEMICAL]-(ne:NonpolymerEntity)<-[:DEFINES_ENTITY]-(s:Structure)
+                        WITH c, count(DISTINCT s) AS cnt
+                        ORDER BY cnt DESC
+                        LIMIT 50
+                        RETURN c.chemical_id AS chemical_id, c.chemical_name AS chemical_name, cnt AS count
+                    """)
+                ]
+
+                # Variant stats by family
+                variants_by_family = [
+                    VariantsByFamily(
+                        family=r["family"],
+                        variant_count=r["variant_count"],
+                        structure_count=r["structure_count"],
+                    )
+                    for r in tx.run("""
+                        MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+                        WHERE e.family IS NOT NULL
+                        WITH e.family AS family, count(DISTINCT v) AS variant_count, count(DISTINCT e.parent_rcsb_id) AS structure_count
+                        RETURN family, variant_count, structure_count
+                        ORDER BY variant_count DESC
+                    """)
+                ]
+
+                # Common variants (top 30)
+                common_variants = [
+                    CommonVariant(
+                        family=r["family"],
+                        variant_type=r["variant_type"],
+                        position=r["position"],
+                        wild_type=r["wild_type"],
+                        observed=r["observed"],
+                        count=r["cnt"],
+                    )
+                    for r in tx.run("""
+                        MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+                        WITH e.family AS family, v.type AS variant_type, v.master_index AS position, 
+                             v.wild_type AS wild_type, v.observed AS observed, count(*) AS cnt
+                        ORDER BY cnt DESC
+                        LIMIT 30
+                        RETURN family, variant_type, position, wild_type, observed, cnt
+                    """)
+                ]
+
+                # Variant position ranges by family
+                variant_position_ranges = [
+                    VariantPositionRange(
+                        family=r["family"],
+                        min_position=r["min_pos"],
+                        max_position=r["max_pos"],
+                    )
+                    for r in tx.run("""
+                        MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+                        WHERE e.family IS NOT NULL AND v.master_index IS NOT NULL
+                        WITH e.family AS family, min(v.master_index) AS min_pos, max(v.master_index) AS max_pos
+                        RETURN family, min_pos, max_pos
+                    """)
+                ]
+
+                return FilterFacets(
+                    total_structures=total_structures,
+                    exp_methods=exp_methods,
+                    tubulin_families=tubulin_families,
+                    year_range=year_range,
+                    resolution_range=resolution_range,
+                    top_ligands=top_ligands,
+                    variants_by_family=variants_by_family,
+                    common_variants=common_variants,
+                    variant_position_ranges=variant_position_ranges,
+                )
 
             return session.execute_read(run_query)
 

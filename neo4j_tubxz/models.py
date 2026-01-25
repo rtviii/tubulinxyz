@@ -62,6 +62,7 @@ class StructureFilters(BaseModel):
     has_polymer_family: Optional[List[str]] = None
     has_uniprot: Optional[List[str]] = None
 
+    # Variant filters (renamed from mutation)
     has_variants: Optional[bool] = Field(default=None, description="Has any variants")
     variant_family: Optional[str] = Field(
         default=None, description="Family to scope variant filters"
@@ -213,6 +214,11 @@ class LigandListResponse(PaginatedResponse[LigandSummary]):
     pass
 
 
+# =============================================================================
+# Facets Response Models
+# =============================================================================
+
+
 class FacetValue(BaseModel):
     """Single facet option with count."""
 
@@ -247,7 +253,7 @@ class CommonVariant(BaseModel):
     """Common variant for quick filters."""
 
     family: Optional[str] = None
-    position: int
+    position: Optional[int] = None
     wild_type: Optional[str] = None
     observed: Optional[str] = None
     variant_type: str
@@ -266,11 +272,46 @@ class FilterFacets(BaseModel):
     """Available filter options for the UI."""
 
     total_structures: int
-    exp_methods: List[FacetValue]
-    tubulin_families: List[FacetValue]
+    exp_methods: List[FacetValue] = []
+    tubulin_families: List[FacetValue] = []
     year_range: RangeValue
     resolution_range: RangeValue
-    top_ligands: List[LigandFacet]
-    variants_by_family: List[VariantsByFamily]
-    common_variants: List[CommonVariant]
-    variant_position_ranges: List[VariantPositionRange]
+    top_ligands: List[LigandFacet] = []
+    variants_by_family: List[VariantsByFamily] = []
+    common_variants: List[CommonVariant] = []
+    variant_position_ranges: List[VariantPositionRange] = []
+
+
+# =============================================================================
+# Ligand Neighborhood Response Models
+# =============================================================================
+
+
+class BindingSiteResidue(BaseModel):
+    """A residue in a ligand binding site."""
+
+    auth_asym_id: str
+    observed_index: int
+    comp_id: str
+    master_index: Optional[int] = None
+
+
+class LigandNeighborhood(BaseModel):
+    """Ligand neighborhood for a specific polymer chain."""
+
+    ligand_id: str
+    ligand_name: Optional[str] = None
+    ligand_auth_asym_id: str
+    residues: List[BindingSiteResidue] = []
+    residue_count: int
+    drugbank_id: Optional[str] = None
+
+
+class PolymerNeighborhoodsResponse(BaseModel):
+    """All ligand neighborhoods for a polymer chain."""
+
+    rcsb_id: str
+    auth_asym_id: str
+    neighborhoods: List[LigandNeighborhood]
+    total_ligands: int
+    total_residues: int
