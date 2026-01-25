@@ -315,3 +315,4 @@ class PolymerNeighborhoodsResponse(BaseModel):
     neighborhoods: List[LigandNeighborhood]
     total_ligands: int
     total_residues: int
+

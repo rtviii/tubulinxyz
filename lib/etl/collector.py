@@ -479,51 +479,62 @@ class TubulinETLCollector:
 
         return entity_map, polypeptides, polynucleotides
 
+    # lib/etl/collector.py
+
     def _process_nonpolymers(self, nonpoly_data: dict):
         entity_map = {}
         instances = []
 
-        raw_list = nonpoly_data.get("nonpolymer_entities") or []
-        chem_info_map = self._fetch_chem_info(
-            list(set(r["pdbx_entity_nonpoly"]["comp_id"] for r in raw_list))
-        )
-        all_auth_ids = [
-            aid
-            for raw in raw_list
-            for aid in raw.get("rcsb_nonpolymer_entity_container_identifiers", {}).get(
-                "auth_asym_ids", []
-            )
-        ]
-        assembly_lookup = self._get_assembly_mappings(all_auth_ids)
+        # 1. Map the Entities (The "Blueprints")
+        raw_entities = nonpoly_data.get("nonpolymer_entities") or []
+        
+        # Batch fetch chemical info for all unique comp_ids
+        comp_ids = list(set(r["pdbx_entity_nonpoly"]["comp_id"] for r in raw_entities))
+        chem_info_map = self._fetch_chem_info(comp_ids)
 
-        for raw in raw_list:
-            ids = raw["rcsb_nonpolymer_entity_container_identifiers"]
-            comp_id = raw["pdbx_entity_nonpoly"]["comp_id"]
+        for raw_ent in raw_entities:
+            ids = raw_ent["pdbx_entity_nonpoly"]
+            ent_id = ids["entity_id"]
+            comp_id = ids["comp_id"]
             chem = chem_info_map.get(comp_id, {})
 
             ent = NonpolymerEntity(
-                entity_id=ids["entity_id"],
+                entity_id=ent_id,
                 chemical_id=comp_id,
-                chemical_name=raw["pdbx_entity_nonpoly"]["name"],
-                pdbx_description=raw["rcsb_nonpolymer_entity"]["pdbx_description"],
+                chemical_name=ids["name"],
+                pdbx_description=raw_ent["rcsb_nonpolymer_entity"]["pdbx_description"],
+                formula_weight=raw_ent["rcsb_nonpolymer_entity"].get("formula_weight"),
                 SMILES=chem.get("SMILES"),
                 InChIKey=chem.get("InChIKey"),
-                nonpolymer_comp=raw.get("nonpolymer_comp"),
+                nonpolymer_comp=raw_ent.get("nonpolymer_comp"),
             )
-            entity_map[ids["entity_id"]] = ent
+            entity_map[ent_id] = ent
 
-            for auth_id, asym_id in zip(
-                ids.get("auth_asym_ids", []), ids.get("asym_ids", [])
-            ):
-                instances.append(
-                    Nonpolymer(
-                        parent_rcsb_id=self.rcsb_id,
-                        auth_asym_id=auth_id,
-                        asym_id=asym_id,
-                        entity_id=ids["entity_id"],
-                        assembly_id=assembly_lookup.get(auth_id, 0),
-                    )
+        # 2. Map the Instances (The physical molecules)
+        raw_instances = nonpoly_data.get("nonpolymer_entity_instances") or []
+        
+        # Pre-calculate assembly mappings for all auth_asym_ids found
+        all_auth_ids = [
+            inst["rcsb_nonpolymer_entity_instance_container_identifiers"]["auth_asym_id"]
+            for inst in raw_instances
+        ]
+        assembly_lookup = self._get_assembly_mappings(all_auth_ids)
+
+        for raw_inst in raw_instances:
+            # According to the schema in your image: RcsbNonpolymerEntityInstanceContainerIdentifiers
+            ident = raw_inst["rcsb_nonpolymer_entity_instance_container_identifiers"]
+            
+            auth_id = ident["auth_asym_id"]
+            instances.append(
+                Nonpolymer(
+                    parent_rcsb_id=self.rcsb_id,
+                    auth_asym_id=auth_id,
+                    asym_id=ident["asym_id"],
+                    auth_seq_id=ident["auth_seq_id"], # Successfully grabbed
+                    entity_id=ident["entity_id"],
+                    assembly_id=assembly_lookup.get(auth_id, 0),
                 )
+            )
 
         return entity_map, instances
 

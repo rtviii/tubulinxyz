@@ -37,21 +37,31 @@ def create_binding_site_relationships(
         # Serialize residues as JSON for storage
         residues_json = json.dumps([r.to_dict() for r in residues])
 
+        # node_binding_site.py -> create_binding_site_relationships
         tx.run("""
+            // 1. Target the specific ligand instance using chain + residue number + type
             MATCH (li:Instance:NonpolymerInstance {
                 parent_rcsb_id: $rcsb_id,
-                auth_asym_id: $lig_auth_id
-            })
+                auth_asym_id:   $lig_auth_id,
+                auth_seq_id:    $lig_auth_seq_id
+            })-[:INSTANCE_OF]->(e:NonpolymerEntity)
+            WHERE e.chemical_id = $lig_comp_id
+
+            // 2. Target the protein chain
             MATCH (pi:Instance:PolypeptideInstance {
                 parent_rcsb_id: $rcsb_id,
-                auth_asym_id: $poly_auth_id
+                auth_asym_id:   $poly_auth_id
             })
+
+            // 3. Create/Update the specific relationship
             MERGE (li)-[r:NEAR_POLYMER]->(pi)
             SET r.residues_json = $residues_json,
                 r.residue_count = $residue_count
         """, {
             "rcsb_id": parent_rcsb_id,
             "lig_auth_id": binding_site.ligand_auth_asym_id,
+            "lig_auth_seq_id": binding_site.ligand_auth_seq_id,
+            "lig_comp_id": binding_site.ligand_comp_id,
             "poly_auth_id": chain_id,
             "residues_json": residues_json,
             "residue_count": len(residues),

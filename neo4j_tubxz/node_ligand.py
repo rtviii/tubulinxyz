@@ -4,8 +4,9 @@ from neo4j import ManagedTransaction, Transaction
 from neo4j.graph import Node, Relationship
 from lib.types import NonpolymerEntity, Nonpolymer
 
+
 def node__chemical(
-    entity: NonpolymerEntity
+    entity: NonpolymerEntity,
 ) -> Callable[[Transaction | ManagedTransaction], Node]:
     """
     Merges the Global Chemical Node (shared across ALL PDB structures).
@@ -21,15 +22,18 @@ def node__chemical(
         # Flatten drugbank info if available
         "drugbank_id": (
             entity.nonpolymer_comp.drugbank.drugbank_container_identifiers.drugbank_id
-            if entity.nonpolymer_comp and entity.nonpolymer_comp.drugbank and entity.nonpolymer_comp.drugbank.drugbank_container_identifiers
+            if entity.nonpolymer_comp
+            and entity.nonpolymer_comp.drugbank
+            and entity.nonpolymer_comp.drugbank.drugbank_container_identifiers
             else None
-        )
+        ),
     }
     # Clean None values
     props = {k: v for k, v in props.items() if v is not None}
 
     def _(tx: Transaction | ManagedTransaction):
-        return tx.run("""
+        return tx.run(
+            """
             MERGE (c:Chemical {chemical_id: $chemical_id})
             ON CREATE SET c += $props
             ON MATCH SET 
@@ -37,13 +41,15 @@ def node__chemical(
                 c.SMILES = COALESCE(c.SMILES, $props.SMILES),
                 c.InChIKey = COALESCE(c.InChIKey, $props.InChIKey)
             RETURN c
-        """, {"chemical_id": entity.chemical_id, "props": props}).single(strict=True)['c']
+        """,
+            {"chemical_id": entity.chemical_id, "props": props},
+        ).single(strict=True)["c"]
+
     return _
 
 
 def node__nonpolymer_entity(
-    entity: NonpolymerEntity, 
-    parent_rcsb_id: str
+    entity: NonpolymerEntity, parent_rcsb_id: str
 ) -> Callable[[Transaction | ManagedTransaction], Node]:
     """
     Merges the Structure-Specific Entity Definition.
@@ -54,11 +60,12 @@ def node__nonpolymer_entity(
         "parent_rcsb_id": parent_rcsb_id,
         "pdbx_description": entity.pdbx_description,
         "formula_weight": entity.formula_weight,
-        "chemical_id": entity.chemical_id 
+        "chemical_id": entity.chemical_id,
     }
 
     def _(tx: Transaction | ManagedTransaction):
-        return tx.run("""
+        return tx.run(
+            """
             MERGE (e:Entity:NonpolymerEntity {parent_rcsb_id: $parent_rcsb_id, entity_id: $entity_id})
             ON CREATE SET e += $props
             ON MATCH SET e += $props
@@ -67,37 +74,42 @@ def node__nonpolymer_entity(
             MATCH (c:Chemical {chemical_id: $chemical_id})
             MERGE (e)-[:DEFINED_BY_CHEMICAL]->(c)
             RETURN e
-        """, {
-            "parent_rcsb_id": parent_rcsb_id, 
-            "entity_id": entity.entity_id, 
-            "chemical_id": entity.chemical_id,
-            "props": props
-        }).single(strict=True)['e']
+        """,
+            {
+                "parent_rcsb_id": parent_rcsb_id,
+                "entity_id": entity.entity_id,
+                "chemical_id": entity.chemical_id,
+                "props": props,
+            },
+        ).single(strict=True)["e"]
+
     return _
 
 
-def node__nonpolymer_instance(
-    instance: Nonpolymer
-) -> Callable[[Transaction | ManagedTransaction], Node]:
-    """
-    Merges the physical instance using internal asym_id as the unique key.
-    """
+# node_ligand.py -> node__nonpolymer_instance
+def node__nonpolymer_instance(instance: Nonpolymer):
     def _(tx: Transaction | ManagedTransaction):
-        return tx.run("""
+        return tx.run(
+            """
             MERGE (i:Instance:NonpolymerInstance {parent_rcsb_id: $rcsb_id, asym_id: $asym_id})
             ON CREATE SET 
                 i.auth_asym_id = $auth_id,
-                i.assembly_id = $assembly_id
+                i.auth_seq_id  = $seq_id,
+                i.assembly_id  = $assembly_id
             
             WITH i
             MATCH (e:Entity:NonpolymerEntity {parent_rcsb_id: $rcsb_id, entity_id: $entity_id})
             MERGE (i)-[:INSTANCE_OF]->(e)
             RETURN i
-        """, {
-            "rcsb_id": instance.parent_rcsb_id,
-            "asym_id": instance.asym_id,       # TUBE-FIX: Unique Key
-            "auth_id": instance.auth_asym_id,  # TUBE-FIX: Property
-            "assembly_id": instance.assembly_id,
-            "entity_id": instance.entity_id
-        }).single(strict=True)['i']
+        """,
+            {
+                "rcsb_id": instance.parent_rcsb_id,
+                "asym_id": instance.asym_id,
+                "auth_id": instance.auth_asym_id,
+                "seq_id": instance.auth_seq_id,
+                "assembly_id": instance.assembly_id,
+                "entity_id": instance.entity_id,
+            },
+        ).single(strict=True)["i"]
+
     return _

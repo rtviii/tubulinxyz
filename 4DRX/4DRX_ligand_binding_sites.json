@@ -1,0 +1,844 @@
+{
+  "rcsb_id": "4DRX",
+  "generated_at": "2026-01-25T13:39:49.177224",
+  "binding_sites": [
+    {
+      "ligand_comp_id": "GTP",
+      "ligand_auth_asym_id": "A",
+      "ligand_auth_seq_id": 600,
+      "residues": [
+        {
+          "auth_asym_id": "A",
+          "observed_index": 9,
+          "comp_id": "VAL",
+          "master_index": 9
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 10,
+          "comp_id": "GLY",
+          "master_index": 10
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 11,
+          "comp_id": "GLN",
+          "master_index": 11
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 12,
+          "comp_id": "ALA",
+          "master_index": 12
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 15,
+          "comp_id": "GLN",
+          "master_index": 15
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 16,
+          "comp_id": "ILE",
+          "master_index": 16
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 69,
+          "comp_id": "ASP",
+          "master_index": 69
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 98,
+          "comp_id": "ASP",
+          "master_index": 98
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 99,
+          "comp_id": "ALA",
+          "master_index": 99
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 100,
+          "comp_id": "ALA",
+          "master_index": 100
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 101,
+          "comp_id": "ASN",
+          "master_index": 101
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 102,
+          "comp_id": "ASN",
+          "master_index": 102
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 140,
+          "comp_id": "SER",
+          "master_index": 140
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 141,
+          "comp_id": "PHE",
+          "master_index": 141
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 142,
+          "comp_id": "GLY",
+          "master_index": 142
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 143,
+          "comp_id": "GLY",
+          "master_index": 143
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 144,
+          "comp_id": "GLY",
+          "master_index": 144
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 145,
+          "comp_id": "THR",
+          "master_index": 145
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 146,
+          "comp_id": "GLY",
+          "master_index": 146
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 171,
+          "comp_id": "ILE",
+          "master_index": 171
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 173,
+          "comp_id": "PRO",
+          "master_index": 173
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 174,
+          "comp_id": "ALA",
+          "master_index": 174
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 177,
+          "comp_id": "VAL",
+          "master_index": 177
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 178,
+          "comp_id": "SER",
+          "master_index": 178
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 179,
+          "comp_id": "THR",
+          "master_index": 179
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 183,
+          "comp_id": "GLU",
+          "master_index": 183
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 206,
+          "comp_id": "ASN",
+          "master_index": 206
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 224,
+          "comp_id": "TYR",
+          "master_index": 224
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 227,
+          "comp_id": "LEU",
+          "master_index": 227
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 228,
+          "comp_id": "ASN",
+          "master_index": 228
+        },
+        {
+          "auth_asym_id": "A",
+          "observed_index": 231,
+          "comp_id": "ILE",
+          "master_index": 231
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 247,
+          "comp_id": "GLN",
+          "master_index": 245
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 254,
+          "comp_id": "LYS",
+          "master_index": 252
+        }
+      ]
+    },
+    {
+      "ligand_comp_id": "GTP",
+      "ligand_auth_asym_id": "B",
+      "ligand_auth_seq_id": 600,
+      "residues": [
+        {
+          "auth_asym_id": "B",
+          "observed_index": 9,
+          "comp_id": "ALA",
+          "master_index": 9
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 10,
+          "comp_id": "GLY",
+          "master_index": 10
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 11,
+          "comp_id": "GLN",
+          "master_index": 11
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 12,
+          "comp_id": "CYS",
+          "master_index": 12
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 13,
+          "comp_id": "GLY",
+          "master_index": 13
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 15,
+          "comp_id": "GLN",
+          "master_index": 15
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 16,
+          "comp_id": "ILE",
+          "master_index": 16
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 69,
+          "comp_id": "ASP",
+          "master_index": 67
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 71,
+          "comp_id": "GLU",
+          "master_index": 69
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 98,
+          "comp_id": "GLY",
+          "master_index": 96
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 99,
+          "comp_id": "ALA",
+          "master_index": 97
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 100,
+          "comp_id": "GLY",
+          "master_index": 98
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 101,
+          "comp_id": "ASN",
+          "master_index": 99
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 102,
+          "comp_id": "ASN",
+          "master_index": 100
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 140,
+          "comp_id": "SER",
+          "master_index": 138
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 141,
+          "comp_id": "LEU",
+          "master_index": 139
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 142,
+          "comp_id": "GLY",
+          "master_index": 140
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 143,
+          "comp_id": "GLY",
+          "master_index": 141
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 144,
+          "comp_id": "GLY",
+          "master_index": 142
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 145,
+          "comp_id": "THR",
+          "master_index": 143
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 146,
+          "comp_id": "GLY",
+          "master_index": 144
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 147,
+          "comp_id": "SER",
+          "master_index": 145
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 171,
+          "comp_id": "VAL",
+          "master_index": 169
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 173,
+          "comp_id": "PRO",
+          "master_index": 171
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 174,
+          "comp_id": "SER",
+          "master_index": 172
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 177,
+          "comp_id": "VAL",
+          "master_index": 175
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 178,
+          "comp_id": "SER",
+          "master_index": 176
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 183,
+          "comp_id": "GLU",
+          "master_index": 181
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 206,
+          "comp_id": "ASN",
+          "master_index": 204
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 209,
+          "comp_id": "LEU",
+          "master_index": 207
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 224,
+          "comp_id": "TYR",
+          "master_index": 222
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 227,
+          "comp_id": "LEU",
+          "master_index": 225
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 228,
+          "comp_id": "ASN",
+          "master_index": 226
+        },
+        {
+          "auth_asym_id": "B",
+          "observed_index": 231,
+          "comp_id": "VAL",
+          "master_index": 229
+        }
+      ]
+    },
+    {
+      "ligand_comp_id": "GTP",
+      "ligand_auth_asym_id": "C",
+      "ligand_auth_seq_id": 600,
+      "residues": [
+        {
+          "auth_asym_id": "C",
+          "observed_index": 9,
+          "comp_id": "VAL",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 10,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 11,
+          "comp_id": "GLN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 12,
+          "comp_id": "ALA",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 15,
+          "comp_id": "GLN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 16,
+          "comp_id": "ILE",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 69,
+          "comp_id": "ASP",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 70,
+          "comp_id": "LEU",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 98,
+          "comp_id": "ASP",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 99,
+          "comp_id": "ALA",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 100,
+          "comp_id": "ALA",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 101,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 102,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 140,
+          "comp_id": "SER",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 141,
+          "comp_id": "PHE",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 142,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 143,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 144,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 145,
+          "comp_id": "THR",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 146,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 171,
+          "comp_id": "ILE",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 173,
+          "comp_id": "PRO",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 174,
+          "comp_id": "ALA",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 177,
+          "comp_id": "VAL",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 178,
+          "comp_id": "SER",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 179,
+          "comp_id": "THR",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 183,
+          "comp_id": "GLU",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 206,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 224,
+          "comp_id": "TYR",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 227,
+          "comp_id": "LEU",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 228,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "C",
+          "observed_index": 231,
+          "comp_id": "ILE",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 247,
+          "comp_id": "GLN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 254,
+          "comp_id": "LYS",
+          "master_index": null
+        }
+      ]
+    },
+    {
+      "ligand_comp_id": "GTP",
+      "ligand_auth_asym_id": "D",
+      "ligand_auth_seq_id": 600,
+      "residues": [
+        {
+          "auth_asym_id": "D",
+          "observed_index": 9,
+          "comp_id": "ALA",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 10,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 11,
+          "comp_id": "GLN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 12,
+          "comp_id": "CYS",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 13,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 15,
+          "comp_id": "GLN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 16,
+          "comp_id": "ILE",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 69,
+          "comp_id": "ASP",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 98,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 99,
+          "comp_id": "ALA",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 100,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 101,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 102,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 140,
+          "comp_id": "SER",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 141,
+          "comp_id": "LEU",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 142,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 143,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 144,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 145,
+          "comp_id": "THR",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 146,
+          "comp_id": "GLY",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 147,
+          "comp_id": "SER",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 171,
+          "comp_id": "VAL",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 172,
+          "comp_id": "MET",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 173,
+          "comp_id": "PRO",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 174,
+          "comp_id": "SER",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 177,
+          "comp_id": "VAL",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 178,
+          "comp_id": "SER",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 183,
+          "comp_id": "GLU",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 206,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 209,
+          "comp_id": "LEU",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 224,
+          "comp_id": "TYR",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 227,
+          "comp_id": "LEU",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 228,
+          "comp_id": "ASN",
+          "master_index": null
+        },
+        {
+          "auth_asym_id": "D",
+          "observed_index": 231,
+          "comp_id": "VAL",
+          "master_index": null
+        }
+      ]
+    }
+  ]
+}

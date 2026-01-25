@@ -1,0 +1,123 @@
+{
+  "rcsb_id": "4DRX",
+  "generated_at": "2026-01-25T13:39:49.050647",
+  "summary": {
+    "total": 3,
+    "classified": 2,
+    "unclassified": 1,
+    "tubulin": 2,
+    "map": 0
+  },
+  "entities": {
+    "3": {
+      "entity_id": "3",
+      "auth_asym_ids": [
+        "E",
+        "F"
+      ],
+      "sequence_length": 156,
+      "assigned_family": null,
+      "best_hit_score": null,
+      "best_hit_evalue": null,
+      "all_hits": []
+    },
+    "2": {
+      "entity_id": "2",
+      "auth_asym_ids": [
+        "B",
+        "D"
+      ],
+      "sequence_length": 424,
+      "assigned_family": "tubulin_beta",
+      "best_hit_score": 890.4083862304688,
+      "best_hit_evalue": 1.097311688267069e-272,
+      "all_hits": [
+        {
+          "family": "tubulin_beta",
+          "score": 890.4083862304688,
+          "evalue": 1.097311688267069e-272,
+          "bias": 0.02496337890625
+        },
+        {
+          "family": "tubulin_alpha",
+          "score": 589.6455688476562,
+          "evalue": 3.957757669011065e-181,
+          "bias": 0.0098876953125
+        },
+        {
+          "family": "tubulin_delta",
+          "score": 427.261474609375,
+          "evalue": 5.760575222499239e-132,
+          "bias": 0.00628662109375
+        },
+        {
+          "family": "tubulin_gamma",
+          "score": 387.9417419433594,
+          "evalue": 3.165925034865765e-120,
+          "bias": 0.0009765625
+        },
+        {
+          "family": "tubulin_epsilon",
+          "score": 328.12005615234375,
+          "evalue": 4.4380154764772005e-102,
+          "bias": 0.4625244140625
+        },
+        {
+          "family": "map_eb_family",
+          "score": 80.62969207763672,
+          "evalue": 9.312201110981331e-27,
+          "bias": 0.0003814697265625
+        }
+      ]
+    },
+    "1": {
+      "entity_id": "1",
+      "auth_asym_ids": [
+        "A",
+        "C"
+      ],
+      "sequence_length": 431,
+      "assigned_family": "tubulin_alpha",
+      "best_hit_score": 960.0357055664062,
+      "best_hit_evalue": 2.5702664530374556e-293,
+      "all_hits": [
+        {
+          "family": "tubulin_alpha",
+          "score": 960.0357055664062,
+          "evalue": 2.5702664530374556e-293,
+          "bias": 0.0025634765625
+        },
+        {
+          "family": "tubulin_beta",
+          "score": 550.6696166992188,
+          "evalue": 1.3164057571193339e-169,
+          "bias": 0.00103759765625
+        },
+        {
+          "family": "tubulin_gamma",
+          "score": 337.10400390625,
+          "evalue": 8.3122310026798e-105,
+          "bias": 0.0
+        },
+        {
+          "family": "tubulin_epsilon",
+          "score": 289.4967346191406,
+          "evalue": 2.2903251768515187e-90,
+          "bias": 0.002899169921875
+        },
+        {
+          "family": "tubulin_delta",
+          "score": 282.6621398925781,
+          "evalue": 3.451935447547815e-88,
+          "bias": 0.00006103515625
+        },
+        {
+          "family": "map_eb_family",
+          "score": 112.83562469482422,
+          "evalue": 1.4512657353699177e-36,
+          "bias": 0.00238800048828125
+        }
+      ]
+    }
+  }
+}

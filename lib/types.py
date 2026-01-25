@@ -333,6 +333,7 @@ class Polynucleotide(BaseInstance):
 
 
 class Nonpolymer(BaseInstance):
+    auth_seq_id: int  # Add this
     pass
 
 

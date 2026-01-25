@@ -44,6 +44,21 @@ class AlignmentResponse(BaseModel):
     statistics: Dict[str, Any]
     original_sequence: str
 
+# Add this model:
+
+class MasterProfileInfo(BaseModel):
+    """Master alignment profile metadata and sequences."""
+    profile_path: str
+    profile_exists: bool
+    num_sequences: int
+    alignment_length: int
+    sequences: List[Dict[str, Any]]
+    full_alignment: str
+    muscle_binary: str
+
+
+# Endpoint signature changes:
+
 router_msa = APIRouter()
 
 # Initialize service
@@ -53,7 +68,8 @@ alignment_mapper = TubulinAlignmentMapper(
 )
 
 
-@router_msa.post("/sequence", response_model=AlignmentResponse)
+
+@router_msa.post("/sequence", response_model=AlignmentResponse, operation_id="align_sequence")
 async def align_sequence(request: AlignmentRequest):
     """Align a sequence against the master profile and return mapping."""
     if not alignment_mapper:
@@ -81,8 +97,7 @@ async def align_sequence(request: AlignmentRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Alignment failed: {str(e)}")
 
-
-@router_msa.get("/master")
+@router_msa.get("/master", response_model=MasterProfileInfo, operation_id="get_master_profile")
 async def get_master_profile():
     """Get information about the master alignment profile including raw sequences."""
     try:

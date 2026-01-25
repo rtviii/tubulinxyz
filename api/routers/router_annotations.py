@@ -13,6 +13,24 @@ router_annotations = APIRouter()
 # Response Models
 # =============================================================================
 
+class VariantRangeSummary(BaseModel):
+    """Variants grouped by position in a range."""
+    family: str
+    range: Dict[str, int]  # {"start": x, "end": y}
+    positions_with_variants: int
+    data: Dict[int, List[Dict[str, Any]]]  # position -> list of variant summaries
+
+
+class VariantStats(BaseModel):
+    """Variant statistics for a family."""
+    family: str
+    by_type: Dict[str, int]
+    position_range: Dict[str, Optional[int]]  # {"min": x, "max": y}
+    total_variants: int
+
+
+# Endpoint signature changes:
+
 
 class VariantAnnotation(BaseModel):
     """Variant annotation from the database."""
@@ -127,9 +145,8 @@ def get_variants_for_polymer(
 # =============================================================================
 
 
-@router_annotations.get(
-    "/variants/{family}/{position}", response_model=PositionAnnotationsResponse
-)
+@router_annotations.get("/variants/{family}/{position}", response_model=PositionAnnotationsResponse, operation_id="get_variants_at_position")
+
 async def get_variants_at_position_endpoint(
     family: str, position: int
 ) -> PositionAnnotationsResponse:
@@ -145,7 +162,7 @@ async def get_variants_at_position_endpoint(
     )
 
 
-@router_annotations.get("/range/{family}")
+@router_annotations.get("/range/{family}", response_model=VariantRangeSummary, operation_id="get_variants_in_range")
 async def get_variants_in_range(
     family: str,
     start: int = Query(..., description="Start position (inclusive)"),
@@ -191,9 +208,8 @@ async def get_variants_in_range(
 # =============================================================================
 
 
-@router_annotations.get(
-    "/polymer/{rcsb_id}/{auth_asym_id}", response_model=PolymerAnnotationsResponse
-)
+
+@router_annotations.get("/polymer/{rcsb_id}/{auth_asym_id}", response_model=PolymerAnnotationsResponse, operation_id="get_polymer_annotations")
 async def get_polymer_annotations(
     rcsb_id: str, auth_asym_id: str
 ) -> PolymerAnnotationsResponse:
@@ -220,7 +236,7 @@ async def get_polymer_annotations(
 # =============================================================================
 
 
-@router_annotations.get("/stats/{family}")
+@router_annotations.get("/stats/{family}", response_model=VariantStats, operation_id="get_variant_stats")
 async def get_variant_stats(family: str) -> Dict[str, Any]:
     """
     Get variant statistics for a tubulin family.

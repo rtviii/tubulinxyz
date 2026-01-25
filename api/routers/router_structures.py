@@ -1,8 +1,10 @@
 # api/routers/router_structures.py
 from fastapi import APIRouter, Query, HTTPException
-from typing import Optional, List
+from typing import Any, Dict, Optional, List
 import json
 from pathlib import Path
+
+from pydantic import BaseModel
 
 from lib.types import TubulinStructure
 from lib.etl.assets import TubulinStructureAssets
@@ -18,8 +20,44 @@ from neo4j_tubxz.models import (
 
 router_structures = APIRouter()
 
+# Add these models near the top of the file:
 
-@router_structures.get("/taxonomy-tree/{tax_type}")
+class TaxonomyTreeNode(BaseModel):
+    """Tree node for UI TreeSelect component."""
+    value: int
+    title: str
+    children: Optional[List["TaxonomyTreeNode"]] = None
+
+TaxonomyTreeNode.model_rebuild()  # For self-referential type
+
+
+class TaxonomyFlatNode(BaseModel):
+    """Flat taxonomy node with counts."""
+    tax_id: int
+    name: str
+    rank: Optional[str] = None
+    structure_count: int
+
+
+class FamilyCount(BaseModel):
+    """Family with structure count."""
+    family: str
+    count: int
+
+
+class StructureDetail(BaseModel):
+    """Full structure with related entities."""
+    structure: Dict[str, Any]
+    polypeptide_entities: List[Dict[str, Any]]
+    ligand_entities: List[Dict[str, Any]]
+    polypeptide_instances: List[Dict[str, Any]]
+    ligand_instances: List[Dict[str, Any]]
+
+
+# Endpoint signature changes:
+
+
+@router_structures.get("/taxonomy-tree/{tax_type}", response_model=List[TaxonomyTreeNode], operation_id="get_taxonomy_tree")
 def get_taxonomy_tree(tax_type: str = "source"):
     """Get taxonomy as tree structure for UI TreeSelect component."""
     if tax_type not in ("source", "host"):
@@ -50,7 +88,7 @@ def parse_int_list(value: Optional[List[str]]) -> Optional[List[int]]:
     return None
 
 
-@router_structures.get("", response_model=StructureListResponse)
+@router_structures.get("", response_model=StructureListResponse, operation_id="list_structures")
 def list_structures(
     cursor: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
@@ -125,13 +163,13 @@ def list_structures(
     return db_reader.list_structures(filters)
 
 
-@router_structures.get("/facets", response_model=FilterFacets)
+@router_structures.get("/facets", response_model=FilterFacets, operation_id="get_structure_facets")
 def get_facets():
     """Get available filter options for UI dropdowns."""
     return db_reader.get_filter_facets()
 
 
-@router_structures.get("/taxonomy/{tax_type}")
+@router_structures.get("/taxonomy/{tax_type}", response_model=List[TaxonomyFlatNode], operation_id="get_taxonomy_flat")
 def get_taxonomy(tax_type: str = "source"):
     """Get taxonomy options for filter dropdowns."""
     if tax_type not in ("source", "host"):
@@ -139,13 +177,12 @@ def get_taxonomy(tax_type: str = "source"):
     return db_reader.get_taxonomy_tree(tax_type)
 
 
-@router_structures.get("/families")
+@router_structures.get("/families", response_model=List[FamilyCount], operation_id="list_families")
 def get_families():
     """Get tubulin family options with counts."""
     return db_reader.get_tubulin_families()
 
-
-@router_structures.get("/{rcsb_id}")
+@router_structures.get("/{rcsb_id}", response_model=StructureDetail, operation_id="get_structure")
 def get_structure(rcsb_id: str):
     """Get full structure details."""
     result = db_reader.get_structure(rcsb_id)
@@ -154,7 +191,7 @@ def get_structure(rcsb_id: str):
     return result
 
 
-@router_structures.get("/{rcsb_id}/profile", response_model=TubulinStructure)
+@router_structures.get("/{rcsb_id}/profile", response_model=TubulinStructure, operation_id="get_structure_profile")
 async def get_structure_profile(rcsb_id: str):
     """Fetches the pre-calculated TubulinStructure JSON profile from disk."""
     assets = TubulinStructureAssets(rcsb_id.upper())

@@ -12,7 +12,7 @@ from neo4j_tubxz.models import (
 router_ligands = APIRouter()
 
 
-@router_ligands.get("", response_model=LigandListResponse)
+@router_ligands.get("", response_model=LigandListResponse, operation_id="list_ligands")
 def list_ligands(
     cursor: Optional[str] = Query(None),
     limit: int = Query(25, ge=1, le=500),
@@ -33,7 +33,7 @@ def list_ligands(
     return db_reader.list_ligands(filters)
 
 
-@router_ligands.get("/options", response_model=LigandListResponse)
+@router_ligands.get("/options", response_model=LigandListResponse, operation_id="list_ligand_options")
 def ligand_options(
     search: Optional[str] = Query(None, description="Search by ID or name"),
     limit: int = Query(30, ge=1, le=100),
@@ -46,10 +46,7 @@ def ligand_options(
     return db_reader.list_ligands(filters)
 
 
-@router_ligands.get(
-    "/neighborhoods/{rcsb_id}/{auth_asym_id}",
-    response_model=PolymerNeighborhoodsResponse,
-)
+@router_ligands.get("/neighborhoods/{rcsb_id}/{auth_asym_id}", response_model=PolymerNeighborhoodsResponse, operation_id="get_polymer_ligand_neighborhoods")
 def get_ligand_neighborhoods(rcsb_id: str, auth_asym_id: str):
     """
     Get all ligand neighborhoods for a specific polymer chain.

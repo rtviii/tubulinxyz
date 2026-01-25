@@ -8,7 +8,7 @@ from neo4j_tubxz.models import PolypeptideEntityFilters, PolypeptideListResponse
 router_polymers = APIRouter()
 
 
-@router_polymers.get("", response_model=PolypeptideListResponse)
+@router_polymers.get("", response_model=PolypeptideListResponse, operation_id="list_polymers")
 def list_polymers(
     cursor: Optional[str] = Query(None),
     limit: int = Query(25, ge=1, le=500),

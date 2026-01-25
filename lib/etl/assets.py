@@ -6,19 +6,20 @@ from typing import Any
 
 from lib.etl.constants import TUBETL_DATA
 from lib.etl.libtax import PhylogenyNode, Taxid
-from lib.types import TubulinStructure 
+from lib.types import TubulinStructure
 
 import os
 import json
 from lib.etl.constants import TUBETL_DATA
 
+
 class TubulinStructureAssetPaths:
     """Manages file paths for a given tubulin structure asset."""
+
     rcsb_id: str
 
     def __init__(self, rcsb_id: str) -> None:
         self.rcsb_id = rcsb_id.upper()
-
 
     @property
     def base_dir(self) -> str:
@@ -39,37 +40,42 @@ class TubulinStructureAssetPaths:
     def chains_dir(self) -> str:
         """Directory for split chain files."""
         return os.path.join(self.base_dir, "CHAINS")
-    
+
     def ligand_neighborhood(self, comp_id: str, auth_asym_id: str) -> str:
         """Path to a specific ligand neighborhood report."""
-        return os.path.join(self.base_dir, f"{self.rcsb_id}_{comp_id}_{auth_asym_id}.json")
+        return os.path.join(
+            self.base_dir, f"{self.rcsb_id}_{comp_id}_{auth_asym_id}.json"
+        )
 
     def all_ligand_neighborhoods(self) -> list[str]:
-            """List only ligand neighborhood report files, excluding metadata."""
-            import glob
-            # Specifically look for the [ID]_[COMP]_[ASYM].json pattern
-            pattern = os.path.join(self.base_dir, f"{self.rcsb_id}_*_*.json")
-            
-            excluded_suffixes = [
-                f"{self.rcsb_id}.json", 
-                "_classification_report.json", 
-                "sequence_ingestion.json"
-            ]
-            
-            return [
-                p for p in glob.glob(pattern) 
-                if not any(p.endswith(s) for s in excluded_suffixes)
-            ]
+        """List only ligand neighborhood report files, excluding metadata."""
+        import glob
+
+        # Specifically look for the [ID]_[COMP]_[ASYM].json pattern
+        pattern = os.path.join(self.base_dir, f"{self.rcsb_id}_*_*.json")
+
+        excluded_suffixes = [
+            f"{self.rcsb_id}.json",
+            "_classification_report.json",
+            "sequence_ingestion.json",
+        ]
+
+        return [
+            p
+            for p in glob.glob(pattern)
+            if not any(p.endswith(s) for s in excluded_suffixes)
+        ]
 
     @property
     def variants_file(self) -> str:
         """Path to variants (substitutions/insertions/deletions) file."""
         return os.path.join(self.base_dir, f"{self.rcsb_id}_variants.json")
-    
+
     @property
     def binding_sites_file(self) -> str:
         """Path to ligand binding sites file."""
         return os.path.join(self.base_dir, f"{self.rcsb_id}_ligand_binding_sites.json")
+
     @property
     def classification_report(self) -> str:
         """Path to the HMM classification report."""
@@ -83,25 +89,31 @@ class TubulinStructureAssetPaths:
     @property
     def observed_master_maps(self) -> str:
         """Path to the observed/master index mappings file."""
-        return os.path.join(self.base_dir, f"{self.rcsb_id}_observed_and_master_index_maps.json")
-    
+        return os.path.join(
+            self.base_dir, f"{self.rcsb_id}_observed_and_master_index_maps.json"
+        )
+
     @property
     def ligand_neighborhoods_file(self) -> str:
         """Path to the simplified ligand neighborhoods file."""
         return os.path.join(self.base_dir, f"{self.rcsb_id}_ligand_neighborhoods.json")
-    
+
     @property
     def mutations_indels_file(self) -> str:
         """Path to mutations, insertions, deletions file."""
-        return os.path.join(self.base_dir, f"{self.rcsb_id}_mutations_insertions_deletions.json")
-    
+        return os.path.join(
+            self.base_dir, f"{self.rcsb_id}_mutations_insertions_deletions.json"
+        )
+
     @property
     def molstar_raw_extraction(self) -> str:
         """Path to raw Molstar extraction (intermediate file)."""
         return os.path.join(self.base_dir, f"{self.rcsb_id}_molstar_raw.json")
 
+
 class TubulinStructureAssets:
     """Manager for accessing and verifying tubulin structure assets."""
+
     rcsb_id: str
     paths: TubulinStructureAssetPaths
 
@@ -114,8 +126,10 @@ class TubulinStructureAssets:
     def profile(self) -> TubulinStructure:
         """Loads the Pydantic model from the JSON profile."""
         if not os.path.exists(self.paths.profile):
-            raise FileNotFoundError(f"Profile not found for {self.rcsb_id} at {self.paths.profile}")
-        
+            raise FileNotFoundError(
+                f"Profile not found for {self.rcsb_id} at {self.paths.profile}"
+            )
+
         with open(self.paths.profile, "r") as f:
             return TubulinStructure.model_validate(json.load(f))
 
@@ -125,6 +139,8 @@ class TubulinStructureAssets:
             os.umask(0)
             os.makedirs(self.paths.base_dir, 0o755, exist_ok=True)
             print(f"Created asset directory at: {self.paths.base_dir}")
+
+
 # --------------------------------------------------------------------------
 # GQL DATA-RETRIEVAL STRINGS (from gql_querystrings.py)
 # --------------------------------------------------------------------------
@@ -251,6 +267,14 @@ PolymerEntitiesString = """{
 NonpolymerEntitiesString = """{
   entry(entry_id: "$RCSB_ID") {
     nonpolymer_entities {
+nonpolymer_entity_instances {
+      rcsb_nonpolymer_entity_instance_container_identifiers {
+        entity_id
+        asym_id
+        auth_asym_id
+        auth_seq_id
+      }
+    }
       pdbx_entity_nonpoly {
         comp_id
         name
@@ -333,8 +357,8 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
                             "operator": "exact_match",
                             "negation": False,
-                            "value": "IPR036525"
-                        }
+                            "value": "IPR036525",
+                        },
                     },
                     {
                         "type": "terminal",
@@ -343,11 +367,11 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.type",
                             "operator": "exact_match",
                             "value": "InterPro",
-                            "negation": False
-                        }
-                    }
+                            "negation": False,
+                        },
+                    },
                 ],
-                "label": "nested-attribute"
+                "label": "nested-attribute",
             },
             {
                 "type": "group",
@@ -360,8 +384,8 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
                             "operator": "exact_match",
                             "negation": False,
-                            "value": "IPR002452"
-                        }
+                            "value": "IPR002452",
+                        },
                     },
                     {
                         "type": "terminal",
@@ -370,11 +394,11 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.type",
                             "operator": "exact_match",
                             "value": "InterPro",
-                            "negation": False
-                        }
-                    }
+                            "negation": False,
+                        },
+                    },
                 ],
-                "label": "nested-attribute"
+                "label": "nested-attribute",
             },
             {
                 "type": "group",
@@ -387,8 +411,8 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
                             "operator": "exact_match",
                             "negation": False,
-                            "value": "IPR013838"
-                        }
+                            "value": "IPR013838",
+                        },
                     },
                     {
                         "type": "terminal",
@@ -397,11 +421,11 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.type",
                             "operator": "exact_match",
                             "value": "InterPro",
-                            "negation": False
-                        }
-                    }
+                            "negation": False,
+                        },
+                    },
                 ],
-                "label": "nested-attribute"
+                "label": "nested-attribute",
             },
             {
                 "type": "group",
@@ -414,8 +438,8 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
                             "operator": "exact_match",
                             "negation": False,
-                            "value": "IPR023123"
-                        }
+                            "value": "IPR023123",
+                        },
                     },
                     {
                         "type": "terminal",
@@ -424,26 +448,27 @@ TUBULIN_SEARCH_QUERY = {
                             "attribute": "rcsb_uniprot_annotation.type",
                             "operator": "exact_match",
                             "value": "InterPro",
-                            "negation": False
-                        }
-                    }
+                            "negation": False,
+                        },
+                    },
                 ],
-                "label": "nested-attribute"
-            }
+                "label": "nested-attribute",
+            },
         ],
-        "label": "text"
+        "label": "text",
     },
     "return_type": "entry",
     "request_options": {
         "return_all_hits": True,
         "results_verbosity": "compact",
-        "results_content_type": ["experimental"]
-    }
+        "results_content_type": ["experimental"],
+    },
 }
 
 # --------------------------------------------------------------------------
 # GLOBAL OPS CLASS (from global_ops.py)
 # --------------------------------------------------------------------------
+
 
 class GlobalOps:
     """Global utilities for managing the tubulin structure dataset."""
@@ -456,7 +481,7 @@ class GlobalOps:
         except Exception as e:
             print(f"Error fetching current RCSB structs: {e}")
             return []
-            
+
         local_profiles = set(GlobalOps.list_profiles())
         return list(rcsb_structs - local_profiles)
 
@@ -468,7 +493,7 @@ class GlobalOps:
         except Exception as e:
             print(f"Error fetching current RCSB structs: {e}")
             return []
-            
+
         return list(rcsb_structs - set(db_entries))
 
     @staticmethod
@@ -478,28 +503,30 @@ class GlobalOps:
         project-defined search query.
         """
         rcsb_search_api = "https://search.rcsb.org/rcsbsearch/v2/query"
-        
-        # TUBE-FIX: The error was here. 
+
+        # TUBE-FIX: The error was here.
         # We pass the dict directly, not json.loads(dict)
         query_payload = TUBULIN_SEARCH_QUERY
 
         try:
             response = requests.post(rcsb_search_api, json=query_payload)
-            response.raise_for_status() # Raise an error for bad status codes
-            
+            response.raise_for_status()  # Raise an error for bad status codes
+
             resp_json = response.json()
-            
+
             if "result_set" not in resp_json:
                 raise Exception(f"Unexpected API response: {resp_json}")
 
             # TUBE-UPDATE: Parse the result_set format correctly
             return sorted(resp_json["result_set"])
-        
+
         except requests.exceptions.RequestException as e:
             print(f"Failed to query RCSB Search API: {e}")
             raise e
         except json.JSONDecodeError:
-            print(f"Failed to decode JSON response from RCSB Search API: {response.text}")
+            print(
+                f"Failed to decode JSON response from RCSB Search API: {response.text}"
+            )
             raise
 
     @staticmethod
@@ -511,16 +538,18 @@ class GlobalOps:
         if not os.path.exists(TUBETL_DATA):
             print(f"Warning: TUBETL_DATA directory not found at: {TUBETL_DATA}")
             return []
-            
+
         profiles_exist = []
         for rcsb_id in os.listdir(TUBETL_DATA):
-            if len(rcsb_id) != 4 or not os.path.isdir(os.path.join(TUBETL_DATA, rcsb_id)):
+            if len(rcsb_id) != 4 or not os.path.isdir(
+                os.path.join(TUBETL_DATA, rcsb_id)
+            ):
                 continue
-                
+
             profile_path = TubulinStructureAssets(rcsb_id).paths.profile
             if os.path.exists(profile_path):
                 profiles_exist.append(rcsb_id)
-                
+
         return profiles_exist
 
     @staticmethod
@@ -531,7 +560,7 @@ class GlobalOps:
         """
         _ = set()
         print(f"Collecting taxa from {len(GlobalOps.list_profiles())} profiles...")
-        
+
         for struct in GlobalOps.list_profiles():
             # TUBE-UPDATE: Use TubulinStructureAssets
             try:
@@ -539,9 +568,9 @@ class GlobalOps:
             except Exception as e:
                 print(f"Warning: Could not load profile {struct}. Skipping. Error: {e}")
                 continue
-            
+
             all_orgs = profile.src_organism_ids + profile.host_organism_ids
-            
+
             for org_id in all_orgs:
                 if org_id is None:
                     continue
@@ -555,9 +584,10 @@ class GlobalOps:
                 except Exception as e:
                     print(f"Error processing taxid {org_id} for {struct}: {e}")
                     # This can happen for obsolete or unclassified taxIDs
-        
+
         print(f"Found {len(_)} unique taxa.")
         return _
+
 
 # --------------------------------------------------------------------------
 # RCSB DATA API QUERY HELPER (from queries.py)
@@ -565,27 +595,28 @@ class GlobalOps:
 
 RCSB_GQL_URL = "https://data.rcsb.org/graphql"
 
+
 def query_rcsb_api(gql_string: str) -> dict[str, Any]:
     """
     Submits a GraphQL query to the RCSB DATA API.
     This is different from the SEARCH API used in GlobalOps.
-    
+
     Raises:
         Exception: If the query fails or returns no data.
     """
     try:
         response = requests.get(f"{RCSB_GQL_URL}?query={gql_string}")
         response.raise_for_status()  # Raise an exception for bad status codes
-        
+
         resp_json = response.json()
-        
+
         if "data" in resp_json and resp_json["data"]:
             return resp_json["data"]
         elif "errors" in resp_json:
             raise Exception(f"RCSB API returned errors: {resp_json['errors']}")
         else:
             raise Exception("No data found for query.")
-            
+
     except requests.exceptions.RequestException as e:
         raise Exception(f"Failed to query RCSB API: {e}")
     except json.JSONDecodeError:
