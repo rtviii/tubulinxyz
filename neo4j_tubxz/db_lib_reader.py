@@ -62,7 +62,6 @@ class Neo4jReader:
                         data=[], total_count=0, next_cursor=None, has_more=False
                     )
 
-                # All records have the same total_count and next_cursor
                 total_count = records[0]["total_count"]
                 next_cursor = records[0]["next_cursor"]
 
@@ -169,7 +168,7 @@ class Neo4jReader:
                         sequence_length=r["sequence_length"],
                         src_organism_names=r["src_organism_names"] or [],
                         uniprot_accessions=r["uniprot_accessions"] or [],
-                        mutation_count=r["mutation_count"],
+                        variant_count=r["variant_count"],
                     )
                     for r in records
                 ]
@@ -231,7 +230,6 @@ class Neo4jReader:
     # -------------------------------------------------------------------------
     # Facet/Aggregation Queries (for filter UI dropdowns)
     # -------------------------------------------------------------------------
-
 
     def get_taxonomy_tree(self, tax_type: str = "source") -> List[Dict[str, Any]]:
         """
@@ -301,21 +299,20 @@ class Neo4jReader:
 
             return session.execute_read(run_query)
 
-    # neo4j_tubxz/db_lib_reader.py - add this method to Neo4jReader class
-
-    def get_taxonomy_tree_for_ui(self, tax_type: str = "source") -> List[Dict[str, Any]]:
+    def get_taxonomy_tree_for_ui(
+        self, tax_type: str = "source"
+    ) -> List[Dict[str, Any]]:
         """
         Get taxonomy as a tree structure for antd TreeSelect.
         Returns format: { value, title, children }
         """
         rel_type = f"belongs_to_lineage_{tax_type}"
-        
-        # Get all taxa linked to structures with their parent info
+
         query = f"""
         MATCH (s:Structure)<-[:{rel_type}]-(p:PhylogenyNode)
         WITH p, count(DISTINCT s) AS structure_count
         OPTIONAL MATCH (p)-[:descendant_of]->(parent:PhylogenyNode)
-        RETURN 
+        RETURN
             p.ncbi_tax_id AS tax_id,
             p.scientific_name AS name,
             p.rank AS rank,
@@ -323,12 +320,12 @@ class Neo4jReader:
             parent.ncbi_tax_id AS parent_id
         ORDER BY structure_count DESC
         """
-        
+
         with self.adapter.driver.session() as session:
+
             def run_query(tx):
                 records = list(tx.run(query))
-                
-                # Build flat list with parent refs
+
                 nodes = {}
                 for r in records:
                     nodes[r["tax_id"]] = {
@@ -336,20 +333,18 @@ class Neo4jReader:
                         "title": f"{r['name']} ({r['structure_count']})",
                         "rank": r["rank"],
                         "parent_id": r["parent_id"],
-                        "children": []
+                        "children": [],
                     }
-                
-                # Build tree
+
                 roots = []
                 for tax_id, node in nodes.items():
                     parent_id = node.pop("parent_id")
-                    node.pop("rank")  # Clean up
+                    node.pop("rank")
                     if parent_id and parent_id in nodes:
                         nodes[parent_id]["children"].append(node)
                     else:
                         roots.append(node)
-                
-                # Remove empty children arrays
+
                 def clean_children(node):
                     if not node["children"]:
                         del node["children"]
@@ -357,12 +352,14 @@ class Neo4jReader:
                         for child in node["children"]:
                             clean_children(child)
                     return node
-                
+
                 return [clean_children(r) for r in roots]
-            
+
             return session.execute_read(run_query)
 
-    def get_ligand_options(self, search: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_ligand_options(
+        self, search: Optional[str] = None, limit: int = 50
+    ) -> List[Dict[str, Any]]:
         """
         Get ligands for filter dropdown/autocomplete.
         Returns lightweight list: chemical_id, name, structure_count.
@@ -371,31 +368,32 @@ class Neo4jReader:
         MATCH (c:Chemical)
         """
         params: Dict[str, Any] = {"limit": limit}
-        
+
         if search:
             query += """
-            WHERE toLower(c.chemical_id) CONTAINS $search 
+            WHERE toLower(c.chemical_id) CONTAINS $search
             OR toLower(c.chemical_name) CONTAINS $search
             """
             params["search"] = search.lower()
-        
+
         query += """
         OPTIONAL MATCH (c)<-[:DEFINED_BY_CHEMICAL]-(ne:NonpolymerEntity)<-[:DEFINES_ENTITY]-(s:Structure)
         WITH c, count(DISTINCT s) AS structure_count
         WHERE structure_count > 0
-        RETURN 
+        RETURN
             c.chemical_id AS chemical_id,
             c.chemical_name AS chemical_name,
             structure_count
         ORDER BY structure_count DESC
         LIMIT $limit
         """
-        
+
         with self.adapter.driver.session() as session:
+
             def run_query(tx: Transaction):
                 return [dict(r) for r in tx.run(query, params)]
-            return session.execute_read(run_query)
 
+            return session.execute_read(run_query)
 
     def get_filter_facets(self) -> Dict[str, Any]:
         """
@@ -405,9 +403,9 @@ class Neo4jReader:
         query = """
         MATCH (s:Structure)
         WITH count(s) AS total_structures,
-            min(s.citation_year) AS min_year, 
+            min(s.citation_year) AS min_year,
             max(s.citation_year) AS max_year,
-            min(s.resolution) AS min_res, 
+            min(s.resolution) AS min_res,
             max(s.resolution) AS max_res
 
         // Experimental methods
@@ -436,43 +434,43 @@ class Neo4jReader:
             LIMIT 50
             RETURN c.chemical_id AS chemical_id, c.chemical_name AS chemical_name, cnt AS count
         }
-        WITH total_structures, min_year, max_year, min_res, max_res, 
+        WITH total_structures, min_year, max_year, min_res, max_res,
             exp_methods, tubulin_families,
             collect({chemical_id: chemical_id, chemical_name: chemical_name, count: count}) AS top_ligands
 
-        // Mutation stats by family
+        // Variant stats by family
         CALL {
-            MATCH (e:PolypeptideEntity)-[:HAS_MUTATION]->(m:Mutation)
-            WITH e.family AS family, count(DISTINCT m) AS mutation_count, count(DISTINCT e.parent_rcsb_id) AS structure_count
+            MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+            WITH e.family AS family, count(DISTINCT v) AS variant_count, count(DISTINCT e.parent_rcsb_id) AS structure_count
             WHERE family IS NOT NULL
-            RETURN family, mutation_count, structure_count
+            RETURN family, variant_count, structure_count
         }
         WITH total_structures, min_year, max_year, min_res, max_res,
             exp_methods, tubulin_families, top_ligands,
-            collect({family: family, mutation_count: mutation_count, structure_count: structure_count}) AS mutations_by_family
+            collect({family: family, variant_count: variant_count, structure_count: structure_count}) AS variants_by_family
 
-        // Common mutations (top 30)
+        // Common variants (top 30 substitutions)
         CALL {
-            MATCH (e:PolypeptideEntity)-[:HAS_MUTATION]->(m:Mutation)
-            WITH e.family AS family, m.master_index AS position, m.from_residue AS from_res, m.to_residue AS to_res, count(*) AS cnt
+            MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+            WITH e.family AS family, v.type AS variant_type, v.master_index AS position, v.wild_type AS wild_type, v.observed AS observed, count(*) AS cnt
             ORDER BY cnt DESC
             LIMIT 30
-            RETURN family, position, from_res, to_res, cnt
+            RETURN family, variant_type, position, wild_type, observed, cnt
         }
         WITH total_structures, min_year, max_year, min_res, max_res,
-            exp_methods, tubulin_families, top_ligands, mutations_by_family,
-            collect({family: family, position: position, from_residue: from_res, to_residue: to_res, count: cnt}) AS common_mutations
+            exp_methods, tubulin_families, top_ligands, variants_by_family,
+            collect({family: family, variant_type: variant_type, position: position, wild_type: wild_type, observed: observed, count: cnt}) AS common_variants
 
-        // Mutation position ranges by family
+        // Variant position ranges by family
         CALL {
-            MATCH (e:PolypeptideEntity)-[:HAS_MUTATION]->(m:Mutation)
-            WHERE e.family IS NOT NULL AND m.master_index IS NOT NULL
-            WITH e.family AS family, min(m.master_index) AS min_pos, max(m.master_index) AS max_pos
+            MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+            WHERE e.family IS NOT NULL AND v.master_index IS NOT NULL
+            WITH e.family AS family, min(v.master_index) AS min_pos, max(v.master_index) AS max_pos
             RETURN family, min_pos, max_pos
         }
         WITH total_structures, min_year, max_year, min_res, max_res,
-            exp_methods, tubulin_families, top_ligands, mutations_by_family, common_mutations,
-            collect({family: family, min_position: min_pos, max_position: max_pos}) AS mutation_position_ranges
+            exp_methods, tubulin_families, top_ligands, variants_by_family, common_variants,
+            collect({family: family, min_position: min_pos, max_position: max_pos}) AS variant_position_ranges
 
         RETURN {
             total_structures: total_structures,
@@ -481,17 +479,20 @@ class Neo4jReader:
             year_range: {min: min_year, max: max_year},
             resolution_range: {min: min_res, max: max_res},
             top_ligands: top_ligands,
-            mutations_by_family: mutations_by_family,
-            common_mutations: common_mutations,
-            mutation_position_ranges: mutation_position_ranges
+            variants_by_family: variants_by_family,
+            common_variants: common_variants,
+            variant_position_ranges: variant_position_ranges
         } AS facets
         """
 
         with self.adapter.driver.session() as session:
+
             def run_query(tx: Transaction):
                 result = tx.run(query).single()
                 return result["facets"] if result else {}
+
             return session.execute_read(run_query)
+
 
 # Singleton instance for convenience
 db_reader = Neo4jReader()

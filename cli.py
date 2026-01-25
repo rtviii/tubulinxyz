@@ -37,22 +37,6 @@ def get_db_driver() -> Driver:
         console.print(f"[bold red]Failed to create Neo4j driver:[/bold red] {e}")
         raise typer.Exit(code=1)
 
-
-def get_db_adapter() -> Neo4jAdapter:
-    """Initializes and returns the Neo4jAdapter."""
-    if not all([NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, NEO4J_CURRENTDB]):
-        raise EnvironmentError("Missing Neo4j environment variables!")
-    try:
-        return Neo4jAdapter(
-            NEO4J_URI, 
-            NEO4J_USER, 
-            NEO4J_CURRENTDB, 
-            NEO4J_PASSWORD
-        )
-    except Exception as e:
-        console.print(f"[bold red]Failed to create Neo4j adapter:[/bold red] {e}")
-        raise typer.Exit(code=1)
-
 @app.command(name="init-db")
 def init_db_command():
     """
@@ -136,43 +120,6 @@ def collect_missing():
     console.print(f"[red]Failed:[/red] {fail_count}")
     if failed_ids:
         console.print(f"[red]Failed IDs:[/red] {', '.join(failed_ids)}")
-
-@app.command(name="upload-one")
-def upload_one(
-    rcsb_id: Annotated[str, typer.Argument(help="The 4-character PDB ID to upload from disk.")]
-):
-    """
-    Uploads a single, locally-saved structure profile to the Neo4j database.
-    """
-    rcsb_id = rcsb_id.upper()
-    console.print(f"Attempting to upload [bold magenta]{rcsb_id}[/bold magenta] from disk...", style="cyan")
-
-    # 1. Verify profile exists on disk first
-    try:
-        assets = TubulinStructureAssets(rcsb_id)
-        if not os.path.exists(assets.paths.profile):
-             raise FileNotFoundError(f"Profile not found at {assets.paths.profile}")
-        console.print(f"Found local profile: {assets.paths.profile}")
-    except FileNotFoundError as e:
-        console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(code=1)
-    except Exception as e:
-        console.print(f"[bold red]Error loading local profile {rcsb_id}:[/bold red] {e}")
-        raise typer.Exit(code=1)
-
-    # 2. Upload to Neo4j
-    try:
-        adapter = get_db_adapter()
-        # Your adapter.add_total_structure function correctly reads the
-        # profile from disk using TubulinStructureAssets.
-        # We use disable_exists_check=True to force an upsert.
-        adapter.add_total_structure(rcsb_id, disable_exists_check=True)
-        console.print(f"[bold green]Successfully uploaded {rcsb_id} to Neo4j.[/bold green]")
-    except Exception as e:
-        console.print(f"[bold red]Error uploading {rcsb_id} to Neo4j:[/bold red] {e}")
-        import traceback
-        traceback.print_exc()
-        raise typer.Exit(code=1)
 
 def get_all_structs_in_db(driver: Driver) -> list[str]:
     """
@@ -429,6 +376,240 @@ def collect_all(
     console.print(f"[red]Failed:[/red] {fail_count}")
     if failed_ids:
         console.print(f"[red]Failed IDs:[/red] {', '.join(failed_ids)}")
+
+
+
+# In cli.py
+
+from lib.etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
+from neo4j_tubxz.db_lib_builder import Neo4jAdapter
+from lib.etl.assets import GlobalOps, TubulinStructureAssets
+import os
+def get_db_adapter() -> Neo4jAdapter:
+    """Factory for getting the Neo4j adapter."""
+    return Neo4jAdapter(NEO4J_URI, NEO4J_USER, NEO4J_CURRENTDB, NEO4J_PASSWORD)
+
+
+@app.command(name="init-db")
+def init_db(
+    db_name: Annotated[str, typer.Option("--name", "-n", help="Name for new database (default: use NEO4J_CURRENTDB from constants)")] = "",
+    skip_phylogeny: Annotated[bool, typer.Option("--skip-phylogeny", help="Skip phylogeny seeding (faster, but no taxonomy filtering)")] = False,
+    create: Annotated[bool, typer.Option("--create", "-c", help="Create the database if it doesn't exist")] = False,
+):
+    """
+    Initialize a Neo4j database with constraints and phylogeny tree.
+    
+    Use --create to create a new database first (requires Enterprise/Aura).
+    """
+    from neo4j import GraphDatabase
+    
+    target_db = db_name if db_name else NEO4J_CURRENTDB
+    
+    console.print(f"Target database: [bold]{target_db}[/bold] at [bold]{NEO4J_URI}[/bold]", style="cyan")
+    
+    try:
+        # If --create flag, create the database first via system db
+        if create:
+            console.print(f"Creating database [bold]{target_db}[/bold]...")
+            
+            # Connect to system database to create new db
+            system_driver = GraphDatabase.driver(
+                NEO4J_URI, 
+                auth=(NEO4J_USER, NEO4J_PASSWORD), 
+                database="system"
+            )
+            
+            with system_driver.session() as session:
+                # Check if database already exists
+                result = session.run("SHOW DATABASES YIELD name")
+                existing_dbs = [r["name"] for r in result]
+                
+                if target_db in existing_dbs:
+                    console.print(f"[yellow]Database '{target_db}' already exists.[/yellow]")
+                else:
+                    session.run(f"CREATE DATABASE {target_db}")
+                    console.print(f"[green]Created database '{target_db}'.[/green]")
+                    
+                    # Wait for database to come online
+                    console.print("Waiting for database to start...")
+                    import time
+                    for _ in range(30):  # Wait up to 30 seconds
+                        result = session.run(
+                            "SHOW DATABASE $name YIELD currentStatus", 
+                            {"name": target_db}
+                        ).single()
+                        if result and result["currentStatus"] == "online":
+                            break
+                        time.sleep(1)
+                    else:
+                        console.print("[yellow]Warning: Database may still be starting up.[/yellow]")
+            
+            system_driver.close()
+        
+        # Now connect to the target database and initialize
+        adapter = Neo4jAdapter(NEO4J_URI, NEO4J_USER, target_db, NEO4J_PASSWORD)
+        
+        console.print("Creating constraints and indexes...")
+        adapter.init_constraints()
+        console.print("[green]Constraints created.[/green]")
+        
+        if not skip_phylogeny:
+            console.print("Seeding phylogeny tree (this may take a minute)...")
+            adapter.init_phylogenies()
+            console.print("[green]Phylogeny tree seeded.[/green]")
+        else:
+            console.print("[yellow]Skipped phylogeny seeding.[/yellow]")
+        
+        adapter.close()
+        console.print(f"[bold green]Database '{target_db}' initialized successfully![/bold green]")
+        
+        # Remind user to update constants if they used a custom name
+        if db_name and db_name != NEO4J_CURRENTDB:
+            console.print(f"\n[yellow]Note: Update NEO4J_CURRENTDB in lib/etl/constants.py to '{db_name}' to use this database by default.[/yellow]")
+        
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        import traceback
+        traceback.print_exc()
+        raise typer.Exit(code=1)
+
+
+@app.command(name="upload-one")
+def upload_one(
+    rcsb_id: Annotated[str, typer.Argument(help="The 4-character PDB ID to upload from disk.")],
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Overwrite if structure already exists")] = False,
+):
+    """
+    Upload a single structure profile to Neo4j.
+    """
+    rcsb_id = rcsb_id.upper()
+    console.print(f"Uploading [bold magenta]{rcsb_id}[/bold magenta] to Neo4j...", style="cyan")
+
+    # Verify profile exists
+    try:
+        assets = TubulinStructureAssets(rcsb_id)
+        if not os.path.exists(assets.paths.profile):
+            raise FileNotFoundError(f"Profile not found at {assets.paths.profile}")
+        console.print(f"Found profile: {assets.paths.profile}")
+    except FileNotFoundError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+    # Upload
+    try:
+        adapter = get_db_adapter()
+        adapter.add_total_structure(rcsb_id, disable_exists_check=overwrite)
+        adapter.close()
+        console.print(f"[bold green]Successfully uploaded {rcsb_id}.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]Error uploading {rcsb_id}:[/bold red] {e}")
+        import traceback
+        traceback.print_exc()
+        raise typer.Exit(code=1)
+
+
+@app.command(name="upload-all")
+def upload_all(
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Overwrite existing structures")] = False,
+    limit: Annotated[int, typer.Option("--limit", "-n", help="Limit number of structures to upload")] = 0,
+):
+    """
+    Upload all structure profiles from disk to Neo4j.
+    """
+    profiles = GlobalOps.list_profiles()
+    
+    if limit > 0:
+        profiles = profiles[:limit]
+    
+    console.print(f"Found [bold]{len(profiles)}[/bold] profiles to upload.", style="cyan")
+    
+    if not profiles:
+        console.print("[yellow]No profiles found on disk.[/yellow]")
+        raise typer.Exit(code=0)
+
+    adapter = get_db_adapter()
+    success_count = 0
+    error_count = 0
+
+    for i, rcsb_id in enumerate(sorted(profiles), 1):
+        console.print(f"[{i}/{len(profiles)}] {rcsb_id}...", end=" ")
+        try:
+            adapter.add_total_structure(rcsb_id, disable_exists_check=overwrite)
+            console.print("[green]OK[/green]")
+            success_count += 1
+        except Exception as e:
+            console.print(f"[red]FAILED: {e}[/red]")
+            error_count += 1
+
+    adapter.close()
+    console.print(f"\n[bold]Done:[/bold] {success_count} succeeded, {error_count} failed.")
+
+
+@app.command(name="delete-one")
+def delete_one(
+    rcsb_id: Annotated[str, typer.Argument(help="The 4-character PDB ID to delete.")],
+    force: Annotated[bool, typer.Option("--force", "-f", help="Skip confirmation")] = False,
+):
+    """
+    Delete a structure from Neo4j.
+    """
+    rcsb_id = rcsb_id.upper()
+    
+    if not force:
+        confirm = typer.confirm(f"Are you sure you want to delete {rcsb_id}?")
+        if not confirm:
+            raise typer.Abort()
+
+    try:
+        adapter = get_db_adapter()
+        if not adapter.check_structure_exists(rcsb_id):
+            console.print(f"[yellow]Structure {rcsb_id} not found in database.[/yellow]")
+            raise typer.Exit(code=0)
+        
+        adapter.delete_structure(rcsb_id)
+        adapter.close()
+        console.print(f"[bold green]Deleted {rcsb_id}.[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="db-status")
+def db_status():
+    """
+    Show database connection status and basic stats.
+    """
+    console.print(f"Connecting to [bold]{NEO4J_URI}[/bold] / [bold]{NEO4J_CURRENTDB}[/bold]...", style="cyan")
+    
+    try:
+        adapter = get_db_adapter()
+        
+        # Test connection and get counts
+        with adapter.driver.session() as session:
+            result = session.run("""
+                MATCH (s:Structure) WITH count(s) AS structures
+                MATCH (e:Entity) WITH structures, count(e) AS entities
+                MATCH (i:Instance) WITH structures, entities, count(i) AS instances
+                MATCH (c:Chemical) WITH structures, entities, instances, count(c) AS chemicals
+                MATCH (p:PhylogenyNode) WITH structures, entities, instances, chemicals, count(p) AS taxa
+                MATCH (v:Variant) WITH structures, entities, instances, chemicals, taxa, count(v) AS variants
+                RETURN structures, entities, instances, chemicals, taxa, variants
+            """).single()
+            
+            console.print("\n[bold green]Connected successfully![/bold green]\n")
+            console.print(f"  Structures:  {result['structures']}")
+            console.print(f"  Entities:    {result['entities']}")
+            console.print(f"  Instances:   {result['instances']}")
+            console.print(f"  Chemicals:   {result['chemicals']}")
+            console.print(f"  Taxa:        {result['taxa']}")
+            console.print(f"  Variants:    {result['variants']}")
+        
+        adapter.close()
+        
+    except Exception as e:
+        console.print(f"[bold red]Connection failed:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
 
 if __name__ == "__main__":
     # Ensure environment variables are set

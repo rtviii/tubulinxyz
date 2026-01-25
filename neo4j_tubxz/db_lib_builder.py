@@ -1,33 +1,27 @@
 # neo4j_tubxz/db_lib_builder.py
-import sys, json
-from neo4j import GraphDatabase, Driver, ManagedTransaction
-from typing import Tuple, List, Dict
-import datetime
+"""
+Neo4j database builder - handles structure ingestion.
+"""
+
+import sys
+from neo4j import GraphDatabase, Driver, ManagedTransaction, Transaction
+from typing import List
 
 from lib.etl.assets import GlobalOps, TubulinStructureAssets
 from lib.etl.libtax import PhylogenyNode, Taxid
 
 from lib.types import (
-    LigandNeighborhood,
     TubulinStructure,
     PolypeptideEntity,
     PolynucleotideEntity,
     NonpolymerEntity,
-    Polypeptide,
-    Polynucleotide,
-    Nonpolymer,
-    TubulinFamily,
-    Mutation,
 )
 
-# New Node Logic Imports
-from neo4j_tubxz.node_interaction import node__ligand_interactions
 from neo4j_tubxz.node_ligand import (
     node__chemical,
     node__nonpolymer_entity,
     node__nonpolymer_instance,
 )
-
 from neo4j_tubxz.node_polymer import (
     node__polypeptide_entity,
     node__polynucleotide_entity,
@@ -35,34 +29,36 @@ from neo4j_tubxz.node_polymer import (
     link__entity_to_structure,
     link__instance_to_structure,
 )
-
-from neo4j_tubxz.node_master_alignment import (
-    get_master_alignment,
-    node__master_alignment,
-)
 from neo4j_tubxz.node_phylogeny import link__phylogeny, node__phylogeny
-from neo4j_tubxz.node_mutation import node__mutation
-
 from neo4j_tubxz.node_structure import (
     link__structure_to_lineage_member,
     link__structure_to_organism,
     node__structure,
     struct_exists,
 )
+from neo4j_tubxz.node_variant import create_variants_for_entity
+from neo4j_tubxz.node_binding_site import process_all_binding_sites
+
+sys.dont_write_bytecode = True
+
 
 NODE_CONSTRAINTS = [
-    """CREATE CONSTRAINT rcsb_id_unique IF NOT EXISTS FOR (s:Structure) REQUIRE s.rcsb_id IS UNIQUE;""",
-    
-    """CREATE CONSTRAINT entity_unique IF NOT EXISTS FOR (e:Entity) REQUIRE (e.parent_rcsb_id, e.entity_id) IS NODE KEY;""",
-    
-    # --- TUBE-FIX: Change constraint from auth_asym_id to asym_id ---
-    """CREATE CONSTRAINT instance_unique IF NOT EXISTS FOR (i:Instance) REQUIRE (i.parent_rcsb_id, i.asym_id) IS NODE KEY;""",
-    # -----------------------------------------------------------------
-    
-    """CREATE CONSTRAINT chemical_unique IF NOT EXISTS FOR (c:Chemical) REQUIRE c.chemical_id IS UNIQUE;""",
-    """CREATE CONSTRAINT taxid_unique IF NOT EXISTS FOR (phylonode:PhylogenyNode) REQUIRE phylonode.ncbi_tax_id IS UNIQUE;""",
-    """CREATE CONSTRAINT ma_unique IF NOT EXISTS FOR (a:MasterAlignment) REQUIRE (a.family, a.version) IS NODE KEY;""",
-    """CREATE CONSTRAINT mutation_unique IF NOT EXISTS FOR (m:Mutation) REQUIRE (m.master_index, m.uniprot_id, m.from_residue, m.to_residue) IS NODE KEY;""",
+    # Structure
+    "CREATE CONSTRAINT rcsb_id_unique IF NOT EXISTS FOR (s:Structure) REQUIRE s.rcsb_id IS UNIQUE;",
+    # Entity (unique per structure)
+    "CREATE CONSTRAINT entity_unique IF NOT EXISTS FOR (e:Entity) REQUIRE (e.parent_rcsb_id, e.entity_id) IS NODE KEY;",
+    # Instance (unique per structure by asym_id)
+    "CREATE CONSTRAINT instance_unique IF NOT EXISTS FOR (i:Instance) REQUIRE (i.parent_rcsb_id, i.asym_id) IS NODE KEY;",
+    # Chemical (global)
+    "CREATE CONSTRAINT chemical_unique IF NOT EXISTS FOR (c:Chemical) REQUIRE c.chemical_id IS UNIQUE;",
+    # Phylogeny
+    "CREATE CONSTRAINT taxid_unique IF NOT EXISTS FOR (p:PhylogenyNode) REQUIRE p.ncbi_tax_id IS UNIQUE;",
+    # Variant indexes for querying
+    "CREATE INDEX variant_master_idx IF NOT EXISTS FOR (v:Variant) ON (v.master_index);",
+    "CREATE INDEX variant_type_idx IF NOT EXISTS FOR (v:Variant) ON (v.type);",
+    "CREATE INDEX variant_source_idx IF NOT EXISTS FOR (v:Variant) ON (v.source);",
+    # Substitution-specific index for common queries
+    "CREATE INDEX substitution_positions IF NOT EXISTS FOR (v:Substitution) ON (v.master_index, v.wild_type, v.observed);",
 ]
 
 
@@ -70,7 +66,6 @@ class Neo4jAdapter:
     driver: Driver
     uri: str
     user: str
-    databases: list[str]
 
     def __init__(
         self,
@@ -86,290 +81,281 @@ class Neo4jAdapter:
             self.driver = GraphDatabase.driver(
                 uri, auth=(user, password), database=current_db
             )
-        except Exception as ae:
-            print(ae)
-            raise ae
+        except Exception as e:
+            print(f"Failed to connect to Neo4j: {e}")
+            raise
+
+    def close(self):
+        self.driver.close()
+
+    # =========================================================================
+    # Initialization
+    # =========================================================================
 
     def initialize_new_instance(self):
+        """Set up constraints and seed phylogeny tree."""
         self.init_constraints()
         self.init_phylogenies()
 
     def init_constraints(self) -> None:
         with self.driver.session() as session:
-            for c in NODE_CONSTRAINTS:
-                session.execute_write(lambda tx: tx.run(c))
-                print("\nAdded constraint: ", c)
-
-    def add_phylogeny_node(self, taxid: int):
-        with self.driver.session() as session:
-            node = session.execute_write(
-                node__phylogeny(PhylogenyNode.from_taxid(taxid))
-            )
-            return node
+            for constraint in NODE_CONSTRAINTS:
+                try:
+                    session.execute_write(lambda tx, c=constraint: tx.run(c))
+                    print(f"Applied: {constraint[:60]}...")
+                except Exception as e:
+                    print(f"Skipped (may exist): {constraint[:40]}... ({e})")
 
     def init_phylogenies(self):
+        """Seed phylogeny tree from all profiles on disk."""
         taxa = GlobalOps.collect_all_taxa()
+        print(f"Seeding {len(taxa)} taxa into phylogeny tree...")
         for taxon in taxa:
             self._create_lineage(taxon.ncbi_tax_id)
 
     def _create_lineage(self, taxid: int) -> None:
-        lin = Taxid.get_lineage(taxid)
-        lin.reverse()
+        """Create full lineage path for a taxid."""
+        lineage = Taxid.get_lineage(taxid)
+        lineage.reverse()  # Root to leaf order
+
         previous_id: int | None = None
         with self.driver.session() as session:
-            for taxid in lin:
-                node = session.execute_write(
-                    node__phylogeny(PhylogenyNode.from_taxid(taxid))
-                )
-                if previous_id is None:
-                    previous_id = taxid
-                    continue
-                session.execute_write(link__phylogeny(taxid, previous_id))
-                previous_id = taxid
-        return
+            for tid in lineage:
+                session.execute_write(node__phylogeny(PhylogenyNode.from_taxid(tid)))
+                if previous_id is not None:
+                    session.execute_write(link__phylogeny(tid, previous_id))
+                previous_id = tid
 
-    def link_structure_to_phylogeny(
-            self, rcsb_id: str, profile: TubulinStructure | None = None, verbose: bool = False
-        ):
-            rcsb_id = rcsb_id.upper()
-            
-            # Avoid variable shadowing
-            _profile = profile
-            if _profile is None:
-                _profile = TubulinStructureAssets(rcsb_id).profile()
-
-            # --- SIMPLIFIED LOGIC (Using Restored Root Fields) ---
-            # Since we restored src_organism_ids/host_organism_ids to the TubulinStructure root,
-            # we can access them directly. This bypasses the entity loop and the Pylance errors.
-            
-            host_ids = _profile.host_organism_ids
-            src_ids = _profile.src_organism_ids
-            
-            with self.driver.session() as s:
-                # Handle host organisms
-                for organism_host in host_ids:
-                    self._create_lineage(organism_host)
-                    s.execute_write(
-                        link__structure_to_organism(rcsb_id, organism_host, "host")
-                    )
-                    # Link full lineage
-                    for org in Taxid.get_lineage(organism_host):
-                        s.execute_write(
-                            link__structure_to_lineage_member(
-                                rcsb_id, org, "belongs_to_lineage_host"
-                            )
-                        )
-                
-                # Handle source organisms
-                for organism_src in src_ids:
-                    self._create_lineage(organism_src)
-                    s.execute_write(
-                        link__structure_to_organism(rcsb_id, organism_src, "source")
-                    )
-                    # Link full lineage
-                    for org in Taxid.get_lineage(organism_src):
-                        s.execute_write(
-                            link__structure_to_lineage_member(
-                                rcsb_id, org, "belongs_to_lineage_source"
-                            )
-                        )
+    # =========================================================================
+    # Structure Existence Check
+    # =========================================================================
 
     def check_structure_exists(self, rcsb_id: str) -> bool:
         rcsb_id = rcsb_id.upper()
         with self.driver.session() as session:
             return session.execute_read(struct_exists(rcsb_id))
 
-    def process_entity_mutations(
-                self, 
-                entity: PolypeptideEntity, 
-                entity_node_element_id: str,
-                parent_rcsb_id: str
-            ):
-                if not entity.mutations:
-                    return
-                    
-                with self.driver.session() as s:
-                    for mut in entity.mutations:
-                        # MERGE mutation node (Global)
-                        mut_node = s.execute_write(node__mutation(mut))
-                        
-                        # Link Entity instance to the Mutation
-                        s.execute_write(lambda tx: tx.run("""
-                            MATCH (m:Mutation) WHERE ELEMENTID(m) = $mut_id
-                            MATCH (e:Entity)   WHERE ELEMENTID(e) = $ent_id
-                            MERGE (e)-[:HAS_MUTATION]->(m)
-                            """, {
-                                "mut_id": mut_node.element_id,
-                                "ent_id": entity_node_element_id
-                            }))
-
-    # --- Main ETL Function ---
-
-
-    # Inside Neo4jAdapter class in db_lib_builder.py
-
-    from lib.types import LigandNeighborhood
-
-    def process_ligand_interactions(self, rcsb_id: str):
-        """Iterates through ligand files and pushes them to Neo4j."""
-        assets = TubulinStructureAssets(rcsb_id)
-        neighborhood_files = assets.paths.all_ligand_neighborhoods()
-        
-        with self.driver.session() as s:
-            for filepath in neighborhood_files:
-                try:
-                    with open(filepath, 'r') as f:
-                        raw_data = json.load(f)
-                        # The updated LigandNeighborhood.from_raw handles the array/dict distinction
-                        neighborhood = LigandNeighborhood.from_raw(raw_data)
-                        s.execute_write(node__ligand_interactions(rcsb_id, neighborhood))
-                except Exception as e:
-                    print(f"  ⚠️ Error processing interactions in {filepath}: {e}")
-
-    # Then update add_total_structure to call it at the end:
-    # ... inside add_total_structure ...
+    # =========================================================================
+    # Main Ingestion (backwards compatible name)
+    # =========================================================================
 
     def add_total_structure(self, rcsb_id: str, disable_exists_check: bool = False):
+        """
+        Ingest a structure into the database.
+
+        Args:
+            rcsb_id: PDB ID
+            disable_exists_check: If True, delete existing structure first (upsert behavior)
+        """
         rcsb_id = rcsb_id.upper()
+        print(f"\n{'=' * 60}")
+        print(f"Ingesting {rcsb_id}")
+        print(f"{'=' * 60}")
 
-        print(f"Processing {rcsb_id}...")
-
-        if not disable_exists_check:
-            if self.check_structure_exists(rcsb_id):
-                print(f"Structure {rcsb_id} already exists.")
+        # Check existence
+        if self.check_structure_exists(rcsb_id):
+            if disable_exists_check:
+                print(f"  Deleting existing structure...")
+                self.delete_structure(rcsb_id)
+            else:
+                print(f"  Structure already exists, skipping.")
                 return
 
-        # 1. EXTRACT - Load the profile
-        S: TubulinStructure = TubulinStructureAssets(rcsb_id).profile()
+        # Load profile
+        try:
+            profile: TubulinStructure = TubulinStructureAssets(rcsb_id).profile()
+        except FileNotFoundError:
+            print(f"  ERROR: Profile not found for {rcsb_id}")
+            return
 
         with self.driver.session() as s:
-            # 2. CREATE STRUCTURE NODE
+            # 1. Create Structure node
             print(f"  Creating Structure node...")
-            structure_node = s.execute_write(node__structure(S))
+            s.execute_write(node__structure(profile))
 
-            # 3. LINK TO PHYLOGENY
+            # 2. Link to phylogeny
             print(f"  Linking to phylogeny...")
-            self.link_structure_to_phylogeny(rcsb_id, S)
+            self._link_structure_to_phylogeny(s, rcsb_id, profile)
 
-            # 4. PROCESS ENTITIES (The Blueprints)
-            # We iterate the entities dictionary from the profile
-            print(f"  Processing {len(S.entities)} entities...")
+            # 3. Process entities
+            print(f"  Processing {len(profile.entities)} entities...")
+            entity_ids_created = set()
 
-            # Keep track of created entity IDs to ensure successful creation
-            created_entities = set()
-
-            for entity_id, entity in S.entities.items():
+            for entity_id, entity in profile.entities.items():
                 if isinstance(entity, NonpolymerEntity):
-                    # 4a. Ligand: Ensure Global Chemical -> Create Local Entity
-                    s.execute_write(node__chemical(entity))
-                    e_node = s.execute_write(node__nonpolymer_entity(entity, S.rcsb_id))
-                    s.execute_write(link__entity_to_structure(e_node, S.rcsb_id))
-                    created_entities.add(entity_id)
-
+                    self._process_nonpolymer_entity(s, entity, rcsb_id)
                 elif isinstance(entity, PolypeptideEntity):
-                    # 4b. Polypeptide: Create Entity -> Process Mutations
-                    e_node = s.execute_write(
-                        node__polypeptide_entity(entity, S.rcsb_id)
-                    )
-                    s.execute_write(link__entity_to_structure(e_node, S.rcsb_id))
-
-                    if entity.mutations:
-                        self.process_entity_mutations(
-                            entity, e_node.element_id, S.rcsb_id
-                        )
-                    created_entities.add(entity_id)
-
+                    self._process_polypeptide_entity(s, entity, rcsb_id)
                 elif isinstance(entity, PolynucleotideEntity):
-                    # 4c. Polynucleotide: Create Entity
-                    e_node = s.execute_write(
-                        node__polynucleotide_entity(entity, S.rcsb_id)
+                    self._process_polynucleotide_entity(s, entity, rcsb_id)
+
+                entity_ids_created.add(entity_id)
+
+            # 4. Process instances
+            print(f"  Processing instances...")
+            self._process_instances(s, profile, entity_ids_created)
+
+            # 5. Process binding sites
+            if profile.ligand_binding_sites:
+                print(
+                    f"  Processing {len(profile.ligand_binding_sites)} binding sites..."
+                )
+                count = s.execute_write(
+                    process_all_binding_sites(rcsb_id, profile.ligand_binding_sites)
+                )
+                print(f"    Created {count} NEAR_POLYMER relationships")
+
+        print(f"  Done: {rcsb_id}")
+
+    def _link_structure_to_phylogeny(
+        self, session, rcsb_id: str, profile: TubulinStructure
+    ):
+        """Link structure to source and host organisms."""
+        # Source organisms
+        for org_id in profile.src_organism_ids:
+            self._create_lineage(org_id)
+            session.execute_write(
+                link__structure_to_organism(rcsb_id, org_id, "source")
+            )
+            for lineage_id in Taxid.get_lineage(org_id):
+                session.execute_write(
+                    link__structure_to_lineage_member(
+                        rcsb_id, lineage_id, "belongs_to_lineage_source"
                     )
-                    s.execute_write(link__entity_to_structure(e_node, S.rcsb_id))
-                    created_entities.add(entity_id)
+                )
 
-            # 5. PROCESS INSTANCES (The Physical Copies)
-            # These link to the Entities created above
+        # Host organisms
+        for org_id in profile.host_organism_ids:
+            self._create_lineage(org_id)
+            session.execute_write(link__structure_to_organism(rcsb_id, org_id, "host"))
+            for lineage_id in Taxid.get_lineage(org_id):
+                session.execute_write(
+                    link__structure_to_lineage_member(
+                        rcsb_id, lineage_id, "belongs_to_lineage_host"
+                    )
+                )
 
-            print(f"  Processing {len(S.polypeptides)} polypeptide instances...")
-            for instance in S.polypeptides:
-                if instance.entity_id in created_entities:
-                    i_node = s.execute_write(node__polymer_instance(instance))
-                    s.execute_write(link__instance_to_structure(i_node, S.rcsb_id))
+    def _process_nonpolymer_entity(
+        self, session, entity: NonpolymerEntity, rcsb_id: str
+    ):
+        """Process a nonpolymer (ligand) entity."""
+        # Ensure global Chemical node exists
+        session.execute_write(node__chemical(entity))
+        # Create entity node
+        e_node = session.execute_write(node__nonpolymer_entity(entity, rcsb_id))
+        # Link to structure
+        session.execute_write(link__entity_to_structure(e_node, rcsb_id))
 
-            print(f"  Processing {len(S.polynucleotides)} polynucleotide instances...")
-            for instance in S.polynucleotides:
-                if instance.entity_id in created_entities:
-                    i_node = s.execute_write(node__polymer_instance(instance))
-                    s.execute_write(link__instance_to_structure(i_node, S.rcsb_id))
+    def _process_polypeptide_entity(
+        self, session, entity: PolypeptideEntity, rcsb_id: str
+    ):
+        """Process a polypeptide entity with variants."""
+        # Create entity node (includes index mappings)
+        e_node = session.execute_write(node__polypeptide_entity(entity, rcsb_id))
+        # Link to structure
+        session.execute_write(link__entity_to_structure(e_node, rcsb_id))
 
-            print(f"  Processing {len(S.nonpolymers)} nonpolymer instances...")
-            for instance in S.nonpolymers:
-                if instance.entity_id in created_entities:
-                    i_node = s.execute_write(node__nonpolymer_instance(instance))
-                    s.execute_write(link__instance_to_structure(i_node, S.rcsb_id))
+        # Create variant nodes
+        if entity.variants:
+            count = session.execute_write(
+                lambda tx: create_variants_for_entity(
+                    tx, entity.variants, rcsb_id, entity.entity_id
+                )
+            )
+            if count > 0:
+                print(f"    Entity {entity.entity_id}: {count} variants")
 
-        print(f"  Processing Ligand Interactions...")
-        self.process_ligand_interactions(rcsb_id)
-        
-        return structure_node
+    def _process_polynucleotide_entity(
+        self, session, entity: PolynucleotideEntity, rcsb_id: str
+    ):
+        """Process a polynucleotide entity."""
+        e_node = session.execute_write(node__polynucleotide_entity(entity, rcsb_id))
+        session.execute_write(link__entity_to_structure(e_node, rcsb_id))
 
-    def delete_structure(self, rcsb_id: str, dry_run: bool = False) -> dict[str, int]:
+    def _process_instances(self, session, profile: TubulinStructure, entity_ids: set):
+        """Process all physical instances."""
+        # Polypeptides
+        for instance in profile.polypeptides:
+            if instance.entity_id in entity_ids:
+                i_node = session.execute_write(node__polymer_instance(instance))
+                session.execute_write(
+                    link__instance_to_structure(i_node, profile.rcsb_id)
+                )
+
+        # Polynucleotides
+        for instance in profile.polynucleotides:
+            if instance.entity_id in entity_ids:
+                i_node = session.execute_write(node__polymer_instance(instance))
+                session.execute_write(
+                    link__instance_to_structure(i_node, profile.rcsb_id)
+                )
+
+        # Nonpolymers
+        for instance in profile.nonpolymers:
+            if instance.entity_id in entity_ids:
+                i_node = session.execute_write(node__nonpolymer_instance(instance))
+                session.execute_write(
+                    link__instance_to_structure(i_node, profile.rcsb_id)
+                )
+
+    # =========================================================================
+    # Deletion
+    # =========================================================================
+
+    def delete_structure(self, rcsb_id: str) -> None:
+        """
+        Delete a structure and all its entities/instances/variants.
+        Does NOT delete shared nodes (Chemical, PhylogenyNode).
+        """
         rcsb_id = rcsb_id.upper()
 
-        # TUBE-UPDATE: Updated delete logic for new schema
         query = """
         MATCH (s:Structure {rcsb_id: $rcsb_id})
-        
-        // 1. Get Instances linked to Structure
-        OPTIONAL MATCH (s)-[r_inst_s]->(i:Instance)
-        
-        // 2. Get Entities linked to Structure
-        OPTIONAL MATCH (s)-[r_ent_s]->(e:Entity)
-        
-        // 3. Get relationships between Instance and Entity
-        OPTIONAL MATCH (i)-[r_inst_ent]->(e)
-        
-        // 4. Get Mutations linked to Entities (don't delete mutation nodes themselves if shared, 
-        //    but here mutations are unique to the entity's context usually, or shared via merge.
-        //    In this schema, mutations are unique nodes but linked to specific entities.
-        //    We detach the entity.)
-        
-        // 5. Get relationships to Chemicals (don't delete Chemical node)
-        OPTIONAL MATCH (e)-[r_def_chem]->(c:Chemical)
 
-        WITH s, 
-             collect(DISTINCT i) as instances,
-             collect(DISTINCT e) as entities,
-             collect(DISTINCT r_inst_s) as rels_inst_struct,
-             collect(DISTINCT r_ent_s) as rels_ent_struct,
-             collect(DISTINCT r_inst_ent) as rels_inst_ent,
-             collect(DISTINCT r_def_chem) as rels_def_chem
+        // Get all entities
+        OPTIONAL MATCH (s)-[:DEFINES_ENTITY]->(e:Entity)
 
-        // Delete relationships
-        FOREACH (r IN rels_inst_struct | DELETE r)
-        FOREACH (r IN rels_ent_struct | DELETE r)
-        FOREACH (r IN rels_inst_ent | DELETE r)
-        FOREACH (r IN rels_def_chem | DELETE r)
-        
-        // Delete nodes (Entities and Instances are scoped to this structure, so safe to delete)
-        FOREACH (i IN instances | DETACH DELETE i)
-        FOREACH (e IN entities | DETACH DELETE e)
-        
+        // Get all instances
+        OPTIONAL MATCH (s)-[:HAS_INSTANCE]->(i:Instance)
+
+        // Get all variants linked to polypeptide entities
+        OPTIONAL MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+
+        // Detach and delete variants
+        DETACH DELETE v
+
+        // Detach and delete instances
+        DETACH DELETE i
+
+        // Detach and delete entities
+        DETACH DELETE e
+
         // Finally delete structure
         DETACH DELETE s
-        
-        RETURN 1 as deleted
         """
 
         with self.driver.session() as session:
-            if not self.check_structure_exists(rcsb_id):
-                raise ValueError(f"Structure {rcsb_id} does not exist in database")
+            session.execute_write(lambda tx: tx.run(query, {"rcsb_id": rcsb_id}))
+            print(f"Deleted structure {rcsb_id}")
+
+    # =========================================================================
+    # Bulk Operations
+    # =========================================================================
+
+    def add_all_structures(self, overwrite: bool = False) -> None:
+        """Ingest all structures from disk profiles."""
+        profiles = GlobalOps.list_profiles()
+        print(f"Found {len(profiles)} profiles to ingest")
+
+        for rcsb_id in sorted(profiles):
             try:
-                result = session.execute_write(
-                    lambda tx: tx.run(query, rcsb_id=rcsb_id).single()
-                )
-                print(f"Deleted structure {rcsb_id}")
-                return {"deleted": result["deleted"]}
+                self.add_total_structure(rcsb_id, disable_exists_check=overwrite)
             except Exception as e:
-                print(f"Error deleting structure {rcsb_id}: {str(e)}")
-                raise
+                print(f"  ERROR processing {rcsb_id}: {e}")
+                continue
+
+    def get_all_structure_ids(self) -> List[str]:
+        """Get all structure IDs in the database."""
+        with self.driver.session() as session:
+            result = session.run("MATCH (s:Structure) RETURN collect(s.rcsb_id) AS ids")
+            return result.single()["ids"]

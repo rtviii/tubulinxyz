@@ -1,12 +1,12 @@
+# lib/etl/sequence_alignment.py
 """
 Sequence alignment against family Master Alignments.
 """
 
-import json
 import subprocess
 import tempfile
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -17,10 +17,8 @@ from lib.types import (
     TubulinFamily,
     ObservedSequenceData,
     IndexMappingData,
-    MutationRecord,
-    InsertionRecord,
-    DeletionRecord,
-    MutationsAndIndels,
+    SequenceVariant,
+    VariantType,
 )
 
 
@@ -34,32 +32,20 @@ class AlignmentResult:
     entity_id: str
 
     index_mapping: IndexMappingData
-
-    mutations: List[MutationRecord]
-    insertions: List[InsertionRecord]
-    deletions: List[DeletionRecord]
-
-    stats: Dict[str, Any]
+    variants: List[SequenceVariant] = field(default_factory=list)
+    stats: Dict[str, Any] = field(default_factory=dict)
 
     @property
-    def variants(self) -> List:
-        """Bridge to SequenceVariant format for collector compatibility."""
-        from lib.types import SequenceVariant
-        result = []
-        for m in self.mutations:
-            result.append(SequenceVariant.substitution(
-                m.master_index, m.observed_index, m.wild_type, m.observed
-            ))
-        for i in self.insertions:
-            result.append(SequenceVariant.insertion(i.observed_index, i.residue))
-        for d in self.deletions:
-            result.append(SequenceVariant.deletion(d.master_index, d.expected_residue))
-        return result
+    def substitutions(self) -> List[SequenceVariant]:
+        return [v for v in self.variants if v.type == VariantType.SUBSTITUTION]
 
     @property
-    def substitutions(self) -> List[MutationRecord]:
-        """Alias for mutations (collector uses this name in logging)."""
-        return self.mutations
+    def insertions(self) -> List[SequenceVariant]:
+        return [v for v in self.variants if v.type == VariantType.INSERTION]
+
+    @property
+    def deletions(self) -> List[SequenceVariant]:
+        return [v for v in self.variants if v.type == VariantType.DELETION]
 
 
 class ConsensusCalculator:
@@ -174,7 +160,6 @@ class SequenceAligner:
 
             return str(alignment[0].seq), str(target_record.seq)
 
-
         finally:
             seq_temp.unlink(missing_ok=True)
             out_temp.unlink(missing_ok=True)
@@ -199,9 +184,7 @@ class SequenceAligner:
             i + 1: None for i in range(ref_len)
         }
 
-        mutations: List[MutationRecord] = []
-        insertions: List[InsertionRecord] = []
-        deletions: List[DeletionRecord] = []
+        variants: List[SequenceVariant] = []
 
         master_idx = 0  # 0-based index into consensus
         target_idx = 0  # index into sequence/auth_seq_ids
@@ -212,10 +195,11 @@ class SequenceAligner:
                 if t_char != "-" and target_idx < len(auth_seq_ids):
                     auth_id = auth_seq_ids[target_idx]
                     observed_to_master[auth_id] = None  # No MA position
-                    insertions.append(
-                        InsertionRecord(
+                    variants.append(
+                        SequenceVariant.insertion(
                             observed_index=auth_id,
                             residue=t_char,
+                            source="structural",
                         )
                     )
                     target_idx += 1
@@ -225,10 +209,11 @@ class SequenceAligner:
                 ma_pos = master_idx + 1
                 expected = self.consensus.get_residue(master_idx)
                 if expected not in ("-", "?"):
-                    deletions.append(
-                        DeletionRecord(
+                    variants.append(
+                        SequenceVariant.deletion(
                             master_index=ma_pos,
-                            expected_residue=expected,
+                            expected=expected,
+                            source="structural",
                         )
                     )
                 master_idx += 1
@@ -242,15 +227,16 @@ class SequenceAligner:
                     observed_to_master[auth_id] = ma_pos
                     master_to_observed[ma_pos] = auth_id
 
-                    # Check for mutation
+                    # Check for substitution
                     wild_type = self.consensus.get_residue(master_idx)
                     if wild_type not in ("-", "?") and t_char != wild_type:
-                        mutations.append(
-                            MutationRecord(
+                        variants.append(
+                            SequenceVariant.substitution(
                                 master_index=ma_pos,
                                 observed_index=auth_id,
                                 wild_type=wild_type,
                                 observed=t_char,
+                                source="structural",
                             )
                         )
 
@@ -264,15 +250,18 @@ class SequenceAligner:
         )
 
         coverage = sum(1 for v in master_to_observed.values() if v is not None)
+        substitution_count = sum(1 for v in variants if v.type == VariantType.SUBSTITUTION)
+        insertion_count = sum(1 for v in variants if v.type == VariantType.INSERTION)
+        deletion_count = sum(1 for v in variants if v.type == VariantType.DELETION)
 
         stats = {
             "alignment_length": len(sequence),
             "master_alignment_length": ref_len,
             "ma_coverage": coverage,
             "ma_coverage_pct": round(100 * coverage / ref_len, 1) if ref_len > 0 else 0,
-            "insertions": len(insertions),
-            "deletions": len(deletions),
-            "mutations": len(mutations),
+            "insertions": insertion_count,
+            "deletions": deletion_count,
+            "substitutions": substitution_count,
         }
 
         return AlignmentResult(
@@ -281,26 +270,24 @@ class SequenceAligner:
             auth_asym_id=auth_asym_id,
             entity_id=entity_id,
             index_mapping=index_mapping,
-            mutations=mutations,
-            insertions=insertions,
-            deletions=deletions,
+            variants=variants,
             stats=stats,
         )
 
 
 def get_aligner_for_family(family: TubulinFamily, project_root: Path) -> SequenceAligner:
     muscle_path = project_root / "muscle3.8.1"
-    
+
     family_file_map = {
-        TubulinFamily.ALPHA  : "/Users/rtviii/dev/tubulinxyz/data/alpha_tubulin/alpha_tubulin.afasta",
-        TubulinFamily.BETA   : "/Users/rtviii/dev/tubulinxyz/data/beta_tubulin/beta_tubulin.afasta",
-        TubulinFamily.GAMMA  : "/Users/rtviii/dev/tubulinxyz/data/gamma_tubulin/tubulin_gamma_clean.afasta",
-        TubulinFamily.DELTA  : "/Users/rtviii/dev/tubulinxyz/data/delta_tubulin/tubulin_delta_clean.afasta",
+        TubulinFamily.ALPHA: "/Users/rtviii/dev/tubulinxyz/data/alpha_tubulin/alpha_tubulin.afasta",
+        TubulinFamily.BETA: "/Users/rtviii/dev/tubulinxyz/data/beta_tubulin/beta_tubulin.afasta",
+        TubulinFamily.GAMMA: "/Users/rtviii/dev/tubulinxyz/data/gamma_tubulin/tubulin_gamma_clean.afasta",
+        TubulinFamily.DELTA: "/Users/rtviii/dev/tubulinxyz/data/delta_tubulin/tubulin_delta_clean.afasta",
         TubulinFamily.EPSILON: "/Users/rtviii/dev/tubulinxyz/data/epsilon_tubulin/tubulin_epsilon_clean.afasta",
     }
-    
+
     msa_path = family_file_map.get(family)
     if not msa_path:
         raise ValueError(f"No MSA configured for family: {family}")
-    
+
     return SequenceAligner(Path(msa_path), muscle_path)

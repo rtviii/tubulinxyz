@@ -1,85 +1,23 @@
-# types_tubulin.py
-from typing import Dict, Optional, List, Literal, Tuple, Union, Any
+# lib/types.py
+"""
+Core type definitions for the tubulin ETL pipeline and database.
+"""
 
+import json
+from typing import Dict, Optional, List, Literal, Union, Any
 from enum import Enum
-from pydantic import BaseModel, Field, computed_field
-from enum import Enum
-from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq
 from pydantic import BaseModel, Field
+
+
+# ============================================================
+# Enums
+# ============================================================
 
 
 class VariantType(str, Enum):
     SUBSTITUTION = "substitution"
     INSERTION = "insertion"
     DELETION = "deletion"
-
-
-class SequenceVariant(BaseModel):
-    """
-    A sequence variant detected by alignment to the family consensus.
-    
-    Covers substitutions, insertions, and deletions in one type.
-    """
-    type: VariantType
-    
-    # For substitutions and deletions: the MA position (1-based)
-    # For insertions: None (no MA position exists)
-    master_index: Optional[int] = None
-    
-    # For substitutions and insertions: the auth_seq_id in the structure
-    # For deletions: None (residue doesn't exist in structure)
-    observed_index: Optional[int] = None
-    
-    # For substitutions: wild_type -> observed
-    # For insertions: observed only (wild_type is None)
-    # For deletions: wild_type only (observed is None)
-    wild_type: Optional[str] = None
-    observed: Optional[str] = None
-    
-    @classmethod
-    def substitution(cls, master_index: int, observed_index: int, wild_type: str, observed: str):
-        return cls(
-            type=VariantType.SUBSTITUTION,
-            master_index=master_index,
-            observed_index=observed_index,
-            wild_type=wild_type,
-            observed=observed,
-        )
-    
-    @classmethod
-    def insertion(cls, observed_index: int, residue: str):
-        return cls(
-            type=VariantType.INSERTION,
-            observed_index=observed_index,
-            observed=residue,
-        )
-    
-    @classmethod
-    def deletion(cls, master_index: int, expected: str):
-        return cls(
-            type=VariantType.DELETION,
-            master_index=master_index,
-            wild_type=expected,
-        )
-
-
-# ============================================================
-# Index Mapping 
-# ============================================================
-
-class IndexMappingData(BaseModel):
-    """Bidirectional mapping between observed (auth_seq_id) and master alignment indices."""
-    observed_to_master: Dict[int, Optional[int]]  # auth_seq_id -> MA index (1-based) or None
-    master_to_observed: Dict[int, Optional[int]]  # MA index (1-based) -> auth_seq_id or None
-    
-    def get_master_index(self, auth_seq_id: int) -> Optional[int]:
-        return self.observed_to_master.get(auth_seq_id)
-    
-    def get_observed_index(self, master_index: int) -> Optional[int]:
-        return self.master_to_observed.get(master_index)
-
-
 
 
 class TubulinFamily(str, Enum):
@@ -91,10 +29,7 @@ class TubulinFamily(str, Enum):
 
 
 class MapFamily(str, Enum):
-    """
-    Microtubule Associated Proteins (MAPs) and related enzymes.
-    Values correspond to the filename base.
-    """
+    """Microtubule Associated Proteins (MAPs) and related enzymes."""
 
     ATAT1 = "map_atat1"
     CAMSAP1 = "map_camsap1"
@@ -138,194 +73,197 @@ class MapFamily(str, Enum):
 
 PolymerClass = Union[TubulinFamily, MapFamily]
 
-# --- Ligand Interaction Models ---
+
+class ModificationType(str, Enum):
+    ACETYLATION = "acetylation"
+    PHOSPHORYLATION = "phosphorylation"
+    METHYLATION = "methylation"
+    UBIQUITINATION = "ubiquitination"
+    SUMOYLATION = "sumoylation"
+    PALMITOYLATION = "palmitoylation"
+    NITROSYLATION = "nitrosylation"
+    GLUTAMYLATION = "glutamylation"
+    GLYCYLATION = "glycylation"
+    TYROSINATION = "tyrosination"
+    DETYROSINATION = "detyrosination"
 
 
-class InteractionType(str, Enum):
-    UNKNOWN = "Unknown"
-    IONIC = "Ionic"
-    CATION_PI = "Cation-Pi Interaction"
-    PI_STACKING = "Pi Stacking"
-    HYDROGEN_BOND = "Hydrogen Bond"
-    HALOGEN_BOND = "Halogen Bond"
-    HYDROPHOBIC = "Hydrophobic Contact"
-    METAL_COORDINATION = "Metal Coordination"
-    WEAK_HYDROGEN_BOND = "Weak Hydrogen Bond"
+# ============================================================
+# Index Mapping
+# ============================================================
 
 
-class InteractionParticipant(BaseModel):
-    """An atom participating in an interaction."""
+class IndexMappingData(BaseModel):
+    """Bidirectional mapping between observed (auth_seq_id) and master alignment indices."""
 
-    auth_asym_id: str
-    auth_seq_id: int
-    auth_comp_id: str
-    atom_id: str
-    is_ligand: bool
-    master_index: Optional[int] = None  # Added field, made optional
+    observed_to_master: Dict[
+        int, Optional[int]
+    ]  # auth_seq_id -> MA index (1-based) or None
+    master_to_observed: Dict[
+        int, Optional[int]
+    ]  # MA index (1-based) -> auth_seq_id or None
 
-    @classmethod
-    def from_tuple(cls, t: list) -> "InteractionParticipant":
-        return cls(
-            auth_asym_id=t[0],
-            auth_seq_id=t[1],
-            auth_comp_id=t[2],
-            atom_id=t[3],
-            is_ligand=t[4],
-            # Safely handle both 5-tuples and 6-tuples
-            master_index=t[5] if len(t) > 5 else None,
-        )
+    def get_master_index(self, auth_seq_id: int) -> Optional[int]:
+        return self.observed_to_master.get(auth_seq_id)
 
-    def to_tuple(self) -> list:
-        """Helper to convert back to the list format for JSON storage."""
-        base = [
-            self.auth_asym_id,
-            self.auth_seq_id,
-            self.auth_comp_id,
-            self.atom_id,
-            self.is_ligand,
-        ]
-        if self.master_index is not None:
-            base.append(self.master_index)
-        return base
+    def get_observed_index(self, master_index: int) -> Optional[int]:
+        return self.master_to_observed.get(master_index)
 
-
-class LigandInteraction(BaseModel):
-    """A single interaction between ligand and polymer."""
-
-    type: str
-    participants: Tuple[InteractionParticipant, InteractionParticipant]
-
-    @classmethod
-    def from_raw(cls, raw: dict) -> "LigandInteraction":
-        return cls(
-            type=raw["type"],
-            participants=(
-                InteractionParticipant.from_tuple(raw["participants"][0]),
-                InteractionParticipant.from_tuple(raw["participants"][1]),
+    def to_json_dict(self) -> Dict[str, str]:
+        """Serialize for Neo4j storage as JSON strings."""
+        return {
+            "observed_to_master_json": json.dumps(
+                {str(k): v for k, v in self.observed_to_master.items()}
             ),
-        )
-
-
-class NeighborResidue(BaseModel):
-    """A residue in the ligand's neighborhood."""
-
-    auth_asym_id: str
-    auth_seq_id: int
-    auth_comp_id: str
-    master_index: Optional[int] = None  # Added
+            "master_to_observed_json": json.dumps(
+                {str(k): v for k, v in self.master_to_observed.items()}
+            ),
+        }
 
     @classmethod
-    def from_tuple(cls, t: list) -> "NeighborResidue":
+    def from_json_dict(cls, data: Dict[str, str]) -> "IndexMappingData":
+        """Deserialize from Neo4j JSON strings."""
         return cls(
-            auth_asym_id=t[0],
-            auth_seq_id=t[1],
-            auth_comp_id=t[2],
-            master_index=t[3] if len(t) > 3 else None,
+            observed_to_master={
+                int(k): v
+                for k, v in json.loads(data["observed_to_master_json"]).items()
+            },
+            master_to_observed={
+                int(k): v
+                for k, v in json.loads(data["master_to_observed_json"]).items()
+            },
         )
 
-    def to_tuple(self) -> list:
-        base = [self.auth_asym_id, self.auth_seq_id, self.auth_comp_id]
-        if self.master_index is not None:
-            base.append(self.master_index)
-        return base
+
+# ============================================================
+# Sequence Variants (Substitutions, Insertions, Deletions)
+# ============================================================
+
+
+class SequenceVariant(BaseModel):
+    """
+    A sequence variant detected by alignment or from literature.
+    Covers substitutions, insertions, and deletions.
+    """
+
+    type: VariantType
+
+    # Source of this annotation: "structural" (from alignment) or "literature"
+    source: str = "structural"
+
+    # For substitutions and deletions: the MA position (1-based)
+    # For insertions: None
+    master_index: Optional[int] = None
+
+    # For substitutions and insertions: the auth_seq_id in the structure
+    # For deletions: None
+    observed_index: Optional[int] = None
+
+    # For substitutions: wild_type -> observed
+    # For insertions: observed only
+    # For deletions: wild_type only
+    wild_type: Optional[str] = None
+    observed: Optional[str] = None
+
+    # Optional metadata (primarily for literature-sourced variants)
+    uniprot_id: Optional[str] = None
+    phenotype: Optional[str] = None
+    reference: Optional[str] = None  # DOI, PMID, or database link
+
+    @classmethod
+    def substitution(
+        cls,
+        master_index: int,
+        observed_index: int,
+        wild_type: str,
+        observed: str,
+        source: str = "structural",
+        **kwargs,
+    ):
+        return cls(
+            type=VariantType.SUBSTITUTION,
+            master_index=master_index,
+            observed_index=observed_index,
+            wild_type=wild_type,
+            observed=observed,
+            source=source,
+            **kwargs,
+        )
+
+    @classmethod
+    def insertion(
+        cls, observed_index: int, residue: str, source: str = "structural", **kwargs
+    ):
+        return cls(
+            type=VariantType.INSERTION,
+            observed_index=observed_index,
+            observed=residue,
+            source=source,
+            **kwargs,
+        )
+
+    @classmethod
+    def deletion(
+        cls, master_index: int, expected: str, source: str = "structural", **kwargs
+    ):
+        return cls(
+            type=VariantType.DELETION,
+            master_index=master_index,
+            wild_type=expected,
+            source=source,
+            **kwargs,
+        )
+
+
+# ============================================================
+# Ligand Binding Sites
+# ============================================================
+
 
 class BindingSiteResidue(BaseModel):
     """A residue in a ligand's binding site."""
+
     auth_asym_id: str
-    observed_index: int        # auth_seq_id
-    comp_id: str               # 3-letter residue code
+    observed_index: int  # auth_seq_id
+    comp_id: str  # 3-letter residue code
     master_index: Optional[int] = None  # 1-based MA index, if mapped
 
+    def to_dict(self) -> Dict[str, Any]:
+        """For Neo4j storage on relationship properties."""
+        return {
+            "auth_asym_id": self.auth_asym_id,
+            "observed_index": self.observed_index,
+            "comp_id": self.comp_id,
+            "master_index": self.master_index,
+        }
 
 
 class LigandBindingSite(BaseModel):
-    """
-    Binding site for a single ligand instance.
-    
-    Stored in the profile under structure.ligand_binding_sites
-    """
+    """Binding site for a single ligand instance."""
+
     ligand_comp_id: str
     ligand_auth_asym_id: str
     ligand_auth_seq_id: int
     residues: List[BindingSiteResidue]
-    
+
     @property
     def residue_count(self) -> int:
         return len(self.residues)
 
+    def residues_for_chain(self, auth_asym_id: str) -> List[BindingSiteResidue]:
+        """Get residues belonging to a specific chain."""
+        return [r for r in self.residues if r.auth_asym_id == auth_asym_id]
 
 
-class LigandNeighborhood(BaseModel):
-    ligand_auth_asym_id: str
-    ligand_auth_seq_id: int
-    ligand_comp_id: str
-    interactions: List[LigandInteraction]
-    neighborhood: List[NeighborResidue]
-
-    @classmethod
-    def from_raw(cls, raw: Any) -> "LigandNeighborhood":
-        # If it's the raw list from Molstar (TSX), take the first entry
-        if isinstance(raw, list):
-            if not raw:
-                raise ValueError("Empty ligand data list.")
-            raw = raw[0]
-
-        # The schema uses the "ligand" key which is [auth_asym_id, auth_seq_id, comp_id]
-        ligand_info = raw["ligand"]
-        return cls(
-            ligand_auth_asym_id=ligand_info[0],
-            ligand_auth_seq_id=ligand_info[1],
-            ligand_comp_id=ligand_info[2],
-            interactions=[LigandInteraction.from_raw(i) for i in raw["interactions"]],
-            neighborhood=[NeighborResidue.from_tuple(n) for n in raw["neighborhood"]],
-        )
-
-
-# --- Enums ---
-class MasterAlignment(BaseModel):
-    """Versioned canonical reference MSA for a tubulin family"""
-
-    version: str
-    family: TubulinFamily
-    fasta_content: str
-    created_date: str
-    description: Optional[str] = None
-
-
-class AlignmentMapping(BaseModel):
-    seqres_to_master: str  # JSON array: list[int] (seqres_idx -> master_idx | -1)
-    master_to_seqres: str  # JSON array: list[int] (master_idx -> seqres_idx | -1)
-
-
-class MutationType(str, Enum):
-    SUBSTITUTION = "substitution"
-    INSERTION = "insertion"
-    DELETION = "deletion"
-
-
-class ModificationType(str, Enum):
-    ACETYLATION     = "acetylation"
-    PHOSPHORYLATION = "phosphorylation"
-    METHYLATION     = "methylation"
-    UBIQUITINATION  = "ubiquitination"
-    SUMOYLATION     = "sumoylation"
-    PALMITOYLATION  = "palmitoylation"
-    NITROSYLATION   = "nitrosylation"
-    GLUTAMYLATION   = "glutamylation"
-    GLYCYLATION     = "glycylation"
-    TYROSINATION    = "tyrosination"
-    DETYROSINATION  = "detyrosination"
-
-
-# --- Support Models ---
+# ============================================================
+# Modifications (PTMs) - for future use
+# ============================================================
 
 
 class Modification(BaseModel):
-    """Post-translational modification from literature/databases"""
+    """Post-translational modification from literature/databases."""
 
     master_index: int
-    utn_position: Optional[int] = None
-
     amino_acid: str
     modification_type: str
 
@@ -340,35 +278,14 @@ class Modification(BaseModel):
     notes: Optional[str] = None
 
 
-class NonpolymericLigand(BaseModel):
-    """Ligand model - unchanged from riboxyz"""
-
-    model_config = {"json_encoders": {Enum: lambda v: v.value}}
-
-    class NonpolymerComp(BaseModel):
-        class Drugbank(BaseModel):
-            class DrugbankInfo(BaseModel):
-                cas_number: Optional[str] = None
-                description: Optional[str] = None
-
-
-class Mutation(BaseModel):
-    master_index: int
-    utn_position: Optional[int] = None
-    from_residue: str
-    to_residue: str
-
-    uniprot_id: str
-    species: str
-    tubulin_type: TubulinFamily
-    phenotype: str
-    database_source: str
-    reference_link: str
-    keywords: str
-    notes: Optional[str] = None
+# ============================================================
+# Chemical / Nonpolymer Types
+# ============================================================
 
 
 class NonpolymerComp(BaseModel):
+    """Drugbank and target info for a chemical."""
+
     class Drugbank(BaseModel):
         class DrugbankInfo(BaseModel):
             cas_number: Optional[str] = None
@@ -391,23 +308,9 @@ class NonpolymerComp(BaseModel):
     rcsb_chem_comp_target: Optional[List[RcsbChemCompTarget]] = None
 
 
-# This one is for db only.
-class ChemicalCompound(BaseModel):
-    """
-    Global chemical identity - shared across all structures.
-    One instance per unique chemical_id in the entire PDB.
-    """
-
-    chemical_id: str  # Primary key: "TAX", "PMM", "GTP"
-    chemical_name: str
-
-    SMILES: Optional[str] = None
-    SMILES_stereo: Optional[str] = None
-    InChI: Optional[str] = None
-    InChIKey: Optional[str] = None
-    formula_weight: Optional[float] = None
-
-    nonpolymer_comp: Optional[NonpolymerComp] = None
+# ============================================================
+# Instance Types (physical copies in a structure)
+# ============================================================
 
 
 class BaseInstance(BaseModel):
@@ -421,6 +324,23 @@ class BaseInstance(BaseModel):
         return hash(self.asym_id + self.parent_rcsb_id)
 
 
+class Polypeptide(BaseInstance):
+    pass
+
+
+class Polynucleotide(BaseInstance):
+    pass
+
+
+class Nonpolymer(BaseInstance):
+    pass
+
+
+# ============================================================
+# Entity Types (blueprints - one per unique sequence/chemical per structure)
+# ============================================================
+
+
 class BaseEntity(BaseModel):
     entity_id: str
     type: Literal["polymer", "non-polymer", "water", "branched"]
@@ -429,31 +349,9 @@ class BaseEntity(BaseModel):
     pdbx_strand_ids: List[str] = []
 
 
-class NonpolymerEntity(BaseEntity):
-    type: Literal["non-polymer"] = "non-polymer"
-
-    # Reference to the shared chemical
-    chemical_id: str
-    chemical_name: str
-
-    pdbx_description: Optional[str] = None
-    formula_weight: Optional[float] = None
-
-    # --- MISSING FIELDS ADDED BELOW ---
-    # These are needed so node_ligand.py can create the Global Chemical Node
-    nonpolymer_comp: Optional[NonpolymerComp] = None
-
-    SMILES: Optional[str] = None
-    SMILES_stereo: Optional[str] = None
-    InChI: Optional[str] = None
-    InChIKey: Optional[str] = None
-
-    num_instances: int = 0
-
-
-
 class PolypeptideEntity(BaseModel):
-    """Polypeptide entity with optional index mappings and variants."""
+    """Polypeptide entity with index mappings and variants."""
+
     type: Literal["polymer"] = "polymer"
     polymer_type: Literal["Protein"] = "Protein"
     entity_id: str
@@ -469,33 +367,29 @@ class PolypeptideEntity(BaseModel):
     src_organism_ids: List[int] = []
     host_organism_ids: List[int] = []
 
-    family: Optional[Union["TubulinFamily", "MapFamily"]] = None
+    family: Optional[PolymerClass] = None
     uniprot_accessions: List[str] = []
 
     # Index mappings (for classified tubulin chains)
     index_mapping: Optional[IndexMappingData] = None
-    
-    # Sequence variants (for classified tubulin chains)
+
+    # Sequence variants
     variants: List[SequenceVariant] = []
-    
+
     # Alignment stats
     alignment_stats: Dict[str, Any] = {}
-    
+
     @property
     def substitutions(self) -> List[SequenceVariant]:
         return [v for v in self.variants if v.type == VariantType.SUBSTITUTION]
-    
+
     @property
     def insertions(self) -> List[SequenceVariant]:
         return [v for v in self.variants if v.type == VariantType.INSERTION]
-    
+
     @property
     def deletions(self) -> List[SequenceVariant]:
         return [v for v in self.variants if v.type == VariantType.DELETION]
-
-
-
-
 
 
 class PolynucleotideEntity(BaseEntity):
@@ -508,39 +402,28 @@ class PolynucleotideEntity(BaseEntity):
     src_organism_ids: List[int] = []
 
 
-class Polypeptide(BaseInstance):
-    pass
+class NonpolymerEntity(BaseEntity):
+    type: Literal["non-polymer"] = "non-polymer"
+
+    chemical_id: str
+    chemical_name: str
+
+    pdbx_description: Optional[str] = None
+    formula_weight: Optional[float] = None
+
+    nonpolymer_comp: Optional[NonpolymerComp] = None
+
+    SMILES: Optional[str] = None
+    SMILES_stereo: Optional[str] = None
+    InChI: Optional[str] = None
+    InChIKey: Optional[str] = None
+
+    num_instances: int = 0
 
 
-class Polynucleotide(BaseInstance):
-    pass
-
-
-class Nonpolymer(BaseInstance):
-    """
-    Represents a single nonpolymer instance (one molecule copy) in the structure.
-
-    Inherits from BaseInstance:
-
-        - parent_rcsb_id: str - The PDB ID (e.g., "6WVR")
-        - auth_asym_id  : str - Author chain ID (e.g., "E")
-        - asym_id       : str - Internal chain ID (e.g., "E")
-        - entity_id     : str - References the NonpolymerEntity (e.g., "4")
-        - assembly_id   : int - Which biological assembly (e.g., 1)
-
-    Example:
-        Three Taxol molecules in 6WVR would create three Nonpolymer instances,
-        all pointing to the same NonpolymerEntity (which points to the same
-        ChemicalCompound).
-    """
-
-    # Currently no additional fields beyond BaseInstance
-    # Could add instance-specific data later if needed:
-    # occupancy: Optional[float] = None
-    # b_factor: Optional[float] = None
-
-
-# --- 3. STRUCTURE ROOT ---
+# ============================================================
+# Structure Root
+# ============================================================
 
 
 class AssemblyInstancesMap(BaseModel):
@@ -556,6 +439,7 @@ class AssemblyInstancesMap(BaseModel):
 
 class RCSBStructureMetadata(BaseModel):
     model_config = {"json_encoders": {Enum: lambda v: v.value}}
+
     rcsb_id: str
     expMethod: str
     resolution: float
@@ -573,7 +457,6 @@ class RCSBStructureMetadata(BaseModel):
     citation_title: Optional[str] = None
     citation_pdbx_doi: Optional[str] = None
 
-    # --- RESTORED FIELDS ---
     src_organism_ids: List[int] = []
     src_organism_names: List[str] = []
     host_organism_ids: List[int] = []
@@ -591,93 +474,16 @@ class TubulinStructure(RCSBStructureMetadata):
 
     assembly_map: Optional[List[AssemblyInstancesMap]] = None
     ligand_binding_sites: List[LigandBindingSite] = []
-    
+
     polymerization_state: Optional[
         Literal["monomer", "dimer", "oligomer", "filament", "unknown"]
     ] = None
 
 
-class MutationEntryData(BaseModel):
-    """Mutation entry as stored in sequence ingestion results."""
-
-    ma_position: int
-    wild_type: str
-    observed: str
-    pdb_auth_id: int
-
-
-
 # ============================================================
-# Index Mapping Types
+# Molstar Extraction Types
 # ============================================================
 
-
-# ============================================================
-# Mutation / Indel Types
-# ============================================================
-
-class MutationRecord(BaseModel):
-    """A point mutation detected by alignment to consensus."""
-    master_index  : int  # 1-based MA position
-    observed_index: int  # auth_seq_id in structure
-    wild_type     : str  # Consensus residue
-    observed      : str  # Actual residue in structure
-    
-    
-class InsertionRecord(BaseModel):
-    """An insertion (residue in structure not in master alignment)."""
-    observed_index: int        # auth_seq_id in structure
-    residue: str               # The inserted residue
-    # Insertions don't have a master_index by definition
-
-
-class DeletionRecord(BaseModel):
-    """A deletion (position in master alignment missing in structure)."""
-    master_index: int          # 1-based MA position that's missing
-    expected_residue: str      # What consensus says should be there
-
-
-class MutationsAndIndels(BaseModel):
-    """All mutations, insertions, and deletions for an entity."""
-    entity_id: str
-    auth_asym_id: str
-    family: str
-    mutations: List[MutationRecord]
-    insertions: List[InsertionRecord]
-    deletions: List[DeletionRecord]
-    
-    @property
-    def total_count(self) -> int:
-        return len(self.mutations) + len(self.insertions) + len(self.deletions)
-
-
-# ============================================================
-# Ligand Neighborhood Types (Simplified)
-# ============================================================
-
-class NeighborhoodResidue(BaseModel):
-    """A residue within the ligand neighborhood."""
-    auth_asym_id: str
-    observed_index: int        # auth_seq_id
-    comp_id: str               # 3-letter residue code
-    master_index: Optional[int] = None  # 1-based MA index, if mapped
-
-
-class SimplifiedLigandNeighborhood(BaseModel):
-    """Simplified ligand neighborhood - just the nearby residues."""
-    ligand_comp_id: str
-    ligand_auth_asym_id: str
-    ligand_auth_seq_id: int
-    neighborhood_residues: List[NeighborhoodResidue]
-    
-    @property
-    def residue_count(self) -> int:
-        return len(self.neighborhood_residues)
-
-
-# ============================================================
-# Observed Sequence Types
-# ============================================================
 
 class ObservedResidue(BaseModel):
     auth_seq_id: int
@@ -690,143 +496,74 @@ class ObservedSequenceData(BaseModel):
     auth_asym_id: str
     entity_id: str
     residues: List[ObservedResidue]
-    
+
     @property
     def sequence(self) -> str:
         return "".join(r.one_letter for r in self.residues)
-    
+
     @property
     def auth_seq_ids(self) -> List[int]:
         return [r.auth_seq_id for r in self.residues]
 
 
-
-
-
 class MolstarExtractionResult(BaseModel):
     """Complete extraction result from Molstar for a structure."""
+
     rcsb_id: str
     sequences: List[ObservedSequenceData]
-    ligand_neighborhoods: List[LigandBindingSite]  # Renamed from SimplifiedLigandNeighborhood
-    
-    def get_sequence_for_chain(self, auth_asym_id: str) -> Optional[ObservedSequenceData]:
+    ligand_neighborhoods: List[LigandBindingSite]
+
+    def get_sequence_for_chain(
+        self, auth_asym_id: str
+    ) -> Optional[ObservedSequenceData]:
         for seq in self.sequences:
             if seq.auth_asym_id == auth_asym_id:
                 return seq
         return None
 
 
-
 # ============================================================
-# Structure Output Files Schema
+# Classification Report
 # ============================================================
 
-class ObservedMasterIndexMaps(BaseModel):
-    """
-    File: {RCSB_ID}_observed_and_master_index_maps.json
-    
-    Contains index mappings for all classified tubulin entities.
-    """
-    rcsb_id: str
-    generated_at: str
-    entities: Dict[str, IndexMappingData]  # entity_id -> mappings
-
-
-class LigandNeighborhoodsFile(BaseModel):
-    """
-    File: {RCSB_ID}_ligand_neighborhoods.json
-    
-    Contains simplified neighborhood data for all ligands.
-    """
-    rcsb_id: str
-    generated_at: str
-    neighborhoods: List[SimplifiedLigandNeighborhood]
-
-
-class MutationsIndelsFile(BaseModel):
-    """
-    File: {RCSB_ID}_mutations_insertions_deletions.json
-    
-    Contains all mutations, insertions, and deletions.
-    """
-    rcsb_id: str
-    generated_at: str
-    entities: List[MutationsAndIndels]
-# ============================================================
-# Entity Types (Updated)
-# ============================================================
-# Update in lib/types.py
-
-
-class ProcessedChainData(BaseModel):
-    """Result of sequence alignment/ingestion for a single entity."""
-
-    pdb_id: str
-    chain_id: str
-    tubulin_class: str
-    sequence: str
-
-    # ma_to_auth_map[ma_idx] = auth_seq_id (or -1 if gap in structure)
-    ma_to_auth_map: List[int]
-
-    # auth_to_ma: reverse lookup for augmentation
-    # Stored as JSON string of dict for Pydantic compatibility
-    auth_to_ma_json: str = "{}"
-
-    mutations: List[MutationEntryData]
-    stats: Dict[str, Any]
-
-    def get_auth_to_ma(self) -> Dict[int, int]:
-        """Parse the auth_to_ma reverse mapping."""
-        import json
-
-        return {int(k): v for k, v in json.loads(self.auth_to_ma_json).items()}
-
-
-class SequenceIngestionEntry(BaseModel):
-    """A single entity's ingestion record."""
-
-    processed_at: str
-    family: str
-    data: ProcessedChainData
-
-    def build_auth_to_ma_map(self) -> Dict[int, int]:
-        """Get reverse lookup: auth_seq_id -> MA index (1-based)."""
-        return self.data.get_auth_to_ma()
-
-# Add to lib/types.py
 
 class EntityClassificationResult(BaseModel):
     """Classification result for a single entity."""
+
     entity_id: str
     auth_asym_ids: List[str]
     sequence_length: int
     assigned_family: Optional[str]
     best_hit_score: Optional[float] = None
     best_hit_evalue: Optional[float] = None
-    all_hits: List[Dict[str, Any]] = []  # For debugging/analysis
+    all_hits: List[Dict[str, Any]] = []
 
 
 class ClassificationReport(BaseModel):
-    """
-    File: {RCSB_ID}_classification_report.json
-    
-    Summary of HMM classification for all polypeptide entities.
-    """
+    """File: {RCSB_ID}_classification_report.json"""
+
     rcsb_id: str
     generated_at: str
-    summary: Dict[str, int]  # {"total": N, "classified": M, "tubulin": X, "map": Y}
-    entities: Dict[str, EntityClassificationResult]  # entity_id -> result
+    summary: Dict[str, int]
+    entities: Dict[str, EntityClassificationResult]
+
+
+# ============================================================
+# Output File Schemas
+# ============================================================
+
 
 class VariantsFile(BaseModel):
     """File: {RCSB_ID}_variants.json"""
+
     rcsb_id: str
     generated_at: str
-    entities: Dict[str, List[SequenceVariant]]  # entity_id -> variants
+    entities: Dict[str, List[SequenceVariant]]
 
 
 class LigandBindingSitesFile(BaseModel):
     """File: {RCSB_ID}_ligand_binding_sites.json"""
+
     rcsb_id: str
     generated_at: str
     binding_sites: List[LigandBindingSite]
