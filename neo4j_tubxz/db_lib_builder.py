@@ -200,10 +200,16 @@ class Neo4jAdapter:
                 print(
                     f"  Processing {len(profile.ligand_binding_sites)} binding sites..."
                 )
-                count = s.execute_write(
-                    process_all_binding_sites(rcsb_id, profile.ligand_binding_sites)
+                # process_all_binding_sites returns a transaction function
+                tx_func = process_all_binding_sites(
+                    rcsb_id, profile.ligand_binding_sites
                 )
+
+                # Execute the function within a write transaction
+                count = s.execute_write(tx_func)
                 print(f"    Created {count} NEAR_POLYMER relationships")
+            else:
+                print("  No ligand binding sites to ingest.")
 
         print(f"  Done: {rcsb_id}")
 
@@ -274,29 +280,45 @@ class Neo4jAdapter:
 
     def _process_instances(self, session, profile: TubulinStructure, entity_ids: set):
         """Process all physical instances."""
+        # Get ALL entity IDs that exist in the profile
+        all_entity_ids = set(profile.entities.keys())
+        
+        # Create counters for debugging
+        poly_count = 0
+        nonpoly_count = 0
+        
         # Polypeptides
         for instance in profile.polypeptides:
-            if instance.entity_id in entity_ids:
+            if instance.entity_id in all_entity_ids:
                 i_node = session.execute_write(node__polymer_instance(instance))
                 session.execute_write(
                     link__instance_to_structure(i_node, profile.rcsb_id)
                 )
+                poly_count += 1
 
-        # Polynucleotides
+        # Polynucleotides  
         for instance in profile.polynucleotides:
-            if instance.entity_id in entity_ids:
+            if instance.entity_id in all_entity_ids:
                 i_node = session.execute_write(node__polymer_instance(instance))
                 session.execute_write(
                     link__instance_to_structure(i_node, profile.rcsb_id)
                 )
+                poly_count += 1
 
         # Nonpolymers
         for instance in profile.nonpolymers:
-            if instance.entity_id in entity_ids:
+            if instance.entity_id in all_entity_ids:
                 i_node = session.execute_write(node__nonpolymer_instance(instance))
                 session.execute_write(
                     link__instance_to_structure(i_node, profile.rcsb_id)
                 )
+                nonpoly_count += 1
+            else:
+                print(f"  Warning: Nonpolymer instance {instance.asym_id} references entity {instance.entity_id} not found in entities dict")
+
+        # Print debug info
+        if poly_count > 0 or nonpoly_count > 0:
+            print(f"    Created {poly_count} polymer instances, {nonpoly_count} nonpolymer instances")
 
     # =========================================================================
     # Deletion

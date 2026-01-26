@@ -93,6 +93,15 @@ class TubulinETLCollector:
             polynucleotides,
             nonpolymers,
         ) = self._fetch_rcsb_metadata()
+        logger.debug(
+            f"  RCSB nonpolymer: {len(ligand_entities)} entities, {len(nonpolymers)} instances"
+        )
+        if len(nonpolymers) == 0 and len(ligand_entities) > 0:
+            logger.warning(
+                "  Nonpolymer entities exist but instances are empty. "
+                "Likely NonpolymerEntitiesString query missing nonpolymer_entity_instances."
+            )
+
 
         logger.debug("  Running Molstar extraction...")
         molstar_output = Path(self.assets.paths.molstar_raw_extraction)
@@ -485,10 +494,10 @@ class TubulinETLCollector:
         entity_map = {}
         instances = []
 
-        # 1. Map the Entities (The "Blueprints")
+        # 1) Blueprints
         raw_entities = nonpoly_data.get("nonpolymer_entities") or []
-        
-        # Batch fetch chemical info for all unique comp_ids
+
+        # Batch fetch chemical info
         comp_ids = list(set(r["pdbx_entity_nonpoly"]["comp_id"] for r in raw_entities))
         chem_info_map = self._fetch_chem_info(comp_ids)
 
@@ -499,44 +508,49 @@ class TubulinETLCollector:
             chem = chem_info_map.get(comp_id, {})
 
             ent = NonpolymerEntity(
-                entity_id=ent_id,
-                chemical_id=comp_id,
-                chemical_name=ids["name"],
-                pdbx_description=raw_ent["rcsb_nonpolymer_entity"]["pdbx_description"],
-                formula_weight=raw_ent["rcsb_nonpolymer_entity"].get("formula_weight"),
-                SMILES=chem.get("SMILES"),
-                InChIKey=chem.get("InChIKey"),
-                nonpolymer_comp=raw_ent.get("nonpolymer_comp"),
+                entity_id        = ent_id,
+                chemical_id      = comp_id,
+                chemical_name    = ids["name"],
+                pdbx_description = raw_ent["rcsb_nonpolymer_entity"]["pdbx_description"],
+                formula_weight   = raw_ent["rcsb_nonpolymer_entity"].get("formula_weight"),
+                SMILES           = chem.get("SMILES"),
+                InChIKey         = chem.get("InChIKey"),
+                nonpolymer_comp  = raw_ent.get("nonpolymer_comp"),
             )
             entity_map[ent_id] = ent
 
-        # 2. Map the Instances (The physical molecules)
-        raw_instances = nonpoly_data.get("nonpolymer_entity_instances") or []
-        
-        # Pre-calculate assembly mappings for all auth_asym_ids found
-        all_auth_ids = [
-            inst["rcsb_nonpolymer_entity_instance_container_identifiers"]["auth_asym_id"]
-            for inst in raw_instances
-        ]
+        # 2) Instances
+        # Your schema puts instances UNDER each nonpolymer entity.
+        raw_instances = []
+        for raw_ent in raw_entities:
+            raw_instances.extend(raw_ent.get("nonpolymer_entity_instances") or [])
+
+        # Extract auth_asym_ids for assembly mapping
+        all_auth_ids = []
+        for inst in raw_instances:
+            ident = inst.get("rcsb_nonpolymer_entity_instance_container_identifiers") or {}
+            if ident.get("auth_asym_id"):
+                all_auth_ids.append(ident["auth_asym_id"])
+
         assembly_lookup = self._get_assembly_mappings(all_auth_ids)
 
         for raw_inst in raw_instances:
-            # According to the schema in your image: RcsbNonpolymerEntityInstanceContainerIdentifiers
             ident = raw_inst["rcsb_nonpolymer_entity_instance_container_identifiers"]
-            
+
             auth_id = ident["auth_asym_id"]
             instances.append(
                 Nonpolymer(
                     parent_rcsb_id=self.rcsb_id,
                     auth_asym_id=auth_id,
                     asym_id=ident["asym_id"],
-                    auth_seq_id=ident["auth_seq_id"], # Successfully grabbed
+                    auth_seq_id=ident["auth_seq_id"],
                     entity_id=ident["entity_id"],
                     assembly_id=assembly_lookup.get(auth_id, 0),
                 )
             )
 
         return entity_map, instances
+
 
     def _fetch_chem_info(self, comp_ids: List[str]) -> dict:
         if not comp_ids:

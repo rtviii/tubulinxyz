@@ -87,26 +87,48 @@ def node__nonpolymer_entity(
 
 
 # node_ligand.py -> node__nonpolymer_instance
+# neo4j_tubxz/node_ligand.py
+
+
 def node__nonpolymer_instance(instance: Nonpolymer):
+    # Safety check: if this is null, the node will be created but unsearchable
+    if not instance.parent_rcsb_id:
+        raise ValueError(
+            f"CRITICAL: Nonpolymer {instance.asym_id} has no parent_rcsb_id"
+        )
+
     def _(tx: Transaction | ManagedTransaction):
         return tx.run(
             """
-            MERGE (i:Instance:NonpolymerInstance {parent_rcsb_id: $rcsb_id, asym_id: $asym_id})
-            ON CREATE SET 
-                i.auth_asym_id = $auth_id,
+            // 1. Merge the instance using the Node Key (rcsb_id + asym_id)
+            MERGE (i:Instance:NonpolymerInstance {
+                parent_rcsb_id: $rcsb_id, 
+                asym_id: $asym_id
+            })
+            SET i.auth_asym_id = $auth_id,
                 i.auth_seq_id  = $seq_id,
                 i.assembly_id  = $assembly_id
             
             WITH i
-            MATCH (e:Entity:NonpolymerEntity {parent_rcsb_id: $rcsb_id, entity_id: $entity_id})
+            // 2. Link to the structure-specific Entity
+            MATCH (e:NonpolymerEntity {
+                parent_rcsb_id: $rcsb_id, 
+                entity_id: $entity_id
+            })
             MERGE (i)-[:INSTANCE_OF]->(e)
+
+            WITH i
+            // 3. Link to Structure Root (Required for your Reader queries)
+            MATCH (s:Structure {rcsb_id: $rcsb_id})
+            MERGE (s)-[:HAS_INSTANCE]->(i)
+
             RETURN i
-        """,
+            """,
             {
                 "rcsb_id": instance.parent_rcsb_id,
                 "asym_id": instance.asym_id,
                 "auth_id": instance.auth_asym_id,
-                "seq_id": instance.auth_seq_id,
+                "seq_id": int(instance.auth_seq_id),  # Ensure integer type
                 "assembly_id": instance.assembly_id,
                 "entity_id": instance.entity_id,
             },

@@ -8,7 +8,8 @@ import json
 import sys
 from typing import Optional, List, Dict, Any
 from neo4j import ManagedTransaction, Transaction
-
+# Add this import at the top of db_lib_builder.py
+from neo4j_tubxz.node_binding_site import process_all_binding_sites
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 from neo4j_tubxz.models import (
     StructureFilters,
