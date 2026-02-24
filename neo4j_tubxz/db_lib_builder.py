@@ -2,7 +2,6 @@
 """
 Neo4j database builder - handles structure ingestion.
 """
-
 import sys
 from neo4j import GraphDatabase, Driver, ManagedTransaction, Transaction
 from typing import List

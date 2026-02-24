@@ -250,17 +250,18 @@ class Neo4jReader:
         Get all ligands in the neighborhood of a polymer chain with their nearby residues.
         """
         query = """
-        MATCH (ni:NonpolymerInstance)-[r:NEAR_POLYMER]->(pi:PolypeptideInstance)
-        WHERE pi.parent_rcsb_id = $rcsb_id AND pi.auth_asym_id = $auth_asym_id
-        MATCH (ni)-[:INSTANCE_OF]->(ne:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c:Chemical)
-        RETURN 
-            c.chemical_id AS ligand_id,
-            c.chemical_name AS ligand_name,
-            ni.auth_asym_id AS ligand_auth_asym_id,
-            r.residues_json AS residues_json,
-            r.residue_count AS residue_count,
-            c.drugbank_id AS drugbank_id
-        ORDER BY c.chemical_id
+MATCH (ni:NonpolymerInstance)-[r:NEAR_POLYMER]->(pi:PolypeptideInstance)
+WHERE pi.parent_rcsb_id = $rcsb_id AND pi.auth_asym_id = $auth_asym_id
+MATCH (ni)-[:INSTANCE_OF]->(ne:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c:Chemical)
+RETURN 
+    c.chemical_id AS ligand_id,
+    c.chemical_name AS ligand_name,
+    ni.auth_asym_id AS ligand_auth_asym_id,
+    ni.auth_seq_id AS ligand_auth_seq_id,
+    r.residues_json AS residues_json,
+    r.residue_count AS residue_count,
+    c.drugbank_id AS drugbank_id
+ORDER BY c.chemical_id
         """
 
         with self.adapter.driver.session() as session:
@@ -288,6 +289,7 @@ class Neo4jReader:
                             ligand_id=r["ligand_id"],
                             ligand_name=r["ligand_name"],
                             ligand_auth_asym_id=r["ligand_auth_asym_id"],
+                            ligand_auth_seq_id=r["ligand_auth_seq_id"],
                             residues=residues,
                             residue_count=r["residue_count"] or 0,
                             drugbank_id=r["drugbank_id"],

@@ -9,26 +9,30 @@ from enum import Enum
 
 
 class ExpMethod(str, Enum):
-    XRAY = "X-RAY DIFFRACTION"
-    EM = "ELECTRON MICROSCOPY"
-    NMR = "SOLUTION NMR"
+
+    XRAY    = "X-RAY DIFFRACTION"
+    EM      = "ELECTRON MICROSCOPY"
+    EC      = "ELECTRON CRYSTALLOGRAPHY"
+    NMR     = "SOLUTION NMR"
     NEUTRON = "NEUTRON DIFFRACTION"
-    FIBER = "FIBER DIFFRACTION"
-    OTHER = "OTHER"
+    FIBER   = "FIBER DIFFRACTION"
+    OTHER   = "OTHER"
 
 
 class PolymerizationState(str, Enum):
-    MONOMER = "monomer"
-    DIMER = "dimer"
+
+    MONOMER  = "monomer"
+    DIMER    = "dimer"
     OLIGOMER = "oligomer"
     FILAMENT = "filament"
-    UNKNOWN = "unknown"
+    UNKNOWN  = "unknown"
 
 
 class VariantTypeFilter(str, Enum):
+
     SUBSTITUTION = "substitution"
-    INSERTION = "insertion"
-    DELETION = "deletion"
+    INSERTION    = "insertion"
+    DELETION     = "deletion"
 
 
 class StructureFilters(BaseModel):
@@ -121,12 +125,12 @@ class PolypeptideEntityFilters(BaseModel):
 
     structure_filters: Optional[StructureFilters] = None
 
-    family: Optional[List[str]] = None
-    uniprot_accession: Optional[str] = None
-    sequence_contains: Optional[str] = None
-    sequence_length_min: Optional[int] = None
-    sequence_length_max: Optional[int] = None
-    has_variants: Optional[bool] = Field(
+    family             : Optional[List[str]] = None
+    uniprot_accession  : Optional[str]       = None
+    sequence_contains  : Optional[str]       = None
+    sequence_length_min: Optional[int]       = None
+    sequence_length_max: Optional[int]       = None
+    has_variants       : Optional[bool]      = Field(
         default=None, description="Filter to entities with/without variants"
     )
 
@@ -140,8 +144,8 @@ class LigandFilters(BaseModel):
     search: Optional[str] = Field(
         default=None, description="Search chemical name or ID"
     )
-    chemical_ids: Optional[List[str]] = None
-    has_drugbank: Optional[bool] = None
+    chemical_ids : Optional[List[str]] = None
+    has_drugbank : Optional[bool]      = None
     in_structures: Optional[List[str]] = Field(
         default=None, description="Filter to ligands in these PDB IDs"
     )
@@ -153,25 +157,25 @@ T = TypeVar("T")
 class PaginatedResponse(BaseModel, Generic[T]):
     """Standard paginated response wrapper."""
 
-    data: List[T]
+    data       : List[T]
     total_count: int = Field(description="Total matching results before pagination")
     next_cursor: Optional[str] = Field(default=None, description="Cursor for next page")
-    has_more: bool = Field(description="Whether more results exist")
+    has_more   : bool = Field(description="Whether more results exist")
 
 
 class StructureSummary(BaseModel):
     """Lightweight structure representation for list views."""
 
-    rcsb_id: str
-    resolution: Optional[float] = None
-    exp_method: Optional[str] = Field(None, alias="expMethod")
-    citation_title: Optional[str] = None
-    citation_year: Optional[int] = None
-    deposition_date: Optional[str] = None
+    rcsb_id           : str
+    resolution        : Optional[float] = None
+    exp_method        : Optional[str] = Field(None, alias="expMethod")
+    citation_title    : Optional[str] = None
+    citation_year     : Optional[int] = None
+    deposition_date   : Optional[str] = None
     src_organism_names: List[str] = []
-    pdbx_keywords: Optional[str] = None
-    entity_count: Optional[int] = None
-    ligand_count: Optional[int] = None
+    pdbx_keywords     : Optional[str] = None
+    entity_count      : Optional[int] = None
+    ligand_count      : Optional[int] = None
 
     class Config:
         populate_by_name = True
@@ -271,40 +275,37 @@ class VariantPositionRange(BaseModel):
 class FilterFacets(BaseModel):
     """Available filter options for the UI."""
 
-    total_structures: int
-    exp_methods: List[FacetValue] = []
-    tubulin_families: List[FacetValue] = []
-    year_range: RangeValue
-    resolution_range: RangeValue
-    top_ligands: List[LigandFacet] = []
-    variants_by_family: List[VariantsByFamily] = []
-    common_variants: List[CommonVariant] = []
+    total_structures       : int
+    exp_methods            : List[FacetValue] = []
+    tubulin_families       : List[FacetValue] = []
+    year_range             : RangeValue
+    resolution_range       : RangeValue
+    top_ligands            : List[LigandFacet] = []
+    variants_by_family     : List[VariantsByFamily] = []
+    common_variants        : List[CommonVariant] = []
     variant_position_ranges: List[VariantPositionRange] = []
-
 
 # =============================================================================
 # Ligand Neighborhood Response Models
 # =============================================================================
 
-
 class BindingSiteResidue(BaseModel):
-    """A residue in a ligand binding site."""
-
     auth_asym_id: str
-    observed_index: int
+    auth_seq_id: int = Field(validation_alias="observed_index")
     comp_id: str
     master_index: Optional[int] = None
 
+    model_config = {"populate_by_name": True}
 
 class LigandNeighborhood(BaseModel):
-    """Ligand neighborhood for a specific polymer chain."""
 
-    ligand_id: str
-    ligand_name: Optional[str] = None
+    ligand_id          : str
+    ligand_name        : Optional[str] = None
     ligand_auth_asym_id: str
-    residues: List[BindingSiteResidue] = []
-    residue_count: int
-    drugbank_id: Optional[str] = None
+    ligand_auth_seq_id : int
+    residues           : List[BindingSiteResidue] = []
+    residue_count      : int
+    drugbank_id        : Optional[str] = None
 
 
 class PolymerNeighborhoodsResponse(BaseModel):

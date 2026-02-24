@@ -221,23 +221,21 @@ class SequenceVariant(BaseModel):
 
 
 class BindingSiteResidue(BaseModel):
-    """A residue in a ligand's binding site."""
-
     auth_asym_id: str
-    observed_index: int  # auth_seq_id
-    comp_id: str  # 3-letter residue code
-    master_index: Optional[int] = None  # 1-based MA index, if mapped
+    auth_seq_id: int = Field(validation_alias="observed_index")
+    comp_id: str
+    master_index: Optional[int] = None
+
+    model_config = {"populate_by_name": True}
 
     def to_dict(self) -> Dict[str, Any]:
-        """For Neo4j storage on relationship properties."""
         return {
             "auth_asym_id": self.auth_asym_id,
-            "observed_index": self.observed_index,
+            "observed_index": self.auth_seq_id,  # keep writing old key to graph
             "comp_id": self.comp_id,
             "master_index": self.master_index,
         }
-
-
+        
 class LigandBindingSite(BaseModel):
     """Binding site for a single ligand instance."""
 

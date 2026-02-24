@@ -1,0 +1,16 @@
+{
+  "exclusions": [
+    ".git",
+    "logs",
+    "pack",
+    ".vscode",
+    "__pycache__",
+    "node_modules",
+    "dist",
+    "bin",
+    "build",
+    "venv"
+  ],
+  "updatedAt": "2026-02-24T09:02:44.468Z",
+  "version": 1
+}
