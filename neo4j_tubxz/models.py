@@ -7,6 +7,8 @@ from typing import Any, Optional, List, Generic, TypeVar
 from pydantic import BaseModel, Field, field_validator
 from enum import Enum
 
+from lib.types import BindingSiteResidue
+
 
 class ExpMethod(str, Enum):
 
@@ -289,13 +291,6 @@ class FilterFacets(BaseModel):
 # Ligand Neighborhood Response Models
 # =============================================================================
 
-class BindingSiteResidue(BaseModel):
-    auth_asym_id: str
-    auth_seq_id: int = Field(validation_alias="observed_index")
-    comp_id: str
-    master_index: Optional[int] = None
-
-    model_config = {"populate_by_name": True}
 
 class LigandNeighborhood(BaseModel):
 

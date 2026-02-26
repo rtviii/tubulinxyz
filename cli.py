@@ -37,19 +37,6 @@ def get_db_driver() -> Driver:
         console.print(f"[bold red]Failed to create Neo4j driver:[/bold red] {e}")
         raise typer.Exit(code=1)
 
-@app.command(name="init-db")
-def init_db_command():
-    """
-    Initializes the Neo4j database: sets constraints and builds phylogenies.
-    """
-    try:
-        console.print("Initializing Neo4j database (setting constraints, building phylogeny)...", style="cyan")
-        adapter = get_db_adapter()
-        adapter.initialize_new_instance() # This runs constraints AND phylogenies
-        console.print("[bold green]Database initialized successfully.[/bold green]")
-    except Exception as e:
-        console.print(f"[bold red]Error initializing database:[/bold red] {e}")
-        raise typer.Exit(code=1)
 
 @app.command(name="collect-one")
 def collect_one(
@@ -510,39 +497,48 @@ def upload_one(
 
 @app.command(name="upload-all")
 def upload_all(
-    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Overwrite existing structures")] = False,
-    limit: Annotated[int, typer.Option("--limit", "-n", help="Limit number of structures to upload")] = 0,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-o")] = False,
+    limit: Annotated[int, typer.Option("--limit", "-n")] = 0,
+    workers: Annotated[int, typer.Option("--workers", "-w")] = 8,
 ):
-    """
-    Upload all structure profiles from disk to Neo4j.
-    """
-    profiles = GlobalOps.list_profiles()
-    
+    """Upload all structure profiles from disk to Neo4j."""
+    profiles = sorted(GlobalOps.list_profiles())
     if limit > 0:
         profiles = profiles[:limit]
-    
-    console.print(f"Found [bold]{len(profiles)}[/bold] profiles to upload.", style="cyan")
-    
+
     if not profiles:
         console.print("[yellow]No profiles found on disk.[/yellow]")
         raise typer.Exit(code=0)
 
-    adapter = get_db_adapter()
+    console.print(f"Uploading [bold]{len(profiles)}[/bold] profiles with {workers} workers.", style="cyan")
+
     success_count = 0
     error_count = 0
+    failed_ids = []
 
-    for i, rcsb_id in enumerate(sorted(profiles), 1):
-        console.print(f"[{i}/{len(profiles)}] {rcsb_id}...", end=" ")
+    def upload_one(rcsb_id: str) -> tuple[str, bool, str]:
         try:
+            adapter = get_db_adapter()
             adapter.add_total_structure(rcsb_id, disable_exists_check=overwrite)
-            console.print("[green]OK[/green]")
-            success_count += 1
+            return (rcsb_id, True, "")
         except Exception as e:
-            console.print(f"[red]FAILED: {e}[/red]")
-            error_count += 1
+            return (rcsb_id, False, str(e))
 
-    adapter.close()
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(upload_one, rid): rid for rid in profiles}
+        for future in as_completed(futures):
+            rcsb_id, success, error_msg = future.result()
+            if success:
+                console.print(f"[green]{rcsb_id}[/green]")
+                success_count += 1
+            else:
+                console.print(f"[red]{rcsb_id}: {error_msg}[/red]")
+                error_count += 1
+                failed_ids.append(rcsb_id)
+
     console.print(f"\n[bold]Done:[/bold] {success_count} succeeded, {error_count} failed.")
+    if failed_ids:
+        console.print(f"[red]Failed IDs:[/red] {', '.join(failed_ids)}")
 
 
 @app.command(name="delete-one")

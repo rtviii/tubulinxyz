@@ -51,13 +51,13 @@ interface AtomInfo extends ResidueInfo {
 // --- ALL INTERACTIONS ENABLED ---
 const allInteractionsParams = {
     providers: {
-        'ionic': { name: 'on', params: {} },
-        'cation-pi': { name: 'on', params: {} },
-        'pi-stacking': { name: 'on', params: {} },
-        'hydrogen-bonds': { name: 'on', params: {} },
-        'halogen-bonds': { name: 'on', params: {} },
-        'hydrophobic': { name: 'on', params: {} },
-        'metal-coordination': { name: 'on', params: {} },
+        'ionic'              : { name: 'on', params: {} },
+        'cation-pi'          : { name: 'on', params: {} },
+        'pi-stacking'        : { name: 'on', params: {} },
+        'hydrogen-bonds'     : { name: 'on', params: {} },
+        'halogen-bonds'      : { name: 'on', params: {} },
+        'hydrophobic'        : { name: 'on', params: {} },
+        'metal-coordination' : { name: 'on', params: {} },
         'weak-hydrogen-bonds': { name: 'on', params: {} },
     }
 };
@@ -210,7 +210,6 @@ function extractInteractionsFromStructure(
 }
 
 // --- Main Processor ---
-
 async function runExtraction(pdbPath: string, ligandCompId: string, authAsymId: string, outputPath: string) {
     const externalModules = { gl, pngjs, 'jpeg-js': jpegjs };
     const spec = DefaultPluginSpec();

@@ -324,39 +324,29 @@ class Neo4jAdapter:
     # =========================================================================
 
     def delete_structure(self, rcsb_id: str) -> None:
-        """
-        Delete a structure and all its entities/instances/variants.
-        Does NOT delete shared nodes (Chemical, PhylogenyNode).
-        """
         rcsb_id = rcsb_id.upper()
 
-        query = """
-        MATCH (s:Structure {rcsb_id: $rcsb_id})
-
-        // Get all entities
-        OPTIONAL MATCH (s)-[:DEFINES_ENTITY]->(e:Entity)
-
-        // Get all instances
-        OPTIONAL MATCH (s)-[:HAS_INSTANCE]->(i:Instance)
-
-        // Get all variants linked to polypeptide entities
-        OPTIONAL MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
-
-        // Detach and delete variants
-        DETACH DELETE v
-
-        // Detach and delete instances
-        DETACH DELETE i
-
-        // Detach and delete entities
-        DETACH DELETE e
-
-        // Finally delete structure
-        DETACH DELETE s
-        """
-
         with self.driver.session() as session:
-            session.execute_write(lambda tx: tx.run(query, {"rcsb_id": rcsb_id}))
+            session.execute_write(lambda tx: tx.run("""
+                MATCH (s:Structure {rcsb_id: $rcsb_id})-[:DEFINES_ENTITY]->(e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+                DETACH DELETE v
+            """, {"rcsb_id": rcsb_id}))
+
+            session.execute_write(lambda tx: tx.run("""
+                MATCH (s:Structure {rcsb_id: $rcsb_id})-[:HAS_INSTANCE]->(i:Instance)
+                DETACH DELETE i
+            """, {"rcsb_id": rcsb_id}))
+
+            session.execute_write(lambda tx: tx.run("""
+                MATCH (s:Structure {rcsb_id: $rcsb_id})-[:DEFINES_ENTITY]->(e:Entity)
+                DETACH DELETE e
+            """, {"rcsb_id": rcsb_id}))
+
+            session.execute_write(lambda tx: tx.run("""
+                MATCH (s:Structure {rcsb_id: $rcsb_id})
+                DETACH DELETE s
+            """, {"rcsb_id": rcsb_id}))
+
             print(f"Deleted structure {rcsb_id}")
 
     # =========================================================================

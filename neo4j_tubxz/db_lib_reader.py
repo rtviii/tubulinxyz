@@ -8,6 +8,7 @@ import json
 import sys
 from typing import Optional, List, Dict, Any
 from neo4j import ManagedTransaction, Transaction
+
 # Add this import at the top of db_lib_builder.py
 from neo4j_tubxz.node_binding_site import process_all_binding_sites
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
@@ -604,6 +605,4 @@ ORDER BY c.chemical_id
 
             return session.execute_read(run_query)
 
-
-# Singleton instance for convenience
 db_reader = Neo4jReader()

@@ -1,12 +1,12 @@
-- Tubulin Classification (via hmms)
-- ligand registry (figure out if possible) 
+- [x] Tubulin Classification (via hmms)
+- [x] ligand registry (figure out if possible) 
 
 # MIP/MAP classification
 
 # The landing page:
 
 After everything else is done:
-- purported ligand bindign sites
+- [x] purported ligand bindign sites
 - mutation hotspots
 - annotations 
 

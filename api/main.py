@@ -32,6 +32,8 @@ app.include_router(router_polymers, prefix="/polymers", tags=["Polymers"])
 app.include_router(router_ligands, prefix="/ligands", tags=["Ligands"])
 app.include_router(router_msa, prefix="/msa", tags=["MSA Alignment"])
 app.include_router(router_annotations, prefix="/annotations", tags=["Annotations"])
+for route in app.routes:
+    print(f"  {getattr(route, 'methods', '')} {route.path}")
 
 @app.get("/", include_in_schema=False)
 def root():

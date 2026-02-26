@@ -23,7 +23,6 @@ def node__polypeptide_entity(
     Creates/Merges a Polypeptide Entity.
     Stores sequence, taxonomy, family, index mappings, and alignment stats.
     """
-    # Base properties
     props = {
         "entity_id": entity.entity_id,
         "parent_rcsb_id": parent_rcsb_id,
@@ -39,20 +38,16 @@ def node__polypeptide_entity(
         "uniprot_accessions": entity.uniprot_accessions,
     }
 
-    # Family (handle enum)
     family_val = entity.family.value if entity.family else None
 
-    # Index mappings as JSON strings
     if entity.index_mapping:
-        mapping_json = entity.index_mapping.to_json_dict()
-        props["observed_to_master_json"] = mapping_json["observed_to_master_json"]
-        props["master_to_observed_json"] = mapping_json["master_to_observed_json"]
+        mapping_json = entity.index_mapping.to_neo4j_entity_props()
+        props["label_seq_id_to_master_json"] = mapping_json["label_seq_id_to_master_json"]
+        props["master_to_label_seq_id_json"] = mapping_json["master_to_label_seq_id_json"]
 
-    # Alignment stats as JSON
     if entity.alignment_stats:
         props["alignment_stats_json"] = json.dumps(entity.alignment_stats)
 
-    # Clean None values
     props = {k: v for k, v in props.items() if v is not None}
 
     def _(tx: Transaction | ManagedTransaction) -> Node:

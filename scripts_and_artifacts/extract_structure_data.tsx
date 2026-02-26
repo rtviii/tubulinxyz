@@ -14,34 +14,34 @@ import * as path from 'path';
 // ============================================================
 
 interface ObservedResidue {
-    auth_seq_id : number;
+    auth_seq_id: number;
     label_seq_id: number;
-    comp_id     : string;
-    one_letter  : string;
+    comp_id: string;
+    one_letter: string;
 }
 
 interface ObservedSequenceData {
     auth_asym_id: string;
-    entity_id   : string;
-    residues    : ObservedResidue[];
+    entity_id: string;
+    residues: ObservedResidue[];
 }
 
 interface NeighborhoodResidue {
-    auth_asym_id  : string;
-    observed_index: number;
-    comp_id       : string;
+    auth_asym_id: string;
+    auth_seq_id: number;
+    comp_id: string;
 }
 
 interface SimplifiedLigandNeighborhood {
-    ligand_comp_id       : string;
-    ligand_auth_asym_id  : string;
-    ligand_auth_seq_id   : number;
+    ligand_comp_id: string;
+    ligand_auth_asym_id: string;
+    ligand_auth_seq_id: number;
     neighborhood_residues: NeighborhoodResidue[];
 }
 
 interface ExtractionResult {
-    rcsb_id             : string;
-    sequences           : ObservedSequenceData[];
+    rcsb_id: string;
+    sequences: ObservedSequenceData[];
     ligand_neighborhoods: SimplifiedLigandNeighborhood[];
 }
 
@@ -93,7 +93,7 @@ async function loadStructureFromCif(cifContent: string): Promise<Structure> {
         throw new Error(`CIF parsing failed: ${parsed.message}`);
     }
 
-    const block      = parsed.result.blocks[0];
+    const block = parsed.result.blocks[0];
     const trajectory = await trajectoryFromMmCIF(block).run();
     return Structure.ofModel(trajectory.representative);
 }
@@ -115,11 +115,11 @@ function extractObservedSequences(structure: Structure): ObservedSequenceData[] 
             loc.element = unit.elements[i];
 
             const authAsymId = StructureProperties.chain.auth_asym_id(loc);
-            const entityId   = StructureProperties.entity.id(loc);
-            const authSeqId  = StructureProperties.residue.auth_seq_id(loc);
+            const entityId = StructureProperties.entity.id(loc);
+            const authSeqId = StructureProperties.residue.auth_seq_id(loc);
             const labelSeqId = StructureProperties.residue.label_seq_id(loc);
-            const compId     = StructureProperties.atom.auth_comp_id(loc);
-            const resKey     = `${authAsymId}:${authSeqId}`;
+            const compId = StructureProperties.atom.auth_comp_id(loc);
+            const resKey = `${authAsymId}:${authSeqId}`;
 
             if (seenResidues.has(resKey)) continue;
 
@@ -249,7 +249,7 @@ function extractLigandNeighborhood(
 
                 neighborhoodResidues.push({
                     auth_asym_id: authAsymId,
-                    observed_index: authSeqId,
+                    auth_seq_id: authSeqId,
                     comp_id: compId
                 });
             }
@@ -258,7 +258,7 @@ function extractLigandNeighborhood(
         neighborhoodResidues.sort((a, b) => {
             const chainCmp = a.auth_asym_id.localeCompare(b.auth_asym_id);
             if (chainCmp !== 0) return chainCmp;
-            return a.observed_index - b.observed_index;
+            return a.auth_seq_id - b.auth_seq_id;
         });
 
         return {

@@ -20,17 +20,24 @@ from lib.etl.assets import (
     TubulinStructureAssets,
     query_rcsb_api,
 )
-
-
 from lib.etl.classification import (
     classify_sequence,
     build_entity_classification_result,
     is_map_family,
     is_tubulin_family,
 )
-from lib.types import ClassificationReport, EntityClassificationResult, SequenceVariant
+from lib.types import (
+    ClassificationReport,
+    EntityClassificationResult,
+    IndexMappingData,
+    SequenceVariant,
+)
 from lib.etl.molstar_bridge import run_molstar_extraction
-from lib.etl.sequence_alignment import get_aligner_for_family, AlignmentResult
+from lib.etl.sequence_alignment import (
+    get_aligner_for_family,
+    EntityAlignmentResult,
+    ChainIndexMapping,
+)
 from lib.etl.augmentation import augment_binding_sites
 from lib.types import (
     TubulinStructure,
@@ -102,7 +109,6 @@ class TubulinETLCollector:
                 "Likely NonpolymerEntitiesString query missing nonpolymer_entity_instances."
             )
 
-
         logger.debug("  Running Molstar extraction...")
         molstar_output = Path(self.assets.paths.molstar_raw_extraction)
         molstar_result = run_molstar_extraction(
@@ -156,7 +162,8 @@ class TubulinETLCollector:
                 )
                 continue
             logger.debug(
-                f"  Entity {entity_id}: sequence length = {len(observed.sequence)}, first 50 chars: {observed.sequence[:50]}"
+                f"  Entity {entity_id}: sequence length = {len(observed.sequence)}, "
+                f"first 50 chars: {observed.sequence[:50]}"
             )
 
             family, hmm_result = classify_sequence(observed, self.rcsb_id)
@@ -212,38 +219,71 @@ class TubulinETLCollector:
         # ========================================
         logger.info("Phase 3: Aligning tubulin sequences")
 
-        chain_alignments: Dict[str, AlignmentResult] = {}
+        entity_alignments: Dict[str, EntityAlignmentResult] = {}
+        chain_mappings: Dict[str, ChainIndexMapping] = {}
         all_variants: Dict[str, List[SequenceVariant]] = {}
 
         for entity_id, family in entity_families.items():
             if not is_tubulin_family(family):
                 continue
 
-            observed = observed_by_entity.get(entity_id)
-            if not observed:
+            entity = poly_entities[entity_id]
+            if not isinstance(entity, PolypeptideEntity):
                 continue
 
             try:
                 aligner = get_aligner_for_family(family, PROJECT_ROOT)
                 identifier = f"{self.rcsb_id}_{entity_id}"
 
-                result = aligner.align(observed, family, identifier)
+                # Align CANONICAL sequence once per entity
+                entity_result = aligner.align_entity(
+                    canonical_sequence=entity.one_letter_code_can,
+                    entity_id=entity_id,
+                    family=family,
+                    identifier=identifier,
+                )
 
-                if result:
-                    chain_alignments[observed.auth_asym_id] = result
+                if not entity_result:
+                    continue
 
-                    entity = poly_entities[entity_id]
-                    if isinstance(entity, PolypeptideEntity):
-                        entity.index_mapping = result.index_mapping
-                        entity.variants = result.variants
-                        entity.alignment_stats = result.stats
+                entity_alignments[entity_id] = entity_result
+                all_variants[entity_id] = entity_result.variants
 
-                    all_variants[entity_id] = result.variants
+                # Build per-chain mappings for EVERY chain of this entity
+                chains_mapped = 0
+                for seq in molstar_result.sequences:
+                    chain_entity = chain_to_entity.get(seq.auth_asym_id)
+                    if chain_entity != entity_id:
+                        continue
+
+                    chain_map = aligner.build_chain_mapping(
+                        entity_result=entity_result,
+                        observed=seq,
+                    )
+                    chain_mappings[seq.auth_asym_id] = chain_map
+                    chains_mapped += 1
 
                     logger.debug(
-                        f"  Entity {entity_id}: {result.stats['ma_coverage']} residues mapped, "
-                        f"{len(result.substitutions)} sub, {len(result.insertions)} ins, {len(result.deletions)} del"
+                        f"    Chain {seq.auth_asym_id}: "
+                        f"{sum(1 for v in chain_map.observed_to_master.values() if v is not None)} "
+                        f"residues mapped, {len(chain_map.unresolved_positions)} unresolved"
                     )
+
+                # Store entity-level mapping (canonical_pos <-> master_index)
+                entity.index_mapping = IndexMappingData(
+                    observed_to_master=entity_result.canonical_to_master,
+                    master_to_observed=entity_result.master_to_canonical,
+                )
+                entity.variants = entity_result.variants
+                entity.alignment_stats = entity_result.stats
+
+                logger.debug(
+                    f"  Entity {entity_id} ({chains_mapped} chains): "
+                    f"{entity_result.stats['ma_coverage']} MA positions covered, "
+                    f"{len(entity_result.substitutions)} sub, "
+                    f"{len(entity_result.insertions)} ins, "
+                    f"{len(entity_result.deletions)} del"
+                )
 
             except Exception as e:
                 logger.warning(f"  Entity {entity_id}: Alignment failed - {e}")
@@ -266,7 +306,7 @@ class TubulinETLCollector:
 
         augmented_binding_sites = augment_binding_sites(
             binding_sites=molstar_result.ligand_neighborhoods,
-            chain_alignments=chain_alignments,
+            chain_mappings=chain_mappings,
         )
 
         if augmented_binding_sites:
@@ -488,16 +528,12 @@ class TubulinETLCollector:
 
         return entity_map, polypeptides, polynucleotides
 
-    # lib/etl/collector.py
-
     def _process_nonpolymers(self, nonpoly_data: dict):
         entity_map = {}
         instances = []
 
-        # 1) Blueprints
         raw_entities = nonpoly_data.get("nonpolymer_entities") or []
 
-        # Batch fetch chemical info
         comp_ids = list(set(r["pdbx_entity_nonpoly"]["comp_id"] for r in raw_entities))
         chem_info_map = self._fetch_chem_info(comp_ids)
 
@@ -508,27 +544,26 @@ class TubulinETLCollector:
             chem = chem_info_map.get(comp_id, {})
 
             ent = NonpolymerEntity(
-                entity_id        = ent_id,
-                chemical_id      = comp_id,
-                chemical_name    = ids["name"],
-                pdbx_description = raw_ent["rcsb_nonpolymer_entity"]["pdbx_description"],
-                formula_weight   = raw_ent["rcsb_nonpolymer_entity"].get("formula_weight"),
-                SMILES           = chem.get("SMILES"),
-                InChIKey         = chem.get("InChIKey"),
-                nonpolymer_comp  = raw_ent.get("nonpolymer_comp"),
+                entity_id=ent_id,
+                chemical_id=comp_id,
+                chemical_name=ids["name"],
+                pdbx_description=raw_ent["rcsb_nonpolymer_entity"]["pdbx_description"],
+                formula_weight=raw_ent["rcsb_nonpolymer_entity"].get("formula_weight"),
+                SMILES=chem.get("SMILES"),
+                InChIKey=chem.get("InChIKey"),
+                nonpolymer_comp=raw_ent.get("nonpolymer_comp"),
             )
             entity_map[ent_id] = ent
 
-        # 2) Instances
-        # Your schema puts instances UNDER each nonpolymer entity.
         raw_instances = []
         for raw_ent in raw_entities:
             raw_instances.extend(raw_ent.get("nonpolymer_entity_instances") or [])
 
-        # Extract auth_asym_ids for assembly mapping
         all_auth_ids = []
         for inst in raw_instances:
-            ident = inst.get("rcsb_nonpolymer_entity_instance_container_identifiers") or {}
+            ident = (
+                inst.get("rcsb_nonpolymer_entity_instance_container_identifiers") or {}
+            )
             if ident.get("auth_asym_id"):
                 all_auth_ids.append(ident["auth_asym_id"])
 
@@ -536,7 +571,6 @@ class TubulinETLCollector:
 
         for raw_inst in raw_instances:
             ident = raw_inst["rcsb_nonpolymer_entity_instance_container_identifiers"]
-
             auth_id = ident["auth_asym_id"]
             instances.append(
                 Nonpolymer(
@@ -550,7 +584,6 @@ class TubulinETLCollector:
             )
 
         return entity_map, instances
-
 
     def _fetch_chem_info(self, comp_ids: List[str]) -> dict:
         if not comp_ids:
@@ -602,6 +635,7 @@ class TubulinETLCollector:
         sequences: List[ObservedSequenceData],
         chain_to_entity: Dict[str, str],
     ) -> Dict[str, ObservedSequenceData]:
+        """Map entity_id -> first ObservedSequenceData. Used for classification only."""
         result = {}
         for seq in sequences:
             entity_id = chain_to_entity.get(seq.auth_asym_id)

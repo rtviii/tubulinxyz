@@ -93,44 +93,48 @@ class ModificationType(str, Enum):
 # ============================================================
 
 
+# In IndexMappingData, add an explicit entity-level serialization method:
+
 class IndexMappingData(BaseModel):
-    """Bidirectional mapping between observed (auth_seq_id) and master alignment indices."""
+    """Bidirectional mapping between sequence positions and master alignment indices.
 
-    observed_to_master: Dict[
-        int, Optional[int]
-    ]  # auth_seq_id -> MA index (1-based) or None
-    master_to_observed: Dict[
-        int, Optional[int]
-    ]  # MA index (1-based) -> auth_seq_id or None
+    At entity level: keys are label_seq_id (1-based position in one_letter_code_can).
+    At chain level (runtime ChainIndexMapping): keys are auth_seq_id.
+    """
 
-    def get_master_index(self, auth_seq_id: int) -> Optional[int]:
-        return self.observed_to_master.get(auth_seq_id)
+    observed_to_master: Dict[int, Optional[int]]
+    master_to_observed: Dict[int, Optional[int]]
+
+    def get_master_index(self, position: int) -> Optional[int]:
+        return self.observed_to_master.get(position)
 
     def get_observed_index(self, master_index: int) -> Optional[int]:
         return self.master_to_observed.get(master_index)
 
-    def to_json_dict(self) -> Dict[str, str]:
-        """Serialize for Neo4j storage as JSON strings."""
+    def to_neo4j_entity_props(self) -> Dict[str, str]:
+        """Serialize for Neo4j PolypeptideEntity nodes.
+        Keys are label_seq_id (= canonical position), NOT auth_seq_id.
+        """
         return {
-            "observed_to_master_json": json.dumps(
+            "label_seq_id_to_master_json": json.dumps(
                 {str(k): v for k, v in self.observed_to_master.items()}
             ),
-            "master_to_observed_json": json.dumps(
+            "master_to_label_seq_id_json": json.dumps(
                 {str(k): v for k, v in self.master_to_observed.items()}
             ),
         }
 
     @classmethod
-    def from_json_dict(cls, data: Dict[str, str]) -> "IndexMappingData":
-        """Deserialize from Neo4j JSON strings."""
+    def from_neo4j_entity_props(cls, data: Dict[str, str]) -> "IndexMappingData":
+        """Deserialize from Neo4j PolypeptideEntity node properties."""
         return cls(
             observed_to_master={
                 int(k): v
-                for k, v in json.loads(data["observed_to_master_json"]).items()
+                for k, v in json.loads(data["label_seq_id_to_master_json"]).items()
             },
             master_to_observed={
                 int(k): v
-                for k, v in json.loads(data["master_to_observed_json"]).items()
+                for k, v in json.loads(data["master_to_label_seq_id_json"]).items()
             },
         )
 
@@ -144,6 +148,10 @@ class SequenceVariant(BaseModel):
     """
     A sequence variant detected by alignment or from literature.
     Covers substitutions, insertions, and deletions.
+
+    When source="structural", these are detected by aligning the entity's
+    CANONICAL sequence against the family consensus. They represent true
+    genetic differences, not unresolved density.
     """
 
     type: VariantType
@@ -155,7 +163,7 @@ class SequenceVariant(BaseModel):
     # For insertions: None
     master_index: Optional[int] = None
 
-    # For substitutions and insertions: the auth_seq_id in the structure
+    # For substitutions and insertions: canonical position (1-based)
     # For deletions: None
     observed_index: Optional[int] = None
 
@@ -168,7 +176,7 @@ class SequenceVariant(BaseModel):
     # Optional metadata (primarily for literature-sourced variants)
     uniprot_id: Optional[str] = None
     phenotype: Optional[str] = None
-    reference: Optional[str] = None  # DOI, PMID, or database link
+    reference: Optional[str] = None
 
     @classmethod
     def substitution(
@@ -231,11 +239,12 @@ class BindingSiteResidue(BaseModel):
     def to_dict(self) -> Dict[str, Any]:
         return {
             "auth_asym_id": self.auth_asym_id,
-            "observed_index": self.auth_seq_id,  # keep writing old key to graph
+            "auth_seq_id": self.auth_seq_id,
             "comp_id": self.comp_id,
             "master_index": self.master_index,
         }
-        
+
+
 class LigandBindingSite(BaseModel):
     """Binding site for a single ligand instance."""
 
@@ -254,7 +263,7 @@ class LigandBindingSite(BaseModel):
 
 
 # ============================================================
-# Modifications (PTMs) - for future use
+# Modifications (PTMs)
 # ============================================================
 
 
@@ -331,8 +340,7 @@ class Polynucleotide(BaseInstance):
 
 
 class Nonpolymer(BaseInstance):
-    auth_seq_id: int  # Add this
-    pass
+    auth_seq_id: int
 
 
 # ============================================================
@@ -349,7 +357,11 @@ class BaseEntity(BaseModel):
 
 
 class PolypeptideEntity(BaseModel):
-    """Polypeptide entity with index mappings and variants."""
+    """Polypeptide entity with index mappings and variants.
+
+    index_mapping: At entity level, maps canonical_pos <-> master_index.
+    (canonical_pos = label_seq_id = 1-based position in one_letter_code_can)
+    """
 
     type: Literal["polymer"] = "polymer"
     polymer_type: Literal["Protein"] = "Protein"
@@ -369,13 +381,8 @@ class PolypeptideEntity(BaseModel):
     family: Optional[PolymerClass] = None
     uniprot_accessions: List[str] = []
 
-    # Index mappings (for classified tubulin chains)
     index_mapping: Optional[IndexMappingData] = None
-
-    # Sequence variants
     variants: List[SequenceVariant] = []
-
-    # Alignment stats
     alignment_stats: Dict[str, Any] = {}
 
     @property

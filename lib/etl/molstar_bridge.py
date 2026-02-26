@@ -81,23 +81,30 @@ def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResu
             for seq in raw.get("sequences", [])
         ]
 
-        # Parse as LigandBindingSite (renamed from SimplifiedLigandNeighborhood)
-        binding_sites = [
-            LigandBindingSite(
-                ligand_comp_id=lig["ligand_comp_id"],
-                ligand_auth_asym_id=lig["ligand_auth_asym_id"],
-                ligand_auth_seq_id=lig["ligand_auth_seq_id"],
-                residues=[
+        # Parse ligand neighborhoods into LigandBindingSite objects.
+        # Handles both old format (observed_index) and new format (auth_seq_id)
+        # via the BindingSiteResidue validation alias.
+        binding_sites = []
+        for lig in raw.get("ligand_neighborhoods", []):
+            residues = []
+            for r in lig.get("neighborhood_residues", []):
+                # Support both field names during transition
+                seq_id = r.get("auth_seq_id", r.get("observed_index"))
+                residues.append(
                     BindingSiteResidue(
                         auth_asym_id=r["auth_asym_id"],
-                        observed_index=r["observed_index"],
+                        auth_seq_id=seq_id,
                         comp_id=r["comp_id"],
                     )
-                    for r in lig.get("neighborhood_residues", [])
-                ],
+                )
+            binding_sites.append(
+                LigandBindingSite(
+                    ligand_comp_id=lig["ligand_comp_id"],
+                    ligand_auth_asym_id=lig["ligand_auth_asym_id"],
+                    ligand_auth_seq_id=lig["ligand_auth_seq_id"],
+                    residues=residues,
+                )
             )
-            for lig in raw.get("ligand_neighborhoods", [])
-        ]
 
         return MolstarExtractionResult(
             rcsb_id=raw["rcsb_id"],
