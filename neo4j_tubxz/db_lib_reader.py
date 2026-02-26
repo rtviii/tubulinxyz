@@ -182,6 +182,8 @@ class Neo4jReader:
                         src_organism_names=r["src_organism_names"] or [],
                         uniprot_accessions=r["uniprot_accessions"] or [],
                         variant_count=r["variant_count"],
+                        pdbx_strand_ids=r["pdbx_strand_ids"] or [],   
+                        ligand_ids=r["ligand_ids"] or [],          # <-- add
                     )
                     for r in records
                 ]

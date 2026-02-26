@@ -1,3 +1,4 @@
+# lib/etl/collector.py
 """
 Tubulin structure ETL collector.
 """
@@ -29,7 +30,6 @@ from lib.etl.classification import (
 from lib.types import (
     ClassificationReport,
     EntityClassificationResult,
-    IndexMappingData,
     SequenceVariant,
 )
 from lib.etl.molstar_bridge import run_molstar_extraction
@@ -47,9 +47,7 @@ from lib.types import (
     Polypeptide,
     Polynucleotide,
     Nonpolymer,
-    TubulinFamily,
     AssemblyInstancesMap,
-    MolstarExtractionResult,
     ObservedSequenceData,
     PolymerClass,
     VariantsFile,
@@ -249,6 +247,11 @@ class TubulinETLCollector:
                 entity_alignments[entity_id] = entity_result
                 all_variants[entity_id] = entity_result.variants
 
+                # Store entity-level mapping (label_seq_id <-> master_index)
+                entity.entity_index_mapping = entity_result.to_entity_index_mapping()
+                entity.variants = entity_result.variants
+                entity.alignment_stats = entity_result.stats
+
                 # Build per-chain mappings for EVERY chain of this entity
                 chains_mapped = 0
                 for seq in molstar_result.sequences:
@@ -263,19 +266,16 @@ class TubulinETLCollector:
                     chain_mappings[seq.auth_asym_id] = chain_map
                     chains_mapped += 1
 
-                    logger.debug(
-                        f"    Chain {seq.auth_asym_id}: "
-                        f"{sum(1 for v in chain_map.observed_to_master.values() if v is not None)} "
-                        f"residues mapped, {len(chain_map.unresolved_positions)} unresolved"
+                    # Store on entity for profile serialization
+                    entity.chain_index_mappings[seq.auth_asym_id] = (
+                        chain_map.to_chain_index_mapping_data()
                     )
 
-                # Store entity-level mapping (canonical_pos <-> master_index)
-                entity.index_mapping = IndexMappingData(
-                    observed_to_master=entity_result.canonical_to_master,
-                    master_to_observed=entity_result.master_to_canonical,
-                )
-                entity.variants = entity_result.variants
-                entity.alignment_stats = entity_result.stats
+                    logger.debug(
+                        f"    Chain {seq.auth_asym_id}: "
+                        f"{sum(1 for v in chain_map.auth_seq_id_to_master.values() if v is not None)} "
+                        f"residues mapped, {len(chain_map.unresolved_positions)} unresolved"
+                    )
 
                 logger.debug(
                     f"  Entity {entity_id} ({chains_mapped} chains): "
@@ -666,7 +666,6 @@ async def main(rcsb_id: str):
     await TubulinETLCollector(rcsb_id).generate_profile(overwrite=True)
 
 
-if __name__ == "__main__":
-    import sys
-
-    asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else "6WVR"))
+# if __name__ == "__main__":
+#     import sys
+#     asyncio.run(main(sys.argv[1] if len(sys.argv) > 1 else "6WVR"))

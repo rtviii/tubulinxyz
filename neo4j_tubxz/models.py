@@ -135,6 +135,22 @@ class PolypeptideEntityFilters(BaseModel):
     has_variants       : Optional[bool]      = Field(
         default=None, description="Filter to entities with/without variants"
     )
+    has_ligand_ids: Optional[List[str]] = Field(
+        default=None, description="Filter to polymers whose instances are near these ligands"
+    )
+    exclude_maps: Optional[bool] = Field(
+        default=None,
+        description="Exclude structures that contain non-tubulin (MAP) polymer entities"
+    )
+    variant_type: Optional[str] = Field(
+        default=None, description="Filter by variant type: substitution, insertion, deletion"
+    )
+    variant_position_min: Optional[int] = Field(
+        default=None, description="Min master alignment position for variant filter"
+    )
+    variant_position_max: Optional[int] = Field(
+        default=None, description="Max master alignment position for variant filter"
+    )
 
 
 class LigandFilters(BaseModel):
@@ -184,8 +200,6 @@ class StructureSummary(BaseModel):
 
 
 class PolypeptideEntitySummary(BaseModel):
-    """Lightweight entity representation."""
-
     parent_rcsb_id: str
     entity_id: str
     pdbx_description: Optional[str] = None
@@ -194,7 +208,8 @@ class PolypeptideEntitySummary(BaseModel):
     src_organism_names: List[str] = []
     uniprot_accessions: List[str] = []
     variant_count: Optional[int] = None
-
+    pdbx_strand_ids: List[str] = []          # <-- add
+    ligand_ids: List[str] = []  
 
 class LigandSummary(BaseModel):
     """Lightweight ligand/chemical representation."""

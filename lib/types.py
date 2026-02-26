@@ -89,54 +89,66 @@ class ModificationType(str, Enum):
 
 
 # ============================================================
-# Index Mapping
+# Index Mappings
 # ============================================================
 
 
-# In IndexMappingData, add an explicit entity-level serialization method:
+class EntityIndexMapping(BaseModel):
+    """Entity-level mapping between canonical positions and master alignment.
 
-class IndexMappingData(BaseModel):
-    """Bidirectional mapping between sequence positions and master alignment indices.
+    Keys are label_seq_id (= 1-based position in one_letter_code_can).
+    Computed once per entity during ETL. Same for all chains of this entity.
 
-    At entity level: keys are label_seq_id (1-based position in one_letter_code_can).
-    At chain level (runtime ChainIndexMapping): keys are auth_seq_id.
+    label_seq_id  = position in canonical sequence (one_letter_code_can)
+    master_index  = position in family MSA consensus (1-based)
     """
 
-    observed_to_master: Dict[int, Optional[int]]
-    master_to_observed: Dict[int, Optional[int]]
+    label_seq_id_to_master: Dict[int, Optional[int]]
+    master_to_label_seq_id: Dict[int, Optional[int]]
 
-    def get_master_index(self, position: int) -> Optional[int]:
-        return self.observed_to_master.get(position)
+    def get_master_index(self, label_seq_id: int) -> Optional[int]:
+        return self.label_seq_id_to_master.get(label_seq_id)
 
-    def get_observed_index(self, master_index: int) -> Optional[int]:
-        return self.master_to_observed.get(master_index)
+    def get_label_seq_id(self, master_index: int) -> Optional[int]:
+        return self.master_to_label_seq_id.get(master_index)
 
-    def to_neo4j_entity_props(self) -> Dict[str, str]:
-        """Serialize for Neo4j PolypeptideEntity nodes.
-        Keys are label_seq_id (= canonical position), NOT auth_seq_id.
-        """
+    def to_neo4j_props(self) -> Dict[str, str]:
         return {
             "label_seq_id_to_master_json": json.dumps(
-                {str(k): v for k, v in self.observed_to_master.items()}
+                {str(k): v for k, v in self.label_seq_id_to_master.items()}
             ),
             "master_to_label_seq_id_json": json.dumps(
-                {str(k): v for k, v in self.master_to_observed.items()}
+                {str(k): v for k, v in self.master_to_label_seq_id.items()}
             ),
         }
 
     @classmethod
-    def from_neo4j_entity_props(cls, data: Dict[str, str]) -> "IndexMappingData":
-        """Deserialize from Neo4j PolypeptideEntity node properties."""
+    def from_neo4j_props(cls, data: Dict[str, str]) -> "EntityIndexMapping":
         return cls(
-            observed_to_master={
+            label_seq_id_to_master={
                 int(k): v
                 for k, v in json.loads(data["label_seq_id_to_master_json"]).items()
             },
-            master_to_observed={
+            master_to_label_seq_id={
                 int(k): v
                 for k, v in json.loads(data["master_to_label_seq_id_json"]).items()
             },
         )
+
+
+class ChainIndexMappingData(BaseModel):
+    """Per-chain mapping between auth_seq_id and master alignment.
+
+    Built during ETL from entity mapping + molstar label_seq_id data.
+    Specific to one physical chain instance -- different chains of the
+    same entity will have different auth_seq_id numbering.
+
+    auth_seq_id  = author-assigned residue number (what Molstar uses in 3D)
+    master_index = position in family MSA consensus (1-based)
+    """
+
+    auth_seq_id_to_master: Dict[int, Optional[int]]
+    master_to_auth_seq_id: Dict[int, Optional[int]]
 
 
 # ============================================================
@@ -359,8 +371,9 @@ class BaseEntity(BaseModel):
 class PolypeptideEntity(BaseModel):
     """Polypeptide entity with index mappings and variants.
 
-    index_mapping: At entity level, maps canonical_pos <-> master_index.
-    (canonical_pos = label_seq_id = 1-based position in one_letter_code_can)
+    entity_index_mapping: maps label_seq_id (canonical pos) <-> master_index.
+    chain_index_mappings: per-chain maps of auth_seq_id <-> master_index,
+                          keyed by auth_asym_id.
     """
 
     type: Literal["polymer"] = "polymer"
@@ -381,7 +394,8 @@ class PolypeptideEntity(BaseModel):
     family: Optional[PolymerClass] = None
     uniprot_accessions: List[str] = []
 
-    index_mapping: Optional[IndexMappingData] = None
+    entity_index_mapping: Optional[EntityIndexMapping] = None
+    chain_index_mappings: Dict[str, ChainIndexMappingData] = {}
     variants: List[SequenceVariant] = []
     alignment_stats: Dict[str, Any] = {}
 

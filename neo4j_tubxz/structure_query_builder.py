@@ -244,12 +244,15 @@ RETURN
 
 
 class PolypeptideEntityQueryBuilder:
-    """Builds Cypher queries for filtering PolypeptideEntity nodes."""
+    """Builds Cypher queries for filtering PolypeptideEntity nodes.
+    
+    All ligand filtering and display uses the instance-level NEAR_POLYMER
+    relationship, so results are polymer-specific (not structure-level).
+    """
 
     def __init__(self, filters: PolypeptideEntityFilters):
         self.filters = filters
         self._where_clauses: List[str] = []
-        self._struct_where_clauses: List[str] = []
         self._params: Dict[str, Any] = {"limit": filters.limit}
 
     def build(self) -> Tuple[str, Dict[str, Any]]:
@@ -259,8 +262,37 @@ class PolypeptideEntityQueryBuilder:
     def _process_filters(self):
         f = self.filters
 
+        # --- Structure-level filters (applied to s) ---
+
         if f.structure_filters:
-            self._apply_structure_filters(f.structure_filters)
+            sf = f.structure_filters
+
+            if sf.resolution_min is not None:
+                self._where_clauses.append("s.resolution >= $res_min")
+                self._params["res_min"] = sf.resolution_min
+
+            if sf.resolution_max is not None:
+                self._where_clauses.append("s.resolution <= $res_max")
+                self._params["res_max"] = sf.resolution_max
+
+            if sf.year_min is not None:
+                self._where_clauses.append("s.citation_year >= $year_min")
+                self._params["year_min"] = sf.year_min
+
+            if sf.year_max is not None:
+                self._where_clauses.append("s.citation_year <= $year_max")
+                self._params["year_max"] = sf.year_max
+
+            if sf.source_organism_ids:
+                self._where_clauses.append("""
+                    EXISTS {
+                        MATCH (s)<-[:belongs_to_lineage_source]-(p:PhylogenyNode)
+                        WHERE p.ncbi_tax_id IN $source_taxa
+                    }
+                """)
+                self._params["source_taxa"] = sf.source_organism_ids
+
+        # --- Entity-level filters (applied to e) ---
 
         if f.family:
             self._where_clauses.append("e.family IN $families")
@@ -282,6 +314,8 @@ class PolypeptideEntityQueryBuilder:
             self._where_clauses.append("e.sequence_length <= $seq_len_max")
             self._params["seq_len_max"] = f.sequence_length_max
 
+        # --- Variant filters ---
+
         if f.has_variants is not None:
             if f.has_variants:
                 self._where_clauses.append(
@@ -291,6 +325,57 @@ class PolypeptideEntityQueryBuilder:
                 self._where_clauses.append(
                     "NOT EXISTS { MATCH (e)-[:HAS_VARIANT]->(:Variant) }"
                 )
+
+        if f.variant_type:
+            self._where_clauses.append("""
+                EXISTS {
+                    MATCH (e)-[:HAS_VARIANT]->(v:Variant)
+                    WHERE v.type = $variant_type
+                }
+            """)
+            self._params["variant_type"] = f.variant_type
+
+        if f.variant_position_min is not None or f.variant_position_max is not None:
+            pos_conditions = []
+            if f.variant_position_min is not None:
+                pos_conditions.append("v.master_index >= $var_pos_min")
+                self._params["var_pos_min"] = f.variant_position_min
+            if f.variant_position_max is not None:
+                pos_conditions.append("v.master_index <= $var_pos_max")
+                self._params["var_pos_max"] = f.variant_position_max
+            self._where_clauses.append(f"""
+                EXISTS {{
+                    MATCH (e)-[:HAS_VARIANT]->(v:Variant)
+                    WHERE {" AND ".join(pos_conditions)}
+                }}
+            """)
+
+        # --- Ligand filter: polymer-specific via NEAR_POLYMER ---
+
+        if f.has_ligand_ids:
+            for i, chem_id in enumerate(f.has_ligand_ids):
+                param_name = f"ligand_id_{i}"
+                self._where_clauses.append(f"""
+                    EXISTS {{
+                        MATCH (pi_f:PolypeptideInstance)-[:INSTANCE_OF]->(e)
+                        MATCH (ni_f:NonpolymerInstance)-[:NEAR_POLYMER]->(pi_f)
+                        MATCH (ni_f)-[:INSTANCE_OF]->(:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c_f:Chemical)
+                        WHERE c_f.chemical_id = ${param_name}
+                    }}
+                """)
+                self._params[param_name] = chem_id.upper()
+
+        # --- Exclude MAPs ---
+
+        if f.exclude_maps:
+            self._where_clauses.append("""
+                NOT EXISTS {
+                    MATCH (s)-[:DEFINES_ENTITY]->(map_e:PolypeptideEntity)
+                    WHERE map_e.family STARTS WITH 'map_'
+                }
+            """)
+
+        # --- Cursor pagination ---
 
         if f.cursor:
             parts = f.cursor.split(":")
@@ -303,38 +388,11 @@ class PolypeptideEntityQueryBuilder:
                 self._params["cursor_rcsb"] = rcsb_id.upper()
                 self._params["cursor_entity"] = entity_id
 
-    def _apply_structure_filters(self, sf: StructureFilters):
-        if sf.resolution_min is not None:
-            self._struct_where_clauses.append("s.resolution >= $res_min")
-            self._params["res_min"] = sf.resolution_min
-
-        if sf.resolution_max is not None:
-            self._struct_where_clauses.append("s.resolution <= $res_max")
-            self._params["res_max"] = sf.resolution_max
-
-        if sf.year_min is not None:
-            self._struct_where_clauses.append("s.citation_year >= $year_min")
-            self._params["year_min"] = sf.year_min
-
-        if sf.year_max is not None:
-            self._struct_where_clauses.append("s.citation_year <= $year_max")
-            self._params["year_max"] = sf.year_max
-
-        if sf.source_organism_ids:
-            self._struct_where_clauses.append("""
-                EXISTS {
-                    MATCH (s)<-[:belongs_to_lineage_source]-(p:PhylogenyNode)
-                    WHERE p.ncbi_tax_id IN $source_taxa
-                }
-            """)
-            self._params["source_taxa"] = sf.source_organism_ids
-
     def _assemble(self) -> str:
         parts = ["MATCH (s:Structure)-[:DEFINES_ENTITY]->(e:PolypeptideEntity)"]
 
-        all_where = self._struct_where_clauses + self._where_clauses
-        if all_where:
-            parts.append("WHERE " + "\n  AND ".join(all_where))
+        if self._where_clauses:
+            parts.append("WHERE " + "\n  AND ".join(self._where_clauses))
 
         parts.append("""
 WITH e, s
@@ -343,14 +401,18 @@ WITH collect({entity: e, struct: s}) AS all_results
 WITH all_results, size(all_results) AS total_count
 WITH total_count, all_results[0..$limit] AS page
 WITH total_count, page,
-     CASE WHEN size(page) = $limit AND size(page) > 0
-          THEN page[-1].entity.parent_rcsb_id + ':' + page[-1].entity.entity_id
-          ELSE null
-     END AS next_cursor
+    CASE WHEN size(page) = $limit AND size(page) > 0
+        THEN page[-1].entity.parent_rcsb_id + ':' + page[-1].entity.entity_id
+        ELSE null
+    END AS next_cursor
 UNWIND page AS row
 WITH total_count, next_cursor, row.entity AS e, row.struct AS s
 OPTIONAL MATCH (e)-[:HAS_VARIANT]->(v:Variant)
-WITH total_count, next_cursor, e, count(v) AS variant_count
+WITH total_count, next_cursor, e, s, count(v) AS variant_count
+OPTIONAL MATCH (pi_lig:PolypeptideInstance)-[:INSTANCE_OF]->(e)
+OPTIONAL MATCH (ni:NonpolymerInstance)-[:NEAR_POLYMER]->(pi_lig)
+OPTIONAL MATCH (ni)-[:INSTANCE_OF]->(:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c:Chemical)
+WITH total_count, next_cursor, e, variant_count, collect(DISTINCT c.chemical_id) AS ligand_ids
 RETURN
     e.parent_rcsb_id AS parent_rcsb_id,
     e.entity_id AS entity_id,
@@ -359,7 +421,9 @@ RETURN
     e.sequence_length AS sequence_length,
     e.src_organism_names AS src_organism_names,
     e.uniprot_accessions AS uniprot_accessions,
+    e.pdbx_strand_ids AS pdbx_strand_ids,
     variant_count,
+    ligand_ids,
     total_count,
     next_cursor
         """)

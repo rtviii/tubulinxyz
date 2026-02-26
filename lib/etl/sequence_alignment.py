@@ -4,7 +4,7 @@ Sequence alignment against family Master Alignments.
 
 Architecture:
   1. Align CANONICAL sequence (per entity) to family MSA
-     -> canonical_to_master mapping + true genetic variants
+     -> label_seq_id_to_master mapping + true genetic variants
   2. For each chain instance, use label_seq_id (from molstar) to build
      auth_seq_id -> master_index mapping per chain.
 
@@ -30,7 +30,8 @@ from loguru import logger
 from lib.types import (
     TubulinFamily,
     ObservedSequenceData,
-    IndexMappingData,
+    EntityIndexMapping,
+    ChainIndexMappingData,
     SequenceVariant,
     VariantType,
 )
@@ -47,20 +48,30 @@ class EntityAlignmentResult:
 
     Computed once per entity. Captures true genetic variants
     (canonical vs family consensus).
+
+    canonical_to_master: label_seq_id (1-based) -> master_index (1-based) or None
+    master_to_canonical: master_index (1-based) -> label_seq_id (1-based) or None
     """
 
     family: TubulinFamily
     entity_id: str
     canonical_sequence: str
 
-    # canonical_pos (1-based) -> master_index (1-based) or None
+    # label_seq_id (1-based) -> master_index (1-based) or None
     canonical_to_master: Dict[int, Optional[int]]
-    # master_index (1-based) -> canonical_pos (1-based) or None
+    # master_index (1-based) -> label_seq_id (1-based) or None
     master_to_canonical: Dict[int, Optional[int]]
 
     # True genetic variants (canonical vs consensus)
     variants: List[SequenceVariant] = field(default_factory=list)
     stats: Dict[str, Any] = field(default_factory=dict)
+
+    def to_entity_index_mapping(self) -> EntityIndexMapping:
+        """Convert to the pydantic model for storage/serialization."""
+        return EntityIndexMapping(
+            label_seq_id_to_master=self.canonical_to_master,
+            master_to_label_seq_id=self.master_to_canonical,
+        )
 
     @property
     def substitutions(self) -> List[SequenceVariant]:
@@ -80,24 +91,27 @@ class ChainIndexMapping:
     """Per-chain mapping from auth_seq_id to master_index.
 
     Built cheaply from entity alignment + molstar label_seq_id data.
+
+    auth_seq_id_to_master: author residue number -> master_index or None
+    master_to_auth_seq_id: master_index -> author residue number or None
     """
 
     auth_asym_id: str
     entity_id: str
 
     # auth_seq_id -> master_index (1-based) or None
-    observed_to_master: Dict[int, Optional[int]]
+    auth_seq_id_to_master: Dict[int, Optional[int]]
     # master_index (1-based) -> auth_seq_id or None
-    master_to_observed: Dict[int, Optional[int]]
+    master_to_auth_seq_id: Dict[int, Optional[int]]
 
     # Canonical positions with a master mapping but not observed in this chain
     unresolved_positions: List[int] = field(default_factory=list)
 
-    def to_index_mapping_data(self) -> IndexMappingData:
-        """Convert to IndexMappingData for storage/serialization."""
-        return IndexMappingData(
-            observed_to_master=self.observed_to_master,
-            master_to_observed=self.master_to_observed,
+    def to_chain_index_mapping_data(self) -> ChainIndexMappingData:
+        """Convert to the pydantic model for storage/serialization."""
+        return ChainIndexMappingData(
+            auth_seq_id_to_master=self.auth_seq_id_to_master,
+            master_to_auth_seq_id=self.master_to_auth_seq_id,
         )
 
 
@@ -162,7 +176,7 @@ class SequenceAligner:
     ) -> Optional[EntityAlignmentResult]:
         """
         Align an entity's canonical sequence to the family MSA.
-        Returns canonical-to-master mapping and true genetic variants.
+        Returns label_seq_id-to-master mapping and true genetic variants.
         """
         if len(canonical_sequence) < 10:
             logger.warning(
@@ -196,25 +210,24 @@ class SequenceAligner:
         Build per-chain auth_seq_id -> master_index mapping.
 
         Uses label_seq_id (= canonical position) as the bridge:
-            auth_seq_id --(per residue)--> label_seq_id
+            auth_seq_id  --(per residue, from molstar)--> label_seq_id
             label_seq_id = canonical_pos --(entity alignment)--> master_index
         """
         master_length = self.consensus.length
 
-        observed_to_master: Dict[int, Optional[int]] = {}
-        master_to_observed: Dict[int, Optional[int]] = {
+        auth_to_master: Dict[int, Optional[int]] = {}
+        master_to_auth: Dict[int, Optional[int]] = {
             i: None for i in range(1, master_length + 1)
         }
 
         for residue in observed.residues:
             if residue.label_seq_id <= 0:
-                # Skip spurious terminal residues (see diagnostic: 7 cases across 22k chains)
                 continue
             canonical_pos = residue.label_seq_id
             master_idx = entity_result.canonical_to_master.get(canonical_pos)
-            observed_to_master[residue.auth_seq_id] = master_idx
+            auth_to_master[residue.auth_seq_id] = master_idx
             if master_idx is not None:
-                master_to_observed[master_idx] = residue.auth_seq_id
+                master_to_auth[master_idx] = residue.auth_seq_id
 
         # Unresolved: canonical positions that map to a master position
         # but have no observed residue in this chain
@@ -230,12 +243,12 @@ class SequenceAligner:
         return ChainIndexMapping(
             auth_asym_id=observed.auth_asym_id,
             entity_id=observed.entity_id,
-            observed_to_master=observed_to_master,
-            master_to_observed=master_to_observed,
+            auth_seq_id_to_master=auth_to_master,
+            master_to_auth_seq_id=master_to_auth,
             unresolved_positions=unresolved,
         )
 
-    # ── MUSCLE execution ──
+    # -- MUSCLE execution --
 
     def _run_muscle(self, seq_id: str, sequence: str) -> Tuple[str, List[bool]]:
         """
@@ -295,7 +308,7 @@ class SequenceAligner:
             seq_temp.unlink(missing_ok=True)
             out_temp.unlink(missing_ok=True)
 
-    # ── Result construction ──
+    # -- Result construction --
 
     def _build_entity_result(
         self,
