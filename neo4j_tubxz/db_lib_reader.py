@@ -40,6 +40,10 @@ from neo4j_tubxz.structure_query_builder import (
 )
 from lib.etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 
+from neo4j_tubxz.models import CanonicalBindingSite, CanonicalBindingSiteResidue
+from collections import Counter
+
+
 sys.dont_write_bytecode = True
 
 
@@ -479,6 +483,7 @@ ORDER BY c.chemical_id
             return session.execute_read(run_query)
 
     def get_filter_facets(self) -> FilterFacets:
+
         """
         Get available filter options for the UI.
         Returns counts for each facet value.
@@ -607,4 +612,83 @@ ORDER BY c.chemical_id
 
             return session.execute_read(run_query)
 
+    def get_canonical_binding_site(
+        self, chemical_id: str, family: str
+    ) -> Optional[CanonicalBindingSite]:
+        """
+        Aggregate binding sites for a given ligand across all structures
+        where it contacts a polymer of the specified family.
+        Returns per-master-index frequencies.
+        """
+        query = """
+        MATCH (li:NonpolymerInstance)-[:INSTANCE_OF]->(ne:NonpolymerEntity)
+              -[:DEFINED_BY_CHEMICAL]->(c:Chemical {chemical_id: $chemical_id})
+        MATCH (li)-[r:NEAR_POLYMER]->(pi:PolypeptideInstance)
+              -[:INSTANCE_OF]->(pe:PolypeptideEntity {family: $family})
+        RETURN r.residues_json AS residues_json,
+               li.parent_rcsb_id AS rcsb_id,
+               c.chemical_name AS chemical_name
+        """
+
+        with self.adapter.driver.session() as session:
+
+            def run_query(tx: Transaction):
+                records = list(tx.run(query, {
+                    "chemical_id": chemical_id.upper(),
+                    "family": family,
+                }))
+
+                if not records:
+                    return None
+
+                chemical_name = records[0]["chemical_name"]
+
+                # Track which structures contributed and count per master_index
+                structures_seen = set()
+                master_index_counter: Counter = Counter()
+
+                for r in records:
+                    rcsb_id = r["rcsb_id"]
+                    residues_json = r["residues_json"]
+                    if not residues_json:
+                        continue
+
+                    raw_residues = json.loads(residues_json)
+                    # Collect unique master indices for this structure+chain combo
+                    # to avoid double-counting if a ligand contacts the same
+                    # master position through multiple atoms
+                    local_indices = set()
+                    for res in raw_residues:
+                        mi = res.get("master_index")
+                        if mi is not None:
+                            local_indices.add(mi)
+
+                    structures_seen.add(rcsb_id)
+                    for mi in local_indices:
+                        master_index_counter[mi] += 1
+
+                structure_count = len(structures_seen)
+                if structure_count == 0:
+                    return None
+
+                residues = [
+                    CanonicalBindingSiteResidue(
+                        master_index=mi,
+                        count=cnt,
+                        frequency=cnt / structure_count,
+                    )
+                    for mi, cnt in sorted(master_index_counter.items())
+                ]
+
+                return CanonicalBindingSite(
+                    chemical_id=chemical_id.upper(),
+                    chemical_name=chemical_name,
+                    family=family,
+                    structure_count=structure_count,
+                    residues=residues,
+                )
+
+            return session.execute_read(run_query)
+
 db_reader = Neo4jReader()
+

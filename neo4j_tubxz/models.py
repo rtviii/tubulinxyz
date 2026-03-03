@@ -320,10 +320,23 @@ class LigandNeighborhood(BaseModel):
 
 class PolymerNeighborhoodsResponse(BaseModel):
     """All ligand neighborhoods for a polymer chain."""
-
     rcsb_id: str
     auth_asym_id: str
     neighborhoods: List[LigandNeighborhood]
     total_ligands: int
     total_residues: int
 
+
+class CanonicalBindingSiteResidue(BaseModel):
+    """Single master-alignment position with its frequency across structures."""
+    master_index: int
+    count: int           # how many structures had this position in the binding site
+    frequency: float     # count / structure_count
+
+class CanonicalBindingSite(BaseModel):
+    """Aggregated binding site for a ligand across all structures of a given family."""
+    chemical_id: str
+    chemical_name: Optional[str] = None
+    family: str
+    structure_count: int
+    residues: List[CanonicalBindingSiteResidue]
