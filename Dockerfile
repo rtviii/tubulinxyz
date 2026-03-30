@@ -4,6 +4,7 @@ FROM node:20-slim AS node-deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 make g++ pkg-config \
     libxi-dev libgl1-mesa-dev \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json* ./
