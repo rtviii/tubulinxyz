@@ -13,10 +13,9 @@ TUBETL_DATA/
 ingestion_logs/
 taxdump.tar.gz
 .etetoolkit/
+scripts_and_artifacts/archive/
 
-# Exclude structure files at root level, but NOT data/ reference files
 /*.cif
-/*.fasta
 /*.gz
 /*.pkl
 /*.pdb
