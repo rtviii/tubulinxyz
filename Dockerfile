@@ -1,5 +1,10 @@
 # ---- Stage 1: Node.js dependencies (tsx, molstar for CIF extraction) ----
+# gl (headless OpenGL) requires python3 + build tools for native compilation
 FROM node:20-slim AS node-deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 make g++ pkg-config \
+    libxi-dev libgl1-mesa-dev \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json* ./
 RUN npm install --production
