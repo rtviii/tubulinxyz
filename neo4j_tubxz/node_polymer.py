@@ -37,6 +37,9 @@ def node__polypeptide_entity(
         "host_organism_names": entity.host_organism_names,
         "host_organism_ids": entity.host_organism_ids,
         "uniprot_accessions": entity.uniprot_accessions,
+        "isotype": entity.isotype,
+        "isotype_method": entity.isotype_method,
+        "isotype_confidence": entity.isotype_confidence,
     }
 
     family_val = entity.family.value if entity.family else None

@@ -58,6 +58,13 @@ NODE_CONSTRAINTS = [
     "CREATE INDEX variant_source_idx IF NOT EXISTS FOR (v:Variant) ON (v.source);",
     # Substitution-specific index for common queries
     "CREATE INDEX substitution_positions IF NOT EXISTS FOR (v:Substitution) ON (v.master_index, v.wild_type, v.observed);",
+    # Literature variant queries (Morisette etc.)
+    "CREATE INDEX variant_family_idx IF NOT EXISTS FOR (v:Variant) ON (v.family);",
+    "CREATE INDEX variant_uniprot_idx IF NOT EXISTS FOR (v:Variant) ON (v.uniprot_id);",
+    # Modification (PTM) queries
+    "CREATE INDEX mod_master_idx IF NOT EXISTS FOR (m:Modification) ON (m.master_index);",
+    "CREATE INDEX mod_family_idx IF NOT EXISTS FOR (m:Modification) ON (m.family);",
+    "CREATE INDEX mod_uniprot_idx IF NOT EXISTS FOR (m:Modification) ON (m.uniprot_id);",
 ]
 
 
