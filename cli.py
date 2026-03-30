@@ -1,5 +1,6 @@
 import asyncio
 import os
+from pathlib import Path
 from typing import Optional
 import typer
 from rich.console import Console
@@ -609,6 +610,103 @@ def db_status():
         
     except Exception as e:
         console.print(f"[bold red]Connection failed:[/bold red] {e}")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="weekly-ingest")
+def weekly_ingest(
+    workers: Annotated[int, typer.Option("--workers", "-w", help="Number of parallel workers")] = 4,
+):
+    """
+    Automated weekly ingestion: collect new structures from PDB, then upload to Neo4j.
+    Writes structured status JSON to /var/log/tubxz/last_ingest_status.json.
+    Designed to be called by cron inside the scheduler container.
+    """
+    import json
+    import time
+    from datetime import datetime, timezone
+
+    log_dir = Path("/var/log/tubxz")
+    log_dir.mkdir(parents=True, exist_ok=True)
+
+    status = {
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "finished_at": None,
+        "collect_new": 0,
+        "collect_failed": 0,
+        "upload_new": 0,
+        "upload_failed": 0,
+        "errors": [],
+    }
+
+    # Phase 1: Collect missing structures from PDB
+    console.print("=== Weekly Ingest: Collecting missing structures ===")
+    try:
+        missing_ids = GlobalOps.missing_profiles()
+        status["collect_total"] = len(missing_ids)
+
+        if missing_ids:
+            console.print(f"Found {len(missing_ids)} new structures to collect.")
+            for rcsb_id in missing_ids:
+                try:
+                    collector = TubulinETLCollector(rcsb_id)
+                    asyncio.run(collector.generate_profile(overwrite=False))
+                    status["collect_new"] += 1
+                    console.print(f"[green]Collected {rcsb_id}[/green]")
+                except Exception as e:
+                    status["collect_failed"] += 1
+                    status["errors"].append(f"collect:{rcsb_id}:{str(e)[:200]}")
+                    console.print(f"[red]Failed to collect {rcsb_id}: {e}[/red]")
+        else:
+            console.print("No new structures to collect.")
+    except Exception as e:
+        status["errors"].append(f"collect_phase:{str(e)[:200]}")
+        console.print(f"[red]Error in collect phase: {e}[/red]")
+
+    # Phase 2: Upload missing structures to Neo4j
+    console.print("=== Weekly Ingest: Uploading missing structures ===")
+    try:
+        local_profiles = set(GlobalOps.list_profiles())
+        db_driver = get_db_driver()
+        db_profiles = set(get_all_structs_in_db(db_driver))
+        db_driver.close()
+
+        missing_from_db = sorted(list(local_profiles - db_profiles))
+        status["upload_total"] = len(missing_from_db)
+
+        if missing_from_db:
+            console.print(f"Found {len(missing_from_db)} structures to upload.")
+            for rcsb_id in missing_from_db:
+                try:
+                    adapter = get_db_adapter()
+                    adapter.add_total_structure(rcsb_id, disable_exists_check=True)
+                    status["upload_new"] += 1
+                    console.print(f"[green]Uploaded {rcsb_id}[/green]")
+                except Exception as e:
+                    status["upload_failed"] += 1
+                    status["errors"].append(f"upload:{rcsb_id}:{str(e)[:200]}")
+                    console.print(f"[red]Failed to upload {rcsb_id}: {e}[/red]")
+        else:
+            console.print("No new structures to upload.")
+    except Exception as e:
+        status["errors"].append(f"upload_phase:{str(e)[:200]}")
+        console.print(f"[red]Error in upload phase: {e}[/red]")
+
+    status["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    # Write status file for the /ingest-status endpoint
+    status_file = log_dir / "last_ingest_status.json"
+    status_file.write_text(json.dumps(status, indent=2))
+    console.print(f"Status written to {status_file}")
+
+    # Rotate old log files (keep last 12)
+    log_files = sorted(log_dir.glob("ingest_*.log"), key=lambda p: p.stat().st_mtime, reverse=True)
+    for old_log in log_files[12:]:
+        old_log.unlink()
+
+    console.print(f"=== Weekly Ingest complete: {status['collect_new']} collected, {status['upload_new']} uploaded ===")
+
+    if status["errors"]:
         raise typer.Exit(code=1)
 
 

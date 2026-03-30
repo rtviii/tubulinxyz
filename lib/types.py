@@ -190,6 +190,15 @@ class SequenceVariant(BaseModel):
     phenotype: Optional[str] = None
     reference: Optional[str] = None
 
+    # Literature-specific fields (Morisette database, etc.)
+    species: Optional[str] = None
+    tubulin_type: Optional[str] = None      # Morisette isotype designation, e.g. "alpha2"
+    family: Optional[str] = None            # e.g. "tubulin_alpha", denormalized for queries
+    reference_link: Optional[str] = None    # PubMed/DOI URL
+    keywords: Optional[str] = None
+    notes: Optional[str] = None
+    utn_position: Optional[int] = None      # original Morisette UTN coordinate (1-440)
+
     @classmethod
     def substitution(
         cls,
@@ -289,6 +298,9 @@ class Modification(BaseModel):
     uniprot_id: str
     species: str
     tubulin_type: str
+
+    family: Optional[str] = None            # e.g. "tubulin_alpha", denormalized for queries
+    utn_position: Optional[int] = None      # original Morisette UTN coordinate (1-440)
 
     phenotype: str
     database_source: str
@@ -393,6 +405,10 @@ class PolypeptideEntity(BaseModel):
 
     family: Optional[PolymerClass] = None
     uniprot_accessions: List[str] = []
+
+    isotype: Optional[str] = None
+    isotype_method: Optional[str] = None
+    isotype_confidence: Optional[float] = None
 
     entity_index_mapping: Optional[EntityIndexMapping] = None
     chain_index_mappings: Dict[str, ChainIndexMappingData] = {}
@@ -541,11 +557,9 @@ class MolstarExtractionResult(BaseModel):
                 return seq
         return None
 
-
 # ============================================================
 # Classification Report
 # ============================================================
-
 
 class EntityClassificationResult(BaseModel):
     """Classification result for a single entity."""

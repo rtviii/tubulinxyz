@@ -115,6 +115,37 @@ def create_variants_for_entity(
     return count
 
 
+def batch_create_literature_variants(
+    tx: Transaction | ManagedTransaction,
+    variants: List[SequenceVariant],
+) -> int:
+    """
+    Batch create free-standing Variant nodes for literature-sourced mutations.
+    These are NOT linked to any PolypeptideEntity -- they represent protein-level
+    annotations (e.g. from Morisette database), queryable by family + master_index.
+
+    Uses MERGE on (master_index, uniprot_id, observed, source) to avoid duplicates.
+    """
+    if not variants:
+        return 0
+
+    props_list = [_variant_to_props(v) for v in variants]
+
+    # All literature variants from Morisette are substitutions, but handle generically
+    tx.run("""
+        UNWIND $props_list AS props
+        MERGE (v:Variant:Substitution {
+            master_index: props.master_index,
+            uniprot_id:   props.uniprot_id,
+            observed:     props.observed,
+            source:       props.source
+        })
+        SET v += props
+    """, {"props_list": props_list})
+
+    return len(props_list)
+
+
 def _variant_to_props(v: SequenceVariant) -> dict:
     """Convert variant to Neo4j properties dict."""
     props = {
@@ -127,5 +158,12 @@ def _variant_to_props(v: SequenceVariant) -> dict:
         "uniprot_id": v.uniprot_id,
         "phenotype": v.phenotype,
         "reference": v.reference,
+        "species": v.species,
+        "tubulin_type": v.tubulin_type,
+        "family": v.family,
+        "reference_link": v.reference_link,
+        "keywords": v.keywords,
+        "notes": v.notes,
+        "utn_position": v.utn_position,
     }
     return {k: v for k, v in props.items() if v is not None}

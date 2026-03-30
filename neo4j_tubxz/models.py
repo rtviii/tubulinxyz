@@ -128,6 +128,7 @@ class PolypeptideEntityFilters(BaseModel):
     structure_filters: Optional[StructureFilters] = None
 
     family             : Optional[List[str]] = None
+    isotype            : Optional[List[str]] = None
     uniprot_accession  : Optional[str]       = None
     sequence_contains  : Optional[str]       = None
     sequence_length_min: Optional[int]       = None
@@ -204,12 +205,13 @@ class PolypeptideEntitySummary(BaseModel):
     entity_id: str
     pdbx_description: Optional[str] = None
     family: Optional[str] = None
+    isotype: Optional[str] = None
     sequence_length: Optional[int] = None
     src_organism_names: List[str] = []
     uniprot_accessions: List[str] = []
     variant_count: Optional[int] = None
     pdbx_strand_ids: List[str] = []          # <-- add
-    ligand_ids: List[str] = []  
+    ligand_ids: List[str] = []
 
 class LigandSummary(BaseModel):
     """Lightweight ligand/chemical representation."""

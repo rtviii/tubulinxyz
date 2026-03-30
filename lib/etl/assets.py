@@ -341,121 +341,36 @@ LigandsChemInfo = """{
 # GQL SEARCH QUERY (from gql_querystrings.py, as a dict)
 # --------------------------------------------------------------------------
 
+# IPR000217 = "Tubulin" family in InterPro (parent of alpha/beta/gamma/delta/epsilon/zeta).
+# Uses annotation_lineage so it matches any child family annotation too.
+# This excludes FtsZ (which shares the GTPase superfamily IPR036525 but is not tubulin).
 TUBULIN_SEARCH_QUERY = {
     "query": {
         "type": "group",
-        "logical_operator": "or",
+        "logical_operator": "and",
         "nodes": [
             {
-                "type": "group",
-                "logical_operator": "and",
-                "nodes": [
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
-                            "operator": "exact_match",
-                            "negation": False,
-                            "value": "IPR036525",
-                        },
-                    },
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.type",
-                            "operator": "exact_match",
-                            "value": "InterPro",
-                            "negation": False,
-                        },
-                    },
-                ],
-                "label": "nested-attribute",
+                "type": "terminal",
+                "service": "text",
+                "parameters": {
+                    "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
+                    "operator": "exact_match",
+                    "negation": False,
+                    "value": "IPR000217",
+                },
             },
             {
-                "type": "group",
-                "logical_operator": "and",
-                "nodes": [
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
-                            "operator": "exact_match",
-                            "negation": False,
-                            "value": "IPR002452",
-                        },
-                    },
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.type",
-                            "operator": "exact_match",
-                            "value": "InterPro",
-                            "negation": False,
-                        },
-                    },
-                ],
-                "label": "nested-attribute",
-            },
-            {
-                "type": "group",
-                "logical_operator": "and",
-                "nodes": [
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
-                            "operator": "exact_match",
-                            "negation": False,
-                            "value": "IPR013838",
-                        },
-                    },
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.type",
-                            "operator": "exact_match",
-                            "value": "InterPro",
-                            "negation": False,
-                        },
-                    },
-                ],
-                "label": "nested-attribute",
-            },
-            {
-                "type": "group",
-                "logical_operator": "and",
-                "nodes": [
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.annotation_lineage.id",
-                            "operator": "exact_match",
-                            "negation": False,
-                            "value": "IPR023123",
-                        },
-                    },
-                    {
-                        "type": "terminal",
-                        "service": "text",
-                        "parameters": {
-                            "attribute": "rcsb_uniprot_annotation.type",
-                            "operator": "exact_match",
-                            "value": "InterPro",
-                            "negation": False,
-                        },
-                    },
-                ],
-                "label": "nested-attribute",
+                "type": "terminal",
+                "service": "text",
+                "parameters": {
+                    "attribute": "rcsb_uniprot_annotation.type",
+                    "operator": "exact_match",
+                    "value": "InterPro",
+                    "negation": False,
+                },
             },
         ],
-        "label": "text",
+        "label": "nested-attribute",
     },
     "return_type": "entry",
     "request_options": {

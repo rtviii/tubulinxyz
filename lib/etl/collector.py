@@ -27,6 +27,7 @@ from lib.etl.classification import (
     is_map_family,
     is_tubulin_family,
 )
+from lib.etl.isotype import IsotypeCaller, ISOTYPE_FAMILIES
 from lib.types import (
     ClassificationReport,
     EntityClassificationResult,
@@ -211,6 +212,36 @@ class TubulinETLCollector:
             f"  Classification: {classified_count}/{total_count} entities "
             f"({tubulin_count} tubulin, {map_count} MAP)"
         )
+
+        # ========================================
+        # Phase 2.5: Isotype Calling
+        # ========================================
+        logger.info("Phase 2.5: Calling isotypes for alpha/beta tubulin")
+
+        isotype_caller = IsotypeCaller(PROJECT_ROOT)
+
+        for entity_id, family in entity_families.items():
+            if family not in ISOTYPE_FAMILIES:
+                continue
+
+            entity = poly_entities[entity_id]
+            if not isinstance(entity, PolypeptideEntity):
+                continue
+
+            result = isotype_caller.call_isotype(
+                family=family,
+                uniprot_accessions=entity.uniprot_accessions,
+                canonical_sequence=entity.one_letter_code_can,
+                entity_id=entity_id,
+                rcsb_id=self.rcsb_id,
+            )
+
+            entity.isotype = result.isotype
+            entity.isotype_method = result.method
+            entity.isotype_confidence = result.confidence
+
+            status = result.isotype or "unknown"
+            logger.debug(f"  Entity {entity_id}: {status} ({result.details})")
 
         # ========================================
         # Phase 3: Sequence Alignment

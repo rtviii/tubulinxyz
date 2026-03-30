@@ -46,7 +46,6 @@ from collections import Counter
 
 sys.dont_write_bytecode = True
 
-
 class Neo4jReader:
     """
     Read-only database operations with typed filters and responses.
@@ -84,16 +83,16 @@ class Neo4jReader:
 
                 structures = [
                     StructureSummary(
-                        rcsb_id=r["rcsb_id"],
-                        resolution=r["resolution"],
-                        exp_method=r["exp_method"],
-                        citation_title=r["citation_title"],
-                        citation_year=r["citation_year"],
-                        deposition_date=r["deposition_date"],
-                        src_organism_names=r["src_organism_names"] or [],
-                        pdbx_keywords=r["pdbx_keywords"],
-                        entity_count=r["entity_count"],
-                        ligand_count=r["ligand_count"],
+                        rcsb_id            = r["rcsb_id"],
+                        resolution         = r["resolution"],
+                        exp_method         = r["exp_method"],
+                        citation_title     = r["citation_title"],
+                        citation_year      = r["citation_year"],
+                        deposition_date    = r["deposition_date"],
+                        src_organism_names = r["src_organism_names"] or [],
+                        pdbx_keywords      = r["pdbx_keywords"],
+                        entity_count       = r["entity_count"],
+                        ligand_count       = r["ligand_count"],
                     )
                     for r in records
                 ]
@@ -182,6 +181,7 @@ class Neo4jReader:
                         entity_id=r["entity_id"],
                         pdbx_description=r["pdbx_description"],
                         family=r["family"],
+                        isotype=r["isotype"],
                         sequence_length=r["sequence_length"],
                         src_organism_names=r["src_organism_names"] or [],
                         uniprot_accessions=r["uniprot_accessions"] or [],

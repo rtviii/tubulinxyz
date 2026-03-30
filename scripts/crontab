@@ -1,0 +1,5 @@
+# Weekly tubulin structure ingestion: Sunday 3am UTC
+# PDB releases new structures on Wednesdays, so Sunday is a comfortable buffer.
+# The wrapper script dumps the container env into the cron environment first.
+0 3 * * 0 root /app/scripts/run_ingest.sh >> /var/log/tubxz/cron.log 2>&1
+# Empty line required by cron

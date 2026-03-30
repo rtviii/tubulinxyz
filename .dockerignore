@@ -5,11 +5,6 @@ __pycache__/
 cache/
 debug_output/
 profiles/
-*.cif
-*.fasta
-*.gz
-*.pkl
-*.pdb
 notes/
 .env
 .git/
@@ -17,3 +12,11 @@ node_modules/
 TUBETL_DATA/
 ingestion_logs/
 taxdump.tar.gz
+.etetoolkit/
+
+# Exclude structure files at root level, but NOT data/ reference files
+/*.cif
+/*.fasta
+/*.gz
+/*.pkl
+/*.pdb

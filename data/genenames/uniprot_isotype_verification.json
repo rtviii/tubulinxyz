@@ -1,0 +1,162 @@
+{
+  "verified_at": "2026-03-29",
+  "notes": "Q13748 (TUBA3D) is INACTIVE in UniProt -- it was demerged into P0DPH7 (TUBA3C) and P0DPH8 (TUBA3D). The correct current accession for TUBA3D is P0DPH8.",
+  "mappings": [
+    {
+      "uniprot_accession": "Q71U36",
+      "expected_symbol": "TUBA1A",
+      "uniprot_gene_name": "TUBA1A",
+      "uniprot_protein_name": "Tubulin alpha-1A chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "P68363",
+      "expected_symbol": "TUBA1B",
+      "uniprot_gene_name": "TUBA1B",
+      "uniprot_protein_name": "Tubulin alpha-1B chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q9BQE3",
+      "expected_symbol": "TUBA1C",
+      "uniprot_gene_name": "TUBA1C",
+      "uniprot_protein_name": "Tubulin alpha-1C chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "P0DPH7",
+      "expected_symbol": "TUBA3C",
+      "uniprot_gene_name": "TUBA3C",
+      "uniprot_protein_name": "Tubulin alpha-3C chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q13748",
+      "expected_symbol": "TUBA3D",
+      "uniprot_gene_name": null,
+      "uniprot_protein_name": null,
+      "organism": null,
+      "verified": false,
+      "flag": "INACTIVE ENTRY -- Q13748 was demerged. The correct accession for TUBA3D is now P0DPH8.",
+      "replacement_accession": "P0DPH8",
+      "replacement_gene_name": "TUBA3D",
+      "replacement_protein_name": "Tubulin alpha-3D chain"
+    },
+    {
+      "uniprot_accession": "Q6PEY2",
+      "expected_symbol": "TUBA3E",
+      "uniprot_gene_name": "TUBA3E",
+      "uniprot_protein_name": "Tubulin alpha-3E chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "P68366",
+      "expected_symbol": "TUBA4A",
+      "uniprot_gene_name": "TUBA4A",
+      "uniprot_protein_name": "Tubulin alpha-4A chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q9NY65",
+      "expected_symbol": "TUBA8",
+      "uniprot_gene_name": "TUBA8",
+      "uniprot_protein_name": "Tubulin alpha-8 chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "A6NHL2",
+      "expected_symbol": "TUBAL3",
+      "uniprot_gene_name": "TUBAL3",
+      "uniprot_protein_name": "Tubulin alpha chain-like 3",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q9H4B7",
+      "expected_symbol": "TUBB1",
+      "uniprot_gene_name": "TUBB1",
+      "uniprot_protein_name": "Tubulin beta-1 chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q13885",
+      "expected_symbol": "TUBB2A",
+      "uniprot_gene_name": "TUBB2A",
+      "uniprot_protein_name": "Tubulin beta-2A chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q9BVA1",
+      "expected_symbol": "TUBB2B",
+      "uniprot_gene_name": "TUBB2B",
+      "uniprot_protein_name": "Tubulin beta-2B chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q13509",
+      "expected_symbol": "TUBB3",
+      "uniprot_gene_name": "TUBB3",
+      "uniprot_protein_name": "Tubulin beta-3 chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "P07437",
+      "expected_symbol": "TUBB",
+      "uniprot_gene_name": "TUBB",
+      "uniprot_protein_name": "Tubulin beta chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "P04350",
+      "expected_symbol": "TUBB4A",
+      "uniprot_gene_name": "TUBB4A",
+      "uniprot_protein_name": "Tubulin beta-4A chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "P68371",
+      "expected_symbol": "TUBB4B",
+      "uniprot_gene_name": "TUBB4B",
+      "uniprot_protein_name": "Tubulin beta-4B chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q9BUF5",
+      "expected_symbol": "TUBB6",
+      "uniprot_gene_name": "TUBB6",
+      "uniprot_protein_name": "Tubulin beta-6 chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "Q3ZCM7",
+      "expected_symbol": "TUBB8",
+      "uniprot_gene_name": "TUBB8",
+      "uniprot_protein_name": "Tubulin beta-8 chain",
+      "organism": "Homo sapiens",
+      "verified": true
+    },
+    {
+      "uniprot_accession": "A6NNZ2",
+      "expected_symbol": "TUBB8B",
+      "uniprot_gene_name": "TUBB8B",
+      "uniprot_protein_name": "Tubulin beta 8B",
+      "organism": "Homo sapiens",
+      "verified": true
+    }
+  ]
+}

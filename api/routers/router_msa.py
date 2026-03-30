@@ -22,7 +22,6 @@ def get_cached_aligner(family: TubulinFamily) -> SequenceAligner:
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"MSA not found for {family}: {e}")
 
-
 # ----------------------------
 # Models
 # ----------------------------
@@ -165,12 +164,12 @@ async def get_master_profile(
 
         sequences_info = [
             {
-                "id": record.id,
+                "id"         : record.id,
                 "description": record.description,
-                "length": len(record.seq),
-                "gap_count": str(record.seq).count("-"),
-                "sequence": str(record.seq),
-                "family": family,
+                "length"     : len(record.seq),
+                "gap_count"  : str(record.seq).count("-"),
+                "sequence"   : str(record.seq),
+                "family"     : family,
             }
             for record in alignment
         ]
@@ -180,13 +179,13 @@ async def get_master_profile(
         )
 
         return {
-            "profile_path": str(profile_path),
-            "profile_exists": profile_path.exists(),
-            "num_sequences": len(alignment),
+            "profile_path"    : str(profile_path),
+            "profile_exists"  : profile_path.exists(),
+            "num_sequences"   : len(alignment),
             "alignment_length": alignment.get_alignment_length(),
-            "sequences": sequences_info,
-            "full_alignment": full_alignment,
-            "muscle_binary": str(aligner.muscle_binary),
+            "sequences"       : sequences_info,
+            "full_alignment"  : full_alignment,
+            "muscle_binary"   : str(aligner.muscle_binary),
         }
 
     except HTTPException:

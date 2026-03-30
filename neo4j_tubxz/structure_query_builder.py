@@ -298,6 +298,10 @@ class PolypeptideEntityQueryBuilder:
             self._where_clauses.append("e.family IN $families")
             self._params["families"] = f.family
 
+        if f.isotype:
+            self._where_clauses.append("e.isotype IN $isotypes")
+            self._params["isotypes"] = f.isotype
+
         if f.uniprot_accession:
             self._where_clauses.append("$uniprot IN e.uniprot_accessions")
             self._params["uniprot"] = f.uniprot_accession
@@ -418,6 +422,7 @@ RETURN
     e.entity_id AS entity_id,
     e.pdbx_description AS pdbx_description,
     e.family AS family,
+    e.isotype AS isotype,
     e.sequence_length AS sequence_length,
     e.src_organism_names AS src_organism_names,
     e.uniprot_accessions AS uniprot_accessions,
