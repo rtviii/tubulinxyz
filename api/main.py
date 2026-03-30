@@ -75,6 +75,19 @@ def ingest_status():
         return {"status": "error reading status file"}
 
 
+@app.get("/bootstrap-status", tags=["Health"])
+def bootstrap_status():
+    """Returns the live bootstrap/init progress (written by the bootstrap service)."""
+    import json
+    status_file = Path("/var/log/tubxz/bootstrap_status.json")
+    if not status_file.exists():
+        return {"phase": "unknown", "done": True, "message": "No bootstrap status file found."}
+    try:
+        return json.loads(status_file.read_text())
+    except Exception:
+        return {"phase": "error", "done": False, "message": "Error reading bootstrap status."}
+
+
 if __name__ == "__main__":
     import uvicorn
     Path("debug_output").mkdir(exist_ok=True)
