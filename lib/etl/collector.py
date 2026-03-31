@@ -33,7 +33,7 @@ from lib.types import (
     EntityClassificationResult,
     SequenceVariant,
 )
-from lib.etl.molstar_bridge import run_molstar_extraction
+from lib.etl.molstar_bridge import run_molstar_extraction, run_thumbnail_render
 from lib.etl.sequence_alignment import (
     get_aligner_for_family,
     EntityAlignmentResult,
@@ -398,6 +398,23 @@ class TubulinETLCollector:
             f.write(structure.model_dump_json(indent=2))
 
         logger.info(f"Profile written to {self.assets.paths.profile}")
+
+        # ========================================
+        # Phase 6: Render Thumbnail
+        # ========================================
+        logger.info("Phase 6: Rendering thumbnail")
+
+        thumbnail_ok = run_thumbnail_render(
+            cif_path=cif_path,
+            rcsb_id=self.rcsb_id,
+            profile_path=Path(self.assets.paths.profile),
+            output_path=Path(self.assets.paths.thumbnail),
+            project_root=PROJECT_ROOT,
+        )
+        if thumbnail_ok:
+            logger.info(f"Thumbnail saved to {self.assets.paths.thumbnail}")
+        else:
+            logger.warning(f"Thumbnail render failed for {self.rcsb_id} (non-fatal)")
 
         return structure
 

@@ -56,6 +56,48 @@ def run_molstar_extraction(
         return None
 
 
+RENDER_SCRIPT = Path(__file__).resolve().parent.parent.parent / "scripts_and_artifacts" / "render_thumbnail.tsx"
+
+
+def run_thumbnail_render(
+    cif_path: Path,
+    rcsb_id: str,
+    profile_path: Path,
+    output_path: Path,
+    project_root: Path,
+    timeout: int = 120,
+) -> bool:
+    """Render a structure thumbnail using headless Molstar. Returns True on success."""
+    local_tsx = project_root / "node_modules" / ".bin" / "tsx"
+
+    if local_tsx.exists():
+        cmd = [str(local_tsx), str(RENDER_SCRIPT)]
+    else:
+        logger.warning("Local tsx not found, falling back to npx")
+        cmd = ["npx", "tsx", str(RENDER_SCRIPT)]
+
+    cmd.extend([str(cif_path), rcsb_id.upper(), str(profile_path), str(output_path)])
+
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout, cwd=project_root
+        )
+
+        if result.returncode != 0:
+            logger.error(f"Thumbnail render failed for {rcsb_id}: {result.stderr[:500]}")
+            return False
+
+        logger.debug(f"Thumbnail rendered: {output_path}")
+        return True
+
+    except subprocess.TimeoutExpired:
+        logger.error(f"Thumbnail render timed out for {rcsb_id}")
+        return False
+    except Exception as e:
+        logger.error(f"Thumbnail render error for {rcsb_id}: {e}")
+        return False
+
+
 def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResult]:
     if not output_path.exists():
         return None

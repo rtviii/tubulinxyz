@@ -70,6 +70,9 @@ class StructureQueryBuilder:
         if f.has_uniprot:
             self._add_uniprot_filter(f.has_uniprot)
 
+        if f.has_isotype:
+            self._add_isotype_filter(f.has_isotype)
+
         self._add_variant_filters()
 
         if f.cursor:
@@ -126,6 +129,15 @@ class StructureQueryBuilder:
             }
         """)
         self._params["uniprot_ids"] = accessions
+
+    def _add_isotype_filter(self, isotypes: List[str]):
+        self._where_clauses.append("""
+            EXISTS {
+                MATCH (s)-[:DEFINES_ENTITY]->(e:PolypeptideEntity)
+                WHERE e.isotype IN $isotypes
+            }
+        """)
+        self._params["isotypes"] = isotypes
 
     def _add_variant_filters(self):
         f = self.filters
@@ -221,10 +233,10 @@ WITH total_count, page,
           ELSE null
      END AS next_cursor
 UNWIND page AS s
-OPTIONAL MATCH (s)-[:DEFINES_ENTITY]->(e:Entity)
-WITH total_count, next_cursor, s, count(e) AS entity_count
-OPTIONAL MATCH (s)-[:DEFINES_ENTITY]->(ne:NonpolymerEntity)
-WITH total_count, next_cursor, s, entity_count, count(ne) AS ligand_count
+OPTIONAL MATCH (s)-[:DEFINES_ENTITY]->(ne:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c:Chemical)
+WITH total_count, next_cursor, s,
+     count(DISTINCT ne) AS ligand_count,
+     collect(DISTINCT c.chemical_id) AS ligand_ids
 RETURN
     s.rcsb_id AS rcsb_id,
     s.resolution AS resolution,
@@ -233,9 +245,10 @@ RETURN
     s.citation_year AS citation_year,
     s.deposition_date AS deposition_date,
     s.src_organism_names AS src_organism_names,
+    s.citation_rcsb_authors AS citation_rcsb_authors,
     s.pdbx_keywords AS pdbx_keywords,
-    entity_count,
     ligand_count,
+    ligand_ids,
     total_count,
     next_cursor
         """)
@@ -423,6 +436,8 @@ RETURN
     e.pdbx_description AS pdbx_description,
     e.family AS family,
     e.isotype AS isotype,
+    e.isotype_method AS isotype_method,
+    e.isotype_confidence AS isotype_confidence,
     e.sequence_length AS sequence_length,
     e.src_organism_names AS src_organism_names,
     e.uniprot_accessions AS uniprot_accessions,

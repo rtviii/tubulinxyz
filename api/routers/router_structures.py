@@ -1,5 +1,6 @@
 # api/routers/router_structures.py
 from fastapi import APIRouter, Query, HTTPException
+from fastapi.responses import FileResponse
 from typing import Any, Dict, Optional, List
 import json
 from pathlib import Path
@@ -105,6 +106,7 @@ def list_structures(
     has_ligand_ids: Optional[List[str]] = Query(None, alias="ligands"),
     has_polymer_family: Optional[List[str]] = Query(None, alias="family"),
     has_uniprot: Optional[List[str]] = Query(None, alias="uniprot"),
+    has_isotype: Optional[List[str]] = Query(None, alias="isotype"),
     # Variant filters
     has_variants: Optional[bool] = Query(None, alias="hasVariants"),
     variant_family: Optional[str] = Query(None, alias="variantFamily"),
@@ -126,6 +128,7 @@ def list_structures(
     parsed_uniprot = parse_list_param(has_uniprot)
     parsed_ids = parse_list_param(rcsb_ids)
 
+    parsed_isotype = parse_list_param(has_isotype)
     parsed_source_taxa = parse_int_list(source_organism_ids)
     parsed_host_taxa = parse_int_list(host_organism_ids)
 
@@ -149,6 +152,7 @@ def list_structures(
         has_ligand_ids=parsed_ligands,
         has_polymer_family=parsed_families,
         has_uniprot=parsed_uniprot,
+        has_isotype=parsed_isotype,
         has_variants=has_variants,
         variant_family=variant_family,
         variant_type=VariantTypeFilter(variant_type) if variant_type else None,
@@ -204,3 +208,21 @@ async def get_structure_profile(rcsb_id: str):
 
     with open(profile_path, "r") as f:
         return json.load(f)
+
+
+@router_structures.get("/{rcsb_id}/thumbnail", operation_id="get_structure_thumbnail")
+async def get_structure_thumbnail(rcsb_id: str):
+    """Serves the pre-rendered structure thumbnail PNG."""
+    assets = TubulinStructureAssets(rcsb_id.upper())
+    thumbnail_path = Path(assets.paths.thumbnail)
+
+    if not thumbnail_path.exists():
+        raise HTTPException(
+            status_code=404, detail=f"Thumbnail for {rcsb_id} not available."
+        )
+
+    return FileResponse(
+        thumbnail_path,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )

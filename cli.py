@@ -22,7 +22,6 @@ app = typer.Typer(
 )
 console = Console()  
 
-
 def get_db_driver() -> Driver:
     """Initializes and returns a Neo4j Driver instance."""
     if not all([NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, NEO4J_CURRENTDB]):
@@ -36,7 +35,6 @@ def get_db_driver() -> Driver:
     except Exception as e:
         console.print(f"[bold red]Failed to create Neo4j driver:[/bold red] {e}")
         raise typer.Exit(code=1)
-
 
 @app.command(name="collect-one")
 def collect_one(
@@ -370,10 +368,6 @@ def collect_all(
     if failed_ids:
         console.print(f"[red]Failed IDs:[/red] {', '.join(failed_ids)}")
 
-
-
-# In cli.py
-
 from lib.etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 from neo4j_tubxz.db_lib_builder import Neo4jAdapter
 from lib.etl.assets import GlobalOps, TubulinStructureAssets
@@ -611,6 +605,103 @@ def db_status():
     except Exception as e:
         console.print(f"[bold red]Connection failed:[/bold red] {e}")
         raise typer.Exit(code=1)
+
+
+@app.command(name="render-thumbnail")
+def render_thumbnail(
+    rcsb_id: Annotated[str, typer.Argument(help="The 4-character PDB ID to render.")],
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Re-render if thumbnail exists")] = False,
+):
+    """
+    Render a thumbnail for a single structure.
+    """
+    from lib.etl.molstar_bridge import run_thumbnail_render
+    from api.config import PROJECT_ROOT
+
+    rcsb_id = rcsb_id.upper()
+    assets = TubulinStructureAssets(rcsb_id)
+
+    if not os.path.exists(assets.paths.profile):
+        console.print(f"[bold red]Profile not found for {rcsb_id}.[/bold red]")
+        raise typer.Exit(code=1)
+
+    if not os.path.exists(assets.paths.cif):
+        console.print(f"[bold red]CIF file not found for {rcsb_id}.[/bold red]")
+        raise typer.Exit(code=1)
+
+    if not overwrite and os.path.exists(assets.paths.thumbnail):
+        console.print(f"[yellow]Thumbnail already exists for {rcsb_id}. Use -o to overwrite.[/yellow]")
+        return
+
+    console.print(f"Rendering thumbnail for [bold magenta]{rcsb_id}[/bold magenta]...", style="cyan")
+
+    ok = run_thumbnail_render(
+        cif_path=Path(assets.paths.cif),
+        rcsb_id=rcsb_id,
+        profile_path=Path(assets.paths.profile),
+        output_path=Path(assets.paths.thumbnail),
+        project_root=PROJECT_ROOT,
+    )
+
+    if ok:
+        console.print(f"[bold green]Thumbnail saved:[/bold green] {assets.paths.thumbnail}")
+    else:
+        console.print(f"[bold red]Thumbnail render failed for {rcsb_id}.[/bold red]")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="render-thumbnails")
+def render_thumbnails(
+    workers: Annotated[int, typer.Option("--workers", "-w", help="Number of parallel workers")] = 4,
+    overwrite: Annotated[bool, typer.Option("--overwrite", "-o", help="Re-render existing thumbnails")] = False,
+):
+    """
+    Render thumbnails for all collected profiles that don't have one yet.
+    """
+    from lib.etl.molstar_bridge import run_thumbnail_render
+    from api.config import PROJECT_ROOT
+
+    console.print("Scanning for profiles missing thumbnails...", style="cyan")
+
+    all_profiles = GlobalOps.list_profiles()
+    to_render = []
+    for rcsb_id in all_profiles:
+        assets = TubulinStructureAssets(rcsb_id)
+        if overwrite or not os.path.exists(assets.paths.thumbnail):
+            to_render.append(rcsb_id)
+
+    if not to_render:
+        console.print("[bold green]All thumbnails are up to date.[/bold green]")
+        return
+
+    console.print(f"Rendering [bold yellow]{len(to_render)}[/bold yellow] thumbnails with {workers} workers.")
+
+    success_count = 0
+    fail_count = 0
+
+    def render_one(rcsb_id: str) -> tuple[str, bool]:
+        assets = TubulinStructureAssets(rcsb_id)
+        ok = run_thumbnail_render(
+            cif_path=Path(assets.paths.cif),
+            rcsb_id=rcsb_id,
+            profile_path=Path(assets.paths.profile),
+            output_path=Path(assets.paths.thumbnail),
+            project_root=PROJECT_ROOT,
+        )
+        return (rcsb_id, ok)
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = {executor.submit(render_one, rid): rid for rid in to_render}
+        for i, future in enumerate(as_completed(futures), 1):
+            rcsb_id, ok = future.result()
+            if ok:
+                console.print(f"[{i}/{len(to_render)}] [green]{rcsb_id}[/green]")
+                success_count += 1
+            else:
+                console.print(f"[{i}/{len(to_render)}] [red]{rcsb_id}[/red]")
+                fail_count += 1
+
+    console.print(f"\n[bold]Done:[/bold] {success_count} rendered, {fail_count} failed.")
 
 
 @app.command(name="weekly-ingest")

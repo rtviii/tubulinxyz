@@ -83,16 +83,17 @@ class Neo4jReader:
 
                 structures = [
                     StructureSummary(
-                        rcsb_id            = r["rcsb_id"],
-                        resolution         = r["resolution"],
-                        exp_method         = r["exp_method"],
-                        citation_title     = r["citation_title"],
-                        citation_year      = r["citation_year"],
-                        deposition_date    = r["deposition_date"],
-                        src_organism_names = r["src_organism_names"] or [],
-                        pdbx_keywords      = r["pdbx_keywords"],
-                        entity_count       = r["entity_count"],
-                        ligand_count       = r["ligand_count"],
+                        rcsb_id               = r["rcsb_id"],
+                        resolution            = r["resolution"],
+                        exp_method            = r["exp_method"],
+                        citation_title        = r["citation_title"],
+                        citation_year         = r["citation_year"],
+                        deposition_date       = r["deposition_date"],
+                        src_organism_names    = r["src_organism_names"] or [],
+                        citation_rcsb_authors = r["citation_rcsb_authors"] or [],
+                        pdbx_keywords         = r["pdbx_keywords"],
+                        ligand_count          = r["ligand_count"],
+                        ligand_ids            = r["ligand_ids"] or [],
                     )
                     for r in records
                 ]
@@ -182,6 +183,8 @@ class Neo4jReader:
                         pdbx_description=r["pdbx_description"],
                         family=r["family"],
                         isotype=r["isotype"],
+                        isotype_method=r["isotype_method"],
+                        isotype_confidence=r["isotype_confidence"],
                         sequence_length=r["sequence_length"],
                         src_organism_names=r["src_organism_names"] or [],
                         uniprot_accessions=r["uniprot_accessions"] or [],
@@ -531,6 +534,17 @@ ORDER BY c.chemical_id
                     """)
                 ]
 
+                # Isotypes
+                isotypes = [
+                    FacetValue(value=r["value"], count=r["count"])
+                    for r in tx.run("""
+                        MATCH (e:PolypeptideEntity)
+                        WHERE e.isotype IS NOT NULL
+                        RETURN e.isotype AS value, count(DISTINCT e.parent_rcsb_id) AS count
+                        ORDER BY count DESC
+                    """)
+                ]
+
                 # Top ligands
                 top_ligands = [
                     LigandFacet(
@@ -602,6 +616,7 @@ ORDER BY c.chemical_id
                     total_structures=total_structures,
                     exp_methods=exp_methods,
                     tubulin_families=tubulin_families,
+                    isotypes=isotypes,
                     year_range=year_range,
                     resolution_range=resolution_range,
                     top_ligands=top_ligands,

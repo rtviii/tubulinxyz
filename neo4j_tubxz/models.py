@@ -67,6 +67,7 @@ class StructureFilters(BaseModel):
     has_ligand_ids: Optional[List[str]] = None
     has_polymer_family: Optional[List[str]] = None
     has_uniprot: Optional[List[str]] = None
+    has_isotype: Optional[List[str]] = None
 
     # Variant filters (renamed from mutation)
     has_variants: Optional[bool] = Field(default=None, description="Has any variants")
@@ -191,10 +192,12 @@ class StructureSummary(BaseModel):
     citation_title    : Optional[str] = None
     citation_year     : Optional[int] = None
     deposition_date   : Optional[str] = None
-    src_organism_names: List[str] = []
-    pdbx_keywords     : Optional[str] = None
-    entity_count      : Optional[int] = None
-    ligand_count      : Optional[int] = None
+    src_organism_names    : List[str] = []
+    citation_rcsb_authors : List[str] = []
+    pdbx_keywords         : Optional[str] = None
+    entity_count          : Optional[int] = None
+    ligand_count          : Optional[int] = None
+    ligand_ids            : List[str] = []
 
     class Config:
         populate_by_name = True
@@ -206,6 +209,8 @@ class PolypeptideEntitySummary(BaseModel):
     pdbx_description: Optional[str] = None
     family: Optional[str] = None
     isotype: Optional[str] = None
+    isotype_method: Optional[str] = None
+    isotype_confidence: Optional[float] = None
     sequence_length: Optional[int] = None
     src_organism_names: List[str] = []
     uniprot_accessions: List[str] = []
@@ -297,6 +302,7 @@ class FilterFacets(BaseModel):
     total_structures       : int
     exp_methods            : List[FacetValue] = []
     tubulin_families       : List[FacetValue] = []
+    isotypes               : List[FacetValue] = []
     year_range             : RangeValue
     resolution_range       : RangeValue
     top_ligands            : List[LigandFacet] = []

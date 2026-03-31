@@ -106,6 +106,11 @@ class TubulinStructureAssetPaths:
         )
 
     @property
+    def thumbnail(self) -> str:
+        """Path to the rendered structure thumbnail PNG."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_thumbnail.png")
+
+    @property
     def molstar_raw_extraction(self) -> str:
         """Path to raw Molstar extraction (intermediate file)."""
         return os.path.join(self.base_dir, f"{self.rcsb_id}_molstar_raw.json")
