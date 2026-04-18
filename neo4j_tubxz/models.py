@@ -198,6 +198,7 @@ class StructureSummary(BaseModel):
     entity_count          : Optional[int] = None
     ligand_count          : Optional[int] = None
     ligand_ids            : List[str] = []
+    polymer_families      : List[str] = []
 
     class Config:
         populate_by_name = True

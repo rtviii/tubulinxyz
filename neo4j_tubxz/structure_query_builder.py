@@ -237,6 +237,10 @@ OPTIONAL MATCH (s)-[:DEFINES_ENTITY]->(ne:NonpolymerEntity)-[:DEFINED_BY_CHEMICA
 WITH total_count, next_cursor, s,
      count(DISTINCT ne) AS ligand_count,
      collect(DISTINCT c.chemical_id) AS ligand_ids
+OPTIONAL MATCH (s)-[:DEFINES_ENTITY]->(pe:PolypeptideEntity)
+WHERE pe.family IS NOT NULL
+WITH total_count, next_cursor, s, ligand_count, ligand_ids,
+     collect(DISTINCT pe.family) AS polymer_families
 RETURN
     s.rcsb_id AS rcsb_id,
     s.resolution AS resolution,
@@ -249,6 +253,7 @@ RETURN
     s.pdbx_keywords AS pdbx_keywords,
     ligand_count,
     ligand_ids,
+    polymer_families,
     total_count,
     next_cursor
         """)

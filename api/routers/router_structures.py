@@ -186,6 +186,22 @@ def get_families():
     """Get tubulin family options with counts."""
     return db_reader.get_tubulin_families()
 
+@router_structures.get("/organisms", response_model=Dict[str, List[str]], operation_id="get_structure_organisms")
+def get_structure_organisms():
+    """Return a mapping of rcsb_id -> source organism names for all structures."""
+    query = """
+    MATCH (e:PolypeptideEntity)
+    WHERE e.src_organism_names IS NOT NULL AND size(e.src_organism_names) > 0
+    RETURN e.parent_rcsb_id AS rcsb_id, collect(DISTINCT e.src_organism_names[0]) AS organisms
+    """
+    with db_reader.adapter.driver.session() as session:
+        result = session.run(query)
+        mapping = {}
+        for record in result:
+            mapping[record["rcsb_id"]] = record["organisms"]
+        return mapping
+
+
 @router_structures.get("/{rcsb_id}", response_model=StructureDetail, operation_id="get_structure")
 def get_structure(rcsb_id: str):
     """Get full structure details."""
@@ -226,3 +242,5 @@ async def get_structure_thumbnail(rcsb_id: str):
         media_type="image/png",
         headers={"Cache-Control": "public, max-age=86400"},
     )
+
+

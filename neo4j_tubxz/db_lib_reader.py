@@ -94,6 +94,7 @@ class Neo4jReader:
                         pdbx_keywords         = r["pdbx_keywords"],
                         ligand_count          = r["ligand_count"],
                         ligand_ids            = r["ligand_ids"] or [],
+                        polymer_families      = r["polymer_families"] or [],
                     )
                     for r in records
                 ]
