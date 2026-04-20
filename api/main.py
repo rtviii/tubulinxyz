@@ -10,6 +10,7 @@ from api.routers import (
     router_polymers,
     router_ligands,
     router_msa,
+    router_nl_query,
 )
 
 from api.routers.router_annotations import router_annotations
@@ -34,6 +35,7 @@ app.include_router(router_polymers, prefix="/polymers", tags=["Polymers"])
 app.include_router(router_ligands, prefix="/ligands", tags=["Ligands"])
 app.include_router(router_msa, prefix="/msa", tags=["MSA Alignment"])
 app.include_router(router_annotations, prefix="/annotations", tags=["Annotations"])
+app.include_router(router_nl_query, prefix="/nl_query", tags=["NL Query"])
 for route in app.routes:
     print(f"  {getattr(route, 'methods', '')} {route.path}")
 
