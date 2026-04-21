@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal, Optional, Protocol, Union, Dict, Any, List
 
+from pydantic import BaseModel
+
 from neo4j_tubxz.models import (
     StructureFilters,
     PolypeptideEntityFilters,
@@ -20,6 +22,33 @@ from neo4j_tubxz.models import (
 Target = Literal["structures", "polymers", "ligands"]
 
 FilterUnion = Union[StructureFilters, PolypeptideEntityFilters, LigandFilters]
+
+
+@dataclass
+class ViewContext:
+    """Snapshot of the molstar viewer's current state, sent by the frontend.
+
+    The LLM uses it to validate arguments (refuse unknown chains/ligands) and
+    pick context-appropriate actions. Keep it small — goes into every prompt.
+    """
+    rcsb_id: Optional[str] = None
+    chain_ids: List[str] = field(default_factory=list)
+    ligand_keys: List[str] = field(default_factory=list)
+    view_mode: Optional[str] = None  # "structure" | "monomer"
+    active_monomer_chain: Optional[str] = None
+
+
+@dataclass
+class ViewerTranslationResult:
+    """Result of one viewer-action translation call.
+
+    - `actions`: validated Pydantic action instances, in emission order.
+    - `clarification`: set instead of actions when the model can't commit.
+    - `summary`: short human readback (empty when clarification is set).
+    """
+    actions: List[BaseModel] = field(default_factory=list)
+    summary: str = ""
+    clarification: Optional[str] = None
 
 
 @dataclass
@@ -64,4 +93,11 @@ class NLTranslator(Protocol):
         facets: FacetContext,
         current_filters: Optional[Dict[str, Any]] = None,
     ) -> TranslationResult:
+        ...
+
+    def translate_viewer(
+        self,
+        text: str,
+        view_context: ViewContext,
+    ) -> ViewerTranslationResult:
         ...

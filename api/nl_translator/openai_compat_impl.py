@@ -36,6 +36,13 @@ from api.nl_translator.interface import (
     Target,
     FacetContext,
     FilterUnion,
+    ViewContext,
+    ViewerTranslationResult,
+)
+from api.nl_translator.viewer_actions import (
+    VIEWER_ACTION_MODELS,
+    VIEWER_ACTION_DESCRIPTIONS,
+    CLARIFY_ACTION_NAME,
 )
 
 
@@ -177,6 +184,10 @@ class OpenAICompatNLTranslator:
         self._model = resolved_model
         self._max_tokens = max_tokens
         self._tools = _build_tools()
+        self._viewer_tools = _build_viewer_tools()
+        self._viewer_models_by_name: Dict[str, Type[BaseModel]] = {
+            m.__name__: m for m in VIEWER_ACTION_MODELS
+        }
 
     def translate(
         self,
@@ -206,6 +217,26 @@ class OpenAICompatNLTranslator:
         )
 
         return self._interpret(response)
+
+    def translate_viewer(
+        self,
+        text: str,
+        view_context: ViewContext,
+    ) -> ViewerTranslationResult:
+        system_prompt = _build_viewer_system_prompt(view_context)
+
+        response = self._client.chat.completions.create(
+            model=self._model,
+            max_tokens=self._max_tokens,
+            tools=self._viewer_tools,
+            tool_choice="auto",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text.strip()},
+            ],
+        )
+
+        return _interpret_viewer_openai(response, self._viewer_models_by_name)
 
     def _interpret(self, response) -> TranslationResult:
         if not response.choices:
@@ -259,6 +290,114 @@ class OpenAICompatNLTranslator:
             filters=filters,
             summary=_summarize(filters),
         )
+
+
+def _build_viewer_tools() -> List[dict]:
+    """Render VIEWER_ACTION_MODELS as OpenAI tool specs."""
+    tools: List[dict] = []
+    for model in VIEWER_ACTION_MODELS:
+        name = model.__name__
+        description = VIEWER_ACTION_DESCRIPTIONS.get(name, (model.__doc__ or "").strip())
+        tools.append(_model_to_tool(name, description, model))
+    return tools
+
+
+def _build_viewer_system_prompt(view_context: ViewContext) -> str:
+    chains = ", ".join(view_context.chain_ids) or "(none loaded)"
+    ligands = ", ".join(view_context.ligand_keys) or "(none)"
+    return f"""You are a controller for a 3D molecular viewer (molstar) displaying a single PDB structure.
+
+Each user turn, emit ONE OR MORE tool calls that together fulfill the request. The frontend will execute them in order against the current viewer.
+
+ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, RequestClarification.
+
+CURRENT VIEWER STATE:
+- rcsb_id: {view_context.rcsb_id}
+- loaded chains (auth_asym_id): {chains}
+- loaded ligand keys: {ligands}
+- view_mode: {view_context.view_mode}
+- active_monomer_chain: {view_context.active_monomer_chain}
+
+RULES:
+- auth_asym_id arguments MUST be one of the loaded chain ids above. If the user names a chain that is not loaded, emit exactly one `RequestClarification` tool call instead, naming the available chains.
+- Treat "residue 240" / "position 240" as auth_seq_id=240.
+- For range expressions ("100-150", "between 100 and 150") include both endpoints.
+- Prefer the minimum number of actions that accomplish the intent. Don't add ClearFocus / ClearHighlight unless the user implies reset.
+- If the user asks to "hide everything except X" / "show only X" / "isolate X", use IsolateChain (not a sequence of SetChainVisibility).
+- Do NOT emit any free-form text alongside tool calls.
+"""
+
+
+class _OpenAICompatViewerMixin:
+    """Kept separate only for readability; actual methods attached to the class below."""
+
+
+def _interpret_viewer_openai(response, viewer_models_by_name: Dict[str, Type[BaseModel]]) -> ViewerTranslationResult:
+    if not response.choices:
+        return ViewerTranslationResult(clarification="Empty response from model.")
+
+    message = response.choices[0].message
+    tool_calls = getattr(message, "tool_calls", None) or []
+
+    if not tool_calls:
+        text = (message.content or "").strip()
+        return ViewerTranslationResult(
+            clarification=text or "I could not interpret that request. Please rephrase."
+        )
+
+    actions: List[BaseModel] = []
+    clarification: Optional[str] = None
+
+    for call in tool_calls:
+        name = call.function.name
+        raw_args = call.function.arguments or "{}"
+        try:
+            inp = json.loads(raw_args)
+        except json.JSONDecodeError as e:
+            return ViewerTranslationResult(
+                clarification=f"Model returned unparseable tool arguments: {e}"
+            )
+        if not isinstance(inp, dict):
+            return ViewerTranslationResult(
+                clarification="Tool arguments were not a JSON object."
+            )
+
+        if name == CLARIFY_ACTION_NAME:
+            clarification = inp.get("question", "Please clarify.")
+            break  # clarification preempts any other actions
+
+        model_cls = viewer_models_by_name.get(name)
+        if model_cls is None:
+            return ViewerTranslationResult(
+                clarification=f"Internal: model invoked unknown viewer tool {name!r}."
+            )
+        try:
+            actions.append(model_cls.model_validate(inp))
+        except ValidationError as e:
+            return ViewerTranslationResult(
+                clarification=(
+                    f"Arguments for {name} failed validation: "
+                    f"{e.errors(include_url=False)[:2]}"
+                )
+            )
+
+    if clarification is not None:
+        return ViewerTranslationResult(clarification=clarification)
+
+    return ViewerTranslationResult(
+        actions=actions,
+        summary=_summarize_actions(actions),
+    )
+
+
+def _summarize_actions(actions: List[BaseModel]) -> str:
+    if not actions:
+        return "(no actions)"
+    parts = []
+    for a in actions:
+        kv = ", ".join(f"{k}={v}" for k, v in a.model_dump().items())
+        parts.append(f"{type(a).__name__}({kv})" if kv else type(a).__name__)
+    return " ; ".join(parts)
 
 
 def _summarize(filters: FilterUnion) -> str:
