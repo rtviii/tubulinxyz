@@ -179,19 +179,19 @@ class Neo4jReader:
 
                 entities = [
                     PolypeptideEntitySummary(
-                        parent_rcsb_id=r["parent_rcsb_id"],
-                        entity_id=r["entity_id"],
-                        pdbx_description=r["pdbx_description"],
-                        family=r["family"],
-                        isotype=r["isotype"],
-                        isotype_method=r["isotype_method"],
-                        isotype_confidence=r["isotype_confidence"],
-                        sequence_length=r["sequence_length"],
-                        src_organism_names=r["src_organism_names"] or [],
-                        uniprot_accessions=r["uniprot_accessions"] or [],
-                        variant_count=r["variant_count"],
-                        pdbx_strand_ids=r["pdbx_strand_ids"] or [],   
-                        ligand_ids=r["ligand_ids"] or [],          # <-- add
+                        parent_rcsb_id     = r["parent_rcsb_id"],
+                        entity_id          = r["entity_id"],
+                        pdbx_description   = r["pdbx_description"],
+                        family             = r["family"],
+                        isotype            = r["isotype"],
+                        isotype_method     = r["isotype_method"],
+                        isotype_confidence = r["isotype_confidence"],
+                        sequence_length    = r["sequence_length"],
+                        src_organism_names = r["src_organism_names"] or [],
+                        uniprot_accessions = r["uniprot_accessions"] or [],
+                        variant_count      = r["variant_count"],
+                        pdbx_strand_ids    = r["pdbx_strand_ids"] or [],
+                        ligand_ids         = r["ligand_ids"] or [],           # <-- add
                     )
                     for r in records
                 ]
