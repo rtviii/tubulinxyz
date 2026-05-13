@@ -11,7 +11,11 @@ Structural biology database for tubulin structures. Neo4j graph database, FastAP
 - Python 3.11+
 - Node.js (for Molstar-based structure extraction via `tsx`)
 - Neo4j 5.x instance (local or remote)
-- MUSCLE 3.8.1 binary at `./bin/muscle3.8.1` (Linux x86_64 baked into the Docker image; macOS users running natively can `brew install muscle` and adjust the path)
+- MUSCLE 3.8.1 binaries are committed under `./bin/`:
+  - `bin/muscle3.8.1` (Linux ELF x86_64; used in Docker)
+  - `bin/muscle3.8.1-darwin` (macOS Mach-O x86_64; used by local dev on Mac; runs via Rosetta on Apple Silicon)
+
+  `api.config.resolve_muscle_binary()` picks the right one at runtime via `platform.system()`. Homebrew's `muscle` is v5, which has a different CLI -- do not use it.
 
 ### Installation
 

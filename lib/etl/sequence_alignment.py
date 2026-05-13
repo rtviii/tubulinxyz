@@ -431,7 +431,8 @@ class SequenceAligner:
 def get_aligner_for_family(
     family: TubulinFamily, project_root: Path
 ) -> SequenceAligner:
-    muscle_path = project_root / "bin" / "muscle3.8.1"
+    from api.config import resolve_muscle_binary
+    muscle_path = resolve_muscle_binary(project_root)
 
     family_file_map = {
         TubulinFamily.ALPHA: project_root

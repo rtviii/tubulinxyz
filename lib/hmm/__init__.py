@@ -5,6 +5,7 @@ Handles path resolution for Tubulin and MAP families.
 from pathlib import Path
 from typing import Union
 from lib.types import TubulinFamily, MapFamily, PolymerClass
+from api.config import resolve_muscle_binary
 
 # --- Base Paths ---
 _PROJECT_ROOT = Path(__file__).parent.parent.parent  # tubulinxyz/
@@ -19,8 +20,8 @@ _SEQ_MAPS_DIR    = _DATA_DIR / "sequences" / "maps"
 _HMM_TUBULIN_DIR = _DATA_DIR / "hmms" / "tubulin"
 _HMM_MAPS_DIR    = _DATA_DIR / "hmms" / "maps"
 
-# Binaries
-_MUSCLE_BIN      = _PROJECT_ROOT / "bin" / "muscle3.8.1"
+# Binary (platform-resolved: Linux ELF in Docker, Mach-O on macOS dev)
+_MUSCLE_BIN      = resolve_muscle_binary(_PROJECT_ROOT)
 
 
 # --- Getters ---
