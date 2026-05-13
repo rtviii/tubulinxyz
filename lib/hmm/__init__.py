@@ -20,7 +20,7 @@ _HMM_TUBULIN_DIR = _DATA_DIR / "hmms" / "tubulin"
 _HMM_MAPS_DIR    = _DATA_DIR / "hmms" / "maps"
 
 # Binaries
-_MUSCLE_BIN      = _PROJECT_ROOT / "muscle3.8.1"
+_MUSCLE_BIN      = _PROJECT_ROOT / "bin" / "muscle3.8.1"
 
 
 # --- Getters ---

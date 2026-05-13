@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends cron curl && rm
 
 # Application code
 COPY . .
-RUN chmod +x /app/muscle3.8.1
+RUN chmod +x /app/bin/muscle3.8.1
 
 # Download NCBI taxonomy database at build time (ete3).
 # This eliminates the need to mount ncbi_taxonomy.sqlite from the host.
