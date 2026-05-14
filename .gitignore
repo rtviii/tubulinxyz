@@ -26,6 +26,11 @@ q_*.md
 
 
 *fasta
+# ...but the per-family master alignments ARE runtime-critical: the ETL
+# variants/isotype steps read data/<family>_tubulin/*.afasta. Without these
+# in the image, collection fails for every non-alpha chain. (alpha's afasta
+# predates the *fasta rule, which is why only it survived.)
+!data/*_tubulin/*.afasta
 
 *.gz
 

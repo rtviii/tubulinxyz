@@ -29,28 +29,28 @@ echo "Initializing database constraints and phylogeny..."
 python cli.py init-db
 write_status "init_db" "Database initialized. Checking for structures..." 0 0 0 0 false
 
-# Step 2: Figure out what needs to happen
-PROFILE_COUNT=$(find /mnt/tubetl_data -maxdepth 2 -name "*.json" -type f 2>/dev/null | head -5 | wc -l)
+# Step 2: Collect every structure that lacks a COMPLETE local profile.
+# Idempotent and resumable:
+#   - structures with a complete <id>.json are skipped fast (generate_profile
+#     short-circuits on overwrite=False)
+#   - structures only partially collected by an interrupted previous run (have
+#     a dir + intermediate files but no <id>.json) are regenerated to completion
+# This replaces the old "if any .json exists, skip collection" branch, which
+# orphaned partially-collected structures when a previous run was interrupted
+# (e.g. by `docker compose down` during a redeploy).
+echo "Collecting structures missing a complete local profile..."
+write_status "collecting" "Collecting structures from PDB..." 0 0 809 0 false
+python cli.py collect-missing 2>&1 | while IFS= read -r line; do
+    echo "$line"
+    COUNT=$(find /mnt/tubetl_data -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
+    write_status "collecting" "Collecting structures from PDB..." "$COUNT" 0 809 0 false
+done
 
-if [ "$PROFILE_COUNT" -eq 0 ]; then
-    # Fresh deploy: collect everything
-    echo "TUBETL_DATA is empty -- running full collection..."
-    write_status "collecting" "Downloading structures from PDB (this takes 2-3 hours)..." 0 0 809 0 false
-    python cli.py collect-missing 2>&1 | while IFS= read -r line; do
-        echo "$line"
-        # Update count periodically
-        COUNT=$(find /mnt/tubetl_data -maxdepth 2 -name "*.json" -type f 2>/dev/null | wc -l)
-        write_status "collecting" "Downloading structures from PDB..." "$COUNT" 0 809 0 false
-    done
-
-    echo "Uploading all collected profiles to Neo4j..."
-    write_status "uploading" "Uploading structures to database..." 0 0 0 0 false
-    python cli.py upload-all --workers 4
-else
-    echo "TUBETL_DATA has data ($PROFILE_COUNT+ profiles). Uploading any missing..."
-    write_status "uploading" "Syncing structures to database..." 0 0 0 0 false
-    python cli.py upload-missing --workers 4
-fi
+# Step 3: Upload every local profile not yet in the database.
+# Idempotent: uploads (local complete profiles - structures already in Neo4j).
+echo "Uploading local profiles missing from Neo4j..."
+write_status "uploading" "Uploading structures to database..." 0 0 0 0 false
+python cli.py upload-missing --workers 4
 
 write_status "done" "Bootstrap complete." 0 0 0 0 true
 echo "=== TubXYZ Bootstrap complete: $(date -Iseconds) ==="
