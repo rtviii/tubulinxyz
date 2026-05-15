@@ -46,10 +46,15 @@ COPY --from=py-builder /install /usr/local
 #     wraps the thumbnail subprocess in `xvfb-run` so each render gets its
 #     own virtual display. Without this you get "Cannot read properties of
 #     null (reading 'getExtension')" from molstar's WebGL setup.
+#   - xauth: required by the `xvfb-run` wrapper (not by Xvfb itself). xvfb-run
+#     shells out to `xauth` to mint a fresh .Xauthority cookie before launching
+#     the server, and aborts with "xvfb-run: error: xauth command not found"
+#     if it isn't on PATH. `xauth` is only a Recommends of `xvfb`, so
+#     --no-install-recommends strips it -- must be listed explicitly.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron curl \
     libx11-6 libxi6 libxext6 libxxf86vm1 libgl1 libglx-mesa0 libgl1-mesa-dri \
-    xvfb \
+    xvfb xauth \
     && rm -rf /var/lib/apt/lists/*
 
 # Application code
