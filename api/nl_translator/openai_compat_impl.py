@@ -166,14 +166,18 @@ class OpenAICompatNLTranslator:
                 "OpenAICompatNLTranslator requires OPENAI_API_KEY (or OPENROUTER_API_KEY) to be set."
             )
 
-        resolved_base = base_url or os.environ.get("OPENAI_BASE_URL", _DEFAULT_BASE_URL)
-        resolved_model = model or os.environ.get("OPENAI_MODEL", _DEFAULT_MODEL)
+        # Treat empty strings the same as unset. docker-compose's `${VAR:-}`
+        # passthrough exports the variable as "" when it isn't in .env, which
+        # `os.environ.get(KEY, DEFAULT)` would return as "" instead of falling
+        # back to DEFAULT. Use a chained `or` so empty strings hit the default.
+        resolved_base = base_url or os.environ.get("OPENAI_BASE_URL") or _DEFAULT_BASE_URL
+        resolved_model = model or os.environ.get("OPENAI_MODEL") or _DEFAULT_MODEL
 
         # OpenRouter recommends (but does not require) these headers for usage
         # attribution. They're harmless against a self-hosted vLLM endpoint too.
         default_headers = {
-            "HTTP-Referer": os.environ.get("OPENROUTER_REFERER", "http://localhost:8000"),
-            "X-Title": os.environ.get("OPENROUTER_APP_TITLE", "tubxz-nl-query"),
+            "HTTP-Referer": os.environ.get("OPENROUTER_REFERER") or "http://localhost:8000",
+            "X-Title": os.environ.get("OPENROUTER_APP_TITLE") or "tubxz-nl-query",
         }
 
         self._client = OpenAI(
