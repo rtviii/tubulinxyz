@@ -40,17 +40,54 @@ write_status "init_db" "Database initialized. Checking for structures..." 0 0 0 
 # (e.g. by `docker compose down` during a redeploy).
 echo "Collecting structures missing a complete local profile..."
 write_status "collecting" "Collecting structures from PDB..." 0 0 809 0 false
-python cli.py collect-missing 2>&1 | while IFS= read -r line; do
+# HANDOFF NOTE (for the session integrating this into the image/scripts):
+# Incremental upload -- collect a structure, then immediately ingest it into
+# Neo4j, in one sequential pass -- is the intended DEFAULT ingestion method.
+# The old "collect everything, then upload everything" two-phase flow should be
+# retired across ALL ingestion paths:
+#   1. cli.py `collect-missing`: flip `--upload` to default True (or make it
+#      unconditional). This script already passes --upload (see below).
+#   2. cli.py `weekly-ingest`: it currently runs a collect phase then a separate
+#      upload phase -- rework it to interleave the same way (ingest each
+#      structure right after collecting it).
+#   3. Keep it single-threaded: collect and upload must never run as concurrent
+#      Neo4j writers. Do not reintroduce a parallel/background uploader.
+# Why: the catalogue fills in as structures are collected, instead of sitting
+# empty for the whole multi-hour collection phase.
+# --upload makes collect-missing ingest each structure into Neo4j right after
+# it is collected, so the catalogue page fills in incrementally during this
+# (multi-hour) phase instead of staying empty until step 3. collect-missing is
+# single-threaded, so this stays strictly sequential with step 3 below -- the
+# two never run a Neo4j writer concurrently.
+UPLOADED=0
+python cli.py collect-missing --upload 2>&1 | while IFS= read -r line; do
     echo "$line"
+    case "$line" in
+        *"Uploaded "*" to Neo4j"*) UPLOADED=$((UPLOADED + 1)) ;;
+    esac
     COUNT=$(find /mnt/tubetl_data -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
-    write_status "collecting" "Collecting structures from PDB..." "$COUNT" 0 809 0 false
+    write_status "collecting" "Collecting structures and filling the catalogue..." "$COUNT" "$UPLOADED" 809 0 false
 done
 
-# Step 3: Upload every local profile not yet in the database.
-# Idempotent: uploads (local complete profiles - structures already in Neo4j).
-echo "Uploading local profiles missing from Neo4j..."
-write_status "uploading" "Uploading structures to database..." 0 0 0 0 false
+# Step 3: Catch any profiles that are on disk but still missing from Neo4j --
+# transient ingest failures during step 2, or profiles left behind by a
+# previous interrupted run. Idempotent; usually a fast no-op now that step 2
+# uploads as it goes.
+echo "Uploading any local profiles still missing from Neo4j..."
+write_status "uploading" "Finalizing catalogue..." 0 0 0 0 false
 python cli.py upload-missing --workers 4
+
+# Step 4: Ingest Morisette literature data (mutations + post-translational
+# modifications) for alpha and beta tubulin. This populates :Variant and
+# :Modification nodes used by the expert-mode mutations/PTMs panel. The data
+# source is the Morisette et al. 2023 dataset (doi:10.1371/journal.pone.0295279);
+# CSVs live in data/<family>_tubulin/*.csv and are already in the image.
+# Idempotent (uses MERGE). Non-fatal: a Morisette failure shouldn't block the
+# structural bootstrap.
+echo "Ingesting Morisette mutation/PTM literature data..."
+write_status "uploading" "Loading mutation/PTM annotations..." 0 0 0 0 false
+python -m lib.etl.ingest_morisette --family tubulin_alpha || echo "WARNING: Morisette alpha ingest failed (non-fatal, see above)"
+python -m lib.etl.ingest_morisette --family tubulin_beta  || echo "WARNING: Morisette beta ingest failed (non-fatal, see above)"
 
 write_status "done" "Bootstrap complete." 0 0 0 0 true
 echo "=== TubXYZ Bootstrap complete: $(date -Iseconds) ==="

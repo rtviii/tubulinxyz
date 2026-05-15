@@ -65,10 +65,17 @@ def collect_one(
         raise typer.Exit(code=1)
 
 @app.command(name="collect-missing")
-def collect_missing():
+def collect_missing(
+    upload: Annotated[bool, typer.Option("--upload", "-u", help="Ingest each structure into Neo4j right after collecting it, so the catalogue fills incrementally instead of all at once at the end.")] = False,
+):
     """
     Finds all tubulin structures on RCSB that are missing locally,
     then collects and saves them all.
+
+    With --upload, each structure is also ingested into Neo4j immediately
+    after it is collected. The bootstrap script uses this so the catalogue
+    page fills in structure-by-structure during the multi-hour collection
+    phase, instead of staying empty until the separate upload step at the end.
     """
     console.print("Finding missing profiles (RCSB vs. Local Disk)...", style="cyan")
     
@@ -83,26 +90,55 @@ def collect_missing():
         return
 
     console.print(f"Found [bold yellow]{len(missing_ids)}[/bold yellow] new structures to collect.")
-    
+
+    # Open the DB adapter up front so an unreachable Neo4j fails immediately,
+    # instead of after a multi-hour collection run. The serial collect loop
+    # below reuses this one adapter (the Neo4j driver pools connections).
+    adapter = None
+    if upload:
+        try:
+            adapter = get_db_adapter()
+        except Exception as e:
+            console.print(f"[bold red]--upload requested but Neo4j is unreachable:[/bold red] {e}")
+            raise typer.Exit(code=1)
+        console.print("[cyan]--upload enabled: each structure is ingested into Neo4j as soon as it is collected.[/cyan]")
+
     success_count = 0
     fail_count = 0
+    upload_fail_count = 0
     failed_ids = []
 
-    for rcsb_id in missing_ids:
-        console.print(f"--- Collecting [bold magenta]{rcsb_id}[/bold magenta]... ---")
-        try:
-            collector = TubulinETLCollector(rcsb_id)
-            asyncio.run(collector.generate_profile(overwrite=False))
-            console.print(f"[green]Successfully collected {rcsb_id}[/green]")
-            success_count += 1
-        except Exception as e:
-            console.print(f"[bold red]!!! Failed to collect {rcsb_id}:[/bold red] {e}")
-            fail_count += 1
-            failed_ids.append(rcsb_id)
-    
+    try:
+        for rcsb_id in missing_ids:
+            console.print(f"--- Collecting [bold magenta]{rcsb_id}[/bold magenta]... ---")
+            try:
+                collector = TubulinETLCollector(rcsb_id)
+                asyncio.run(collector.generate_profile(overwrite=False))
+                console.print(f"[green]Successfully collected {rcsb_id}[/green]")
+                success_count += 1
+            except Exception as e:
+                console.print(f"[bold red]!!! Failed to collect {rcsb_id}:[/bold red] {e}")
+                fail_count += 1
+                failed_ids.append(rcsb_id)
+                continue
+
+            if adapter is not None:
+                try:
+                    adapter.add_total_structure(rcsb_id, disable_exists_check=False)
+                    # Stable, greppable marker line for the bootstrap status reporter.
+                    console.print(f"Uploaded {rcsb_id} to Neo4j")
+                except Exception as e:
+                    upload_fail_count += 1
+                    console.print(f"[yellow]Collected {rcsb_id} but Neo4j ingest failed (upload-missing will retry it): {e}[/yellow]")
+    finally:
+        if adapter is not None:
+            adapter.close()
+
     console.print("\n--- [bold]Collection Complete[/bold] ---")
     console.print(f"[green]Successful:[/green] {success_count}")
     console.print(f"[red]Failed:[/red] {fail_count}")
+    if upload:
+        console.print(f"[yellow]Neo4j ingest failures (will be retried by upload-missing):[/yellow] {upload_fail_count}")
     if failed_ids:
         console.print(f"[red]Failed IDs:[/red] {', '.join(failed_ids)}")
 
@@ -706,15 +742,23 @@ def render_thumbnails(
 
 @app.command(name="weekly-ingest")
 def weekly_ingest(
-    workers: Annotated[int, typer.Option("--workers", "-w", help="Number of parallel workers")] = 4,
+    workers: Annotated[int, typer.Option("--workers", "-w", help="DEPRECATED: ignored. Weekly ingest is single-threaded by design (collect and upload share the same Neo4j writer and must not run concurrently).")] = 1,
 ):
     """
-    Automated weekly ingestion: collect new structures from PDB, then upload to Neo4j.
-    Writes structured status JSON to /var/log/tubxz/last_ingest_status.json.
-    Designed to be called by cron inside the scheduler container.
+    Automated weekly ingestion: for each new PDB structure, collect it AND
+    ingest it into Neo4j in a single sequential pass. Writes structured
+    status JSON to /var/log/tubxz/last_ingest_status.json. Designed to be
+    called by cron inside the scheduler container.
+
+    Single-pass / interleaved design (replaced the older two-phase
+    collect-everything-then-upload-everything flow):
+      - the catalogue page sees new structures appear as they're processed,
+        not all at once at the end
+      - a partially-completed run leaves the DB in a consistent state
+        (every uploaded structure has a complete profile on disk)
+      - collect and upload never run as concurrent Neo4j writers
     """
     import json
-    import time
     from datetime import datetime, timezone
 
     log_dir = Path("/var/log/tubxz")
@@ -730,58 +774,56 @@ def weekly_ingest(
         "errors": [],
     }
 
-    # Phase 1: Collect missing structures from PDB
-    console.print("=== Weekly Ingest: Collecting missing structures ===")
+    console.print("=== Weekly Ingest: collecting + uploading missing structures ===")
+
+    # Open the Neo4j connection up front so an unreachable DB fails fast
+    # (instead of after a multi-hour collection phase). The interleaved loop
+    # below reuses this one adapter -- the driver pools connections.
+    adapter = None
+    try:
+        adapter = get_db_adapter()
+    except Exception as e:
+        status["errors"].append(f"neo4j_connect:{str(e)[:200]}")
+        console.print(f"[bold red]Neo4j unreachable, aborting weekly-ingest:[/bold red] {e}")
+        status["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (log_dir / "last_ingest_status.json").write_text(json.dumps(status, indent=2))
+        raise typer.Exit(code=1)
+
     try:
         missing_ids = GlobalOps.missing_profiles()
         status["collect_total"] = len(missing_ids)
-
-        if missing_ids:
-            console.print(f"Found {len(missing_ids)} new structures to collect.")
-            for rcsb_id in missing_ids:
-                try:
-                    collector = TubulinETLCollector(rcsb_id)
-                    asyncio.run(collector.generate_profile(overwrite=False))
-                    status["collect_new"] += 1
-                    console.print(f"[green]Collected {rcsb_id}[/green]")
-                except Exception as e:
-                    status["collect_failed"] += 1
-                    status["errors"].append(f"collect:{rcsb_id}:{str(e)[:200]}")
-                    console.print(f"[red]Failed to collect {rcsb_id}: {e}[/red]")
-        else:
-            console.print("No new structures to collect.")
+        status["upload_total"] = len(missing_ids)
     except Exception as e:
-        status["errors"].append(f"collect_phase:{str(e)[:200]}")
-        console.print(f"[red]Error in collect phase: {e}[/red]")
+        status["errors"].append(f"list_missing:{str(e)[:200]}")
+        console.print(f"[red]Error listing missing profiles: {e}[/red]")
+        missing_ids = []
 
-    # Phase 2: Upload missing structures to Neo4j
-    console.print("=== Weekly Ingest: Uploading missing structures ===")
-    try:
-        local_profiles = set(GlobalOps.list_profiles())
-        db_driver = get_db_driver()
-        db_profiles = set(get_all_structs_in_db(db_driver))
-        db_driver.close()
+    if not missing_ids:
+        console.print("No new structures to ingest.")
+    else:
+        console.print(f"Found {len(missing_ids)} new structures to collect + upload.")
+        for rcsb_id in missing_ids:
+            # Step A: collect to disk
+            try:
+                collector = TubulinETLCollector(rcsb_id)
+                asyncio.run(collector.generate_profile(overwrite=False))
+                status["collect_new"] += 1
+                console.print(f"[green]Collected {rcsb_id}[/green]")
+            except Exception as e:
+                status["collect_failed"] += 1
+                status["errors"].append(f"collect:{rcsb_id}:{str(e)[:200]}")
+                console.print(f"[red]Failed to collect {rcsb_id}: {e}[/red]")
+                continue  # no point trying to upload if we couldn't collect
 
-        missing_from_db = sorted(list(local_profiles - db_profiles))
-        status["upload_total"] = len(missing_from_db)
-
-        if missing_from_db:
-            console.print(f"Found {len(missing_from_db)} structures to upload.")
-            for rcsb_id in missing_from_db:
-                try:
-                    adapter = get_db_adapter()
-                    adapter.add_total_structure(rcsb_id, disable_exists_check=True)
-                    status["upload_new"] += 1
-                    console.print(f"[green]Uploaded {rcsb_id}[/green]")
-                except Exception as e:
-                    status["upload_failed"] += 1
-                    status["errors"].append(f"upload:{rcsb_id}:{str(e)[:200]}")
-                    console.print(f"[red]Failed to upload {rcsb_id}: {e}[/red]")
-        else:
-            console.print("No new structures to upload.")
-    except Exception as e:
-        status["errors"].append(f"upload_phase:{str(e)[:200]}")
-        console.print(f"[red]Error in upload phase: {e}[/red]")
+            # Step B: upload to Neo4j (same sequential pass, same adapter)
+            try:
+                adapter.add_total_structure(rcsb_id, disable_exists_check=False)
+                status["upload_new"] += 1
+                console.print(f"[green]Uploaded {rcsb_id} to Neo4j[/green]")
+            except Exception as e:
+                status["upload_failed"] += 1
+                status["errors"].append(f"upload:{rcsb_id}:{str(e)[:200]}")
+                console.print(f"[red]Failed to upload {rcsb_id}: {e}[/red]")
 
     status["finished_at"] = datetime.now(timezone.utc).isoformat()
 

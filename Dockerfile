@@ -30,8 +30,18 @@ COPY --from=node-deps /app/node_modules ./node_modules
 # Python dependencies
 COPY --from=py-builder /install /usr/local
 
-# System packages: cron (scheduler), curl (healthchecks)
-RUN apt-get update && apt-get install -y --no-install-recommends cron curl && rm -rf /var/lib/apt/lists/*
+# System packages:
+#   - cron, curl: scheduler + healthcheck tooling
+#   - libx11-6/libxi6/libxext6/libxxf86vm1/libgl1/libglx-mesa0: runtime shared
+#     libs for node's `gl` package (headless WebGL). Used by the thumbnail
+#     renderer (scripts_and_artifacts/render_thumbnail.tsx) -- without these,
+#     gl's .node native binding fails to dlopen libX11.so.6 at runtime and
+#     every thumbnail render errors out. The node-deps build stage installs
+#     the -dev variants for compilation; we need the runtime variants here.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cron curl \
+    libx11-6 libxi6 libxext6 libxxf86vm1 libgl1 libglx-mesa0 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Application code
 COPY . .
