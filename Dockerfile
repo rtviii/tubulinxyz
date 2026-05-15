@@ -35,12 +35,21 @@ COPY --from=py-builder /install /usr/local
 #   - libx11-6/libxi6/libxext6/libxxf86vm1/libgl1/libglx-mesa0: runtime shared
 #     libs for node's `gl` package (headless WebGL). Used by the thumbnail
 #     renderer (scripts_and_artifacts/render_thumbnail.tsx) -- without these,
-#     gl's .node native binding fails to dlopen libX11.so.6 at runtime and
-#     every thumbnail render errors out. The node-deps build stage installs
-#     the -dev variants for compilation; we need the runtime variants here.
+#     gl's .node native binding fails to dlopen libX11.so.6 at runtime. The
+#     node-deps build stage installs the -dev variants for compilation; we
+#     need the runtime variants here.
+#   - libgl1-mesa-dri: Mesa software-rendering drivers (swrast / llvmpipe).
+#     The container has no GPU, so all GL has to go through software rendering.
+#   - xvfb: a headless X server. molstar's headless screenshot helper +
+#     headless-gl still need a display to create a GL context against, even
+#     though the rendering goes to an offscreen framebuffer. molstar_bridge.py
+#     wraps the thumbnail subprocess in `xvfb-run` so each render gets its
+#     own virtual display. Without this you get "Cannot read properties of
+#     null (reading 'getExtension')" from molstar's WebGL setup.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron curl \
-    libx11-6 libxi6 libxext6 libxxf86vm1 libgl1 libglx-mesa0 \
+    libx11-6 libxi6 libxext6 libxxf86vm1 libgl1 libglx-mesa0 libgl1-mesa-dri \
+    xvfb \
     && rm -rf /var/lib/apt/lists/*
 
 # Application code

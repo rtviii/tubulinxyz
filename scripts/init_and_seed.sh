@@ -27,7 +27,18 @@ write_status "starting" "Initializing database..." 0 0 0 0 false
 echo "=== TubXYZ Bootstrap: $(date -Iseconds) ==="
 echo "Initializing database constraints and phylogeny..."
 python cli.py init-db
-write_status "init_db" "Database initialized. Checking for structures..." 0 0 0 0 false
+write_status "init_db" "Database initialized. Loading literature data..." 0 0 0 0 false
+
+# Step 1.5: Ingest Morisette literature data (mutations + post-translational
+# modifications) BEFORE the long structure collection phase, since the data
+# is independent of structures and we want the PTM/mutations panel to populate
+# immediately rather than at the very end of a multi-hour run. Idempotent
+# (MERGE). Non-fatal so a Morisette failure can't block the structural bootstrap.
+# Source: Morisette et al. 2023 (doi:10.1371/journal.pone.0295279); CSVs live
+# in data/<family>_tubulin/*.csv and are baked into the image.
+echo "Ingesting Morisette mutation/PTM literature data..."
+python -m lib.etl.ingest_morisette --family tubulin_alpha || echo "WARNING: Morisette alpha ingest failed (non-fatal, see above)"
+python -m lib.etl.ingest_morisette --family tubulin_beta  || echo "WARNING: Morisette beta ingest failed (non-fatal, see above)"
 
 # Step 2: Collect every structure that lacks a COMPLETE local profile.
 # Idempotent and resumable:
@@ -76,18 +87,6 @@ done
 echo "Uploading any local profiles still missing from Neo4j..."
 write_status "uploading" "Finalizing catalogue..." 0 0 0 0 false
 python cli.py upload-missing --workers 4
-
-# Step 4: Ingest Morisette literature data (mutations + post-translational
-# modifications) for alpha and beta tubulin. This populates :Variant and
-# :Modification nodes used by the expert-mode mutations/PTMs panel. The data
-# source is the Morisette et al. 2023 dataset (doi:10.1371/journal.pone.0295279);
-# CSVs live in data/<family>_tubulin/*.csv and are already in the image.
-# Idempotent (uses MERGE). Non-fatal: a Morisette failure shouldn't block the
-# structural bootstrap.
-echo "Ingesting Morisette mutation/PTM literature data..."
-write_status "uploading" "Loading mutation/PTM annotations..." 0 0 0 0 false
-python -m lib.etl.ingest_morisette --family tubulin_alpha || echo "WARNING: Morisette alpha ingest failed (non-fatal, see above)"
-python -m lib.etl.ingest_morisette --family tubulin_beta  || echo "WARNING: Morisette beta ingest failed (non-fatal, see above)"
 
 write_status "done" "Bootstrap complete." 0 0 0 0 true
 echo "=== TubXYZ Bootstrap complete: $(date -Iseconds) ==="

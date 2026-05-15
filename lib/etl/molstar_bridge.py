@@ -3,6 +3,7 @@ Bridge to Molstar TypeScript extraction scripts.
 """
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -77,6 +78,15 @@ def run_thumbnail_render(
         cmd = ["npx", "tsx", str(RENDER_SCRIPT)]
 
     cmd.extend([str(cif_path), rcsb_id.upper(), str(profile_path), str(output_path)])
+
+    # In a headless Linux container, molstar's WebGL backend (via the `gl`
+    # npm package) needs a display server to create a GL context against,
+    # even though the actual rendering goes to an offscreen framebuffer.
+    # `xvfb-run` provides a per-invocation virtual display. Skip the wrap on
+    # hosts without xvfb-run (e.g. macOS dev), where headless-gl talks to
+    # the native graphics stack directly.
+    if shutil.which("xvfb-run"):
+        cmd = ["xvfb-run", "-a", "-s", "-screen 0 1024x768x24 -ac", *cmd]
 
     try:
         result = subprocess.run(
