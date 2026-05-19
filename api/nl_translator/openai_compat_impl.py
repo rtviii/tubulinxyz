@@ -44,6 +44,8 @@ from api.nl_translator.viewer_actions import (
     VIEWER_ACTION_MODELS,
     VIEWER_ACTION_DESCRIPTIONS,
     CLARIFY_ACTION_NAME,
+    MENTION_ENTITIES_NAME,
+    EMIT_NAV_CARD_NAME,
 )
 from api.nl_translator.global_actions import (
     GlobalNLResponse,
@@ -258,7 +260,11 @@ class OpenAICompatNLTranslator:
         text: str,
         view_context: ViewContext,
     ) -> ViewerTranslationResult:
-        system_prompt = _build_viewer_system_prompt(view_context)
+        # Facets are cached; cheap to load on every viewer call. Needed so the
+        # universal preamble can render the KNOWN ORGANISMS grounding table.
+        from api.nl_translator.facets_loader import load_facet_context
+        facets = load_facet_context()
+        system_prompt = _build_viewer_system_prompt(view_context, facets)
 
         response = self._client.chat.completions.create(
             model=self._model,
@@ -337,14 +343,14 @@ def _build_viewer_tools() -> List[dict]:
     return tools
 
 
-def _build_viewer_system_prompt(view_context: ViewContext) -> str:
+def _build_viewer_system_prompt(view_context: ViewContext, facets: FacetContext) -> str:
     chains = ", ".join(view_context.chain_ids) or "(none loaded)"
     ligands = ", ".join(view_context.ligand_keys) or "(none)"
-    return f"""You are a controller for a 3D molecular viewer (molstar) displaying a single PDB structure.
+    return _build_universal_preamble(facets) + f"""You are a controller for a 3D molecular viewer (molstar) displaying a single PDB structure.
 
-Each user turn, emit ONE OR MORE tool calls that together fulfill the request. The frontend will execute them in order against the current viewer.
+Each user turn, emit ONE OR MORE tool calls that together fulfill the request. The frontend executes them in order against the current viewer.
 
-ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, RequestClarification.
+ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, MentionEntities, EmitNavigationCard, RequestClarification.
 
 CURRENT VIEWER STATE:
 - rcsb_id: {view_context.rcsb_id}
@@ -353,13 +359,57 @@ CURRENT VIEWER STATE:
 - view_mode: {view_context.view_mode}
 - active_monomer_chain: {view_context.active_monomer_chain}
 
-RULES:
+VIEWER-SPECIFIC RULES:
 - auth_asym_id arguments MUST be one of the loaded chain ids above. If the user names a chain that is not loaded, emit exactly one `RequestClarification` tool call instead, naming the available chains.
 - Treat "residue 240" / "position 240" as auth_seq_id=240.
-- For range expressions ("100-150", "between 100 and 150") include both endpoints.
 - Prefer the minimum number of actions that accomplish the intent. Don't add ClearFocus / ClearHighlight unless the user implies reset.
 - If the user asks to "hide everything except X" / "show only X" / "isolate X", use IsolateChain (not a sequence of SetChainVisibility).
-- Do NOT emit any free-form text alongside tool calls.
+- Do NOT use EmitNavigationCard for in-page operations (focus, highlight, isolate) — those are viewer actions.
+
+SURFACING ENTITIES (MentionEntities tool):
+- AFTER your action tool calls, call MentionEntities ONCE with the chains / residues / ranges / ligands the user should be able to hover and click in the side panel.
+- Use this whenever you focused or highlighted something specific (residue, range, chain, ligand). Skip it for pure visibility toggles or camera resets.
+- Cap at 6 entities. Keep them genuinely useful — do not duplicate every action argument verbatim.
+- Entity kinds: 'chain' (auth_asym_id), 'residue_range' (auth_asym_id + start + end), 'ligand' (chemical_id, optional auth_asym_id + auth_seq_id).
+- Example: user asks "highlight the M-loop on chain B" — you emit HighlightResidueRange(B, 217, 230) then MentionEntities(entities=[{{kind:"residue_range", auth_asym_id:"B", start:217, end:230}}]).
+
+NAVIGATION INTENT (EmitNavigationCard tool):
+- If the user's question is about OTHER structures, browsing the catalogue, or switching to a different PDB entry, call EmitNavigationCard with ONE ActionCard.
+- Signs of navigation intent: "what other structures...", "find me X", "show structures with Y", "switch to Z", references to a different PDB id than the one currently loaded.
+- The card uses the same vocabulary as the front-page: open_catalogue, open_structure, open_expert, inspect_ligand, view_variants. Always fill the `description` field (~60-100 chars).
+- Catalogue cards from this endpoint CANNOT reference queries (set `query_ref:null`). Encode filter intent directly on the card payload:
+  - For a ligand-filtered catalogue, set `focus_ligands: ["TA1"]`.
+  - For a family-filtered catalogue, set `family: "tubulin_beta"`.
+  - For a specific PDB id, set `rcsb_id`.
+- Example: on 1JFF, user asks "other structures with taxol" — emit EmitNavigationCard(card={{action:"open_catalogue", label:"Browse structures with taxol", description:"Catalogue filtered to all PDB entries containing taxol.", query_ref:null, focus_ligands:["TA1"]}}).
+
+HANDLING "WHERE WOULD X BIND" / "SHOW ME X'S SITE" WHEN X IS NOT LOADED:
+- The loaded structure does NOT have ligand X bound. The user wants you to project the binding site from biological knowledge onto the loaded chain.
+
+- HARD RULE: For any "where" / "show" / "locate" question, you MUST visually answer with a highlight on the 3D viewer. Words alone are insufficient. The viewer must reflect the user's question.
+
+- HARD RULE: The FIRST tool call you emit MUST be `HighlightResidueRange`. If your first tool call would be RequestClarification or EmitNavigationCard, STOP and emit HighlightResidueRange first. If you cannot identify residues to highlight even from biological knowledge, do not respond at all — re-read the question.
+
+- REQUIRED tool call ORDER for "where would X bind" queries (emit ALL FOUR, in this exact order):
+  1. **HighlightResidueRange** — mandatory. Pick the relevant binding residues from biological knowledge and call this tool with concrete numbers. For heterodimer structures, beta-tubulin is typically chain B (verify against view_context's loaded chains).
+     Conserved binding residue references (approximate, well-conserved across species):
+     - Taxol / paclitaxel (TA1): beta-tubulin M-loop, residues 217-230.
+     - Colchicine (LOC): beta-tubulin T7 loop / H7-H8 region, residues 240-260.
+     - GTP / GDP: beta-tubulin (E-site) or alpha-tubulin (N-site) nucleotide pocket, residues 1-30 plus loop T4 around 140-180.
+     - Vinblastine / vincristine: beta1-alpha2 dimer interface region.
+     - Maytansine (MYT): alpha-tubulin S6-H7 / T7 loop region.
+  2. **MentionEntities** — list the residue_range you just highlighted so the user can hover/click it in the side panel: `entities=[{{kind:"residue_range", auth_asym_id:<chain>, start:<lo>, end:<hi>}}]`.
+  3. **EmitNavigationCard** — one open_catalogue card with `focus_ligands:["<pdb_chem_id>"]` so the user can jump to structures where the ligand is actually bound. Always fill the `description` field.
+  4. **RequestClarification** — brief honest note (≤120 chars): "X (CODE) is not bound here; binding region projected onto chain Y from biology. Card below jumps to bound structures."
+
+- DO NOT emit only RequestClarification or only EmitNavigationCard for these queries. The user expects to SEE SOMETHING CHANGE in the 3D viewer; that's HighlightResidueRange.
+
+- WORKED EXAMPLE — user asks "where would colchicine bind" on a 1JFF-style structure (chains A,B; ligand_keys=[TA1,GTP,GDP]). Your response is FOUR tool calls in this order:
+  call 1: HighlightResidueRange(auth_asym_id="B", start=240, end=260)
+  call 2: MentionEntities(entities=[{{kind:"residue_range", auth_asym_id:"B", start:240, end:260}}])
+  call 3: EmitNavigationCard(card={{action:"open_catalogue", label:"Structures with colchicine bound", description:"Catalogue filtered to PDB entries containing colchicine (LOC).", query_ref:null, focus_ligands:["LOC"]}})
+  call 4: RequestClarification(question="Colchicine (LOC) is not bound in 1JFF; the T7 loop binding region on chain B is highlighted from biology. Card jumps to structures where colchicine is actually bound.")
+  Four tool calls. All of them. In that order. Do not skip call 1.
 """
 
 
@@ -381,6 +431,8 @@ def _interpret_viewer_openai(response, viewer_models_by_name: Dict[str, Type[Bas
         )
 
     actions: List[BaseModel] = []
+    entities: List[Any] = []
+    nav_card: Optional[Any] = None
     clarification: Optional[str] = None
 
     for call in tool_calls:
@@ -398,8 +450,27 @@ def _interpret_viewer_openai(response, viewer_models_by_name: Dict[str, Type[Bas
             )
 
         if name == CLARIFY_ACTION_NAME:
+            # Accumulate; don't break. The LLM may emit RequestClarification
+            # PLUS EmitNavigationCard so the user sees an explanation AND a
+            # concrete action to take (e.g. "this structure lacks colchicine,
+            # but here's a card to browse ones that have it").
             clarification = inp.get("question", "Please clarify.")
-            break  # clarification preempts any other actions
+            continue
+
+        if name == MENTION_ENTITIES_NAME:
+            # Companion tool — doesn't enter actions[], surfaces side-panel pills.
+            raw_entities = inp.get("entities", [])
+            if isinstance(raw_entities, list):
+                entities = raw_entities
+            continue
+
+        if name == EMIT_NAV_CARD_NAME:
+            # Navigation intent — overrides any viewer actions. We accept the
+            # last emitted nav_card if multiple slip through.
+            raw_card = inp.get("card")
+            if isinstance(raw_card, dict):
+                nav_card = raw_card
+            continue
 
         model_cls = viewer_models_by_name.get(name)
         if model_cls is None:
@@ -417,10 +488,24 @@ def _interpret_viewer_openai(response, viewer_models_by_name: Dict[str, Type[Bas
             )
 
     if clarification is not None:
-        return ViewerTranslationResult(clarification=clarification)
+        # Clarification + (optionally) a nav card. The frontend renders the
+        # clarification message in the chat input popover and the card in the
+        # side panel.
+        return ViewerTranslationResult(
+            clarification=clarification,
+            nav_card=nav_card,
+        )
+
+    if nav_card is not None:
+        # Nav card overrides actions — they may not make sense in context.
+        return ViewerTranslationResult(
+            nav_card=nav_card,
+            summary="",
+        )
 
     return ViewerTranslationResult(
         actions=actions,
+        entities=entities,
         summary=_summarize_actions(actions),
     )
 
@@ -433,6 +518,59 @@ def _summarize_actions(actions: List[BaseModel]) -> str:
         kv = ", ".join(f"{k}={v}" for k, v in a.model_dump().items())
         parts.append(f"{type(a).__name__}({kv})" if kv else type(a).__name__)
     return " ; ".join(parts)
+
+
+def _build_universal_preamble(facets: FacetContext) -> str:
+    """Shared rules prepended to BOTH global and viewer system prompts.
+
+    Single source of truth for anti-hallucination, ligand-naming, domain
+    conventions, and the organism→PDB-ID grounding table.
+    """
+    organism_lines: List[str] = []
+    for o in facets.common_source_organisms:
+        rep = o.get("rep_pdbs") or []
+        rep_str = (
+            f" [PDB ids: {', '.join(rep)}]"
+            if rep
+            else " [no entries indexed — DO NOT GUESS, use catalogue + tax_id filter]"
+        )
+        organism_lines.append(f"  - {o.get('tax_id')} -> {o.get('name')}{rep_str}")
+    organism_table = "\n".join(organism_lines) if organism_lines else "  (none loaded)"
+
+    return f"""=== UNIVERSAL RULES (apply to all responses) ===
+
+GROUNDING — NEVER INVENT IDS (highest priority rule):
+- Use ONLY PDB IDs (4-char alphanumeric, e.g. 1JFF, 6WVM) that you can verify from one of:
+  (a) the user's query text, (b) view_context (when present), or (c) the KNOWN ORGANISMS table below.
+- The backend hydrates every PDB id against the database. Invented ids produce broken cards the user sees clearly marked as broken.
+
+HANDLING REQUESTS THAT NEED IDS YOU DON'T HAVE — FAIL LOUD, NEVER PARTIAL-FULFILL WITH INVENTION:
+- If the user asks for something whose fulfillment would require an invented PDB id (e.g. "compare human vs Toxoplasma" but Toxoplasma isn't in the table), do the following INSTEAD:
+  1. Emit cards ONLY for the parts you can fulfill with real ids (e.g. an open_structure for the human side).
+  2. For the unavailable side, emit an open_catalogue card with `source_organism_ids` set directly on the card (e.g. `source_organism_ids:[5811]` for Toxoplasma gondii — use your training knowledge of NCBI taxonomy ids). DO NOT use query_ref / queries[] for this — set the field directly on the card.
+  3. NEVER emit aligned refs containing organisms not in the KNOWN ORGANISMS table. Set `aligned=null` and let the user pick a structure manually via the catalogue card.
+
+BLURB CONSISTENCY:
+- The blurb MUST ONLY mention PDB ids or organisms that correspond to OK cards in your response. Do not name a PDB id or species in the blurb if there's no real card backing it. If a comparison can only be partial ("I have human but not Toxoplasma"), say so honestly in the blurb.
+
+KNOWN ORGANISMS (use ONLY these PDB ids when referencing a structure by species):
+{organism_table}
+
+LIGAND NAMING:
+- Trivial names and PDB chemical IDs differ. Always use the chemical ID (3-4 char code).
+- Common: taxol/paclitaxel=TA1, colchicine=LOC, vinblastine=VLB, vincristine=VCR, GTP=GTP, GDP=GDP, maytansine=MYT.
+
+DOMAIN CONVENTIONS:
+- Resolution in Angstroms: LOWER = BETTER. "Better than 3 A" -> resolution_max=3.0.
+- Range expressions ("between X and Y", "X-Y") are INCLUSIVE on both ends.
+- Tubulin heterodimer chains: alpha typically chain A, beta typically chain B. Verify against view_context's loaded chains when present.
+
+OUTPUT FORMAT:
+- Tool calls only. Do not emit free-form prose alongside tool calls unless the tool itself accepts text as an argument.
+
+=== END UNIVERSAL RULES ===
+
+"""
 
 
 def _build_global_tools() -> List[dict]:
@@ -477,28 +615,44 @@ Example 1 — "where does taxol bind"
   blurb: "Taxol (PDB chem id TA1) binds the beta-tubulin taxane pocket; structures with TA1 listed below."
   queries: [{ id: "q1", target: "structures", filters_structures: { has_ligand_ids: ["TA1"] } }]
   cards:
-    - { action: "open_catalogue", query_ref: "q1", label: "Browse structures with taxol" }
-    - { action: "inspect_ligand", chemical_id: "TA1", rcsb_id: "1JFF", suggested_chain: "B", label: "View taxol bound in 1JFF" }
-    - { action: "open_expert", rcsb_id: "1JFF", primary_chain: "B", focus_range: { start: 217, end: 230 }, label: "Inspect M-loop / taxane pocket in expert mode" }
+    - { action: "open_catalogue", query_ref: "q1",
+        label: "Browse structures with taxol",
+        description: "Catalogue filtered to all PDB entries containing PDB chem id TA1." }
+    - { action: "inspect_ligand", chemical_id: "TA1", rcsb_id: "1JFF", suggested_chain: "B",
+        label: "View taxol bound in 1JFF",
+        description: "Opens 1JFF in expert mode with taxol focused on chain B." }
+    - { action: "open_expert", rcsb_id: "1JFF", primary_chain: "B", focus_range: { start: 217, end: 230 },
+        label: "Inspect the M-loop taxane pocket",
+        description: "Expert mode on 1JFF chain B with residues 217-230 (M-loop) highlighted." }
 
 Example 2 — "what kinds of PTMs are in tubulin"
   blurb: "Tubulin PTMs (acetylation, glutamylation, detyrosination) are annotated per-residue inside expert mode."
   queries: []
   cards:
-    - { action: "open_expert", rcsb_id: "6WVM", primary_chain: "A", label: "Open an alpha-tubulin chain with PTM annotations" }
-    - { action: "view_variants", family: "tubulin_alpha", label: "Browse alpha-tubulin sequence variants" }
+    - { action: "open_expert", rcsb_id: "6WVM", primary_chain: "A",
+        label: "Open an alpha-tubulin chain with PTM annotations",
+        description: "Expert mode on 6WVM chain A. PTM annotations appear in the side panel." }
+    - { action: "view_variants", family: "tubulin_alpha",
+        label: "Browse alpha-tubulin sequence variants",
+        description: "Catalogue filtered to structures with alpha-tubulin variant annotations." }
 
 Example 3 — "differences between the GTP binding site in human and toxoplasma tubulin"
   blurb: "GTP binds alpha-tubulin's N-terminal pocket; compare human vs Toxoplasma chains in expert mode."
   queries: []
   cards:
-    - { action: "open_expert", rcsb_id: "6WVM", primary_chain: "A", aligned: [{ rcsb_id: "8FEH", auth_asym_id: "A" }], focus_range: { start: 140, end: 180 }, label: "Compare GTP site: human vs Toxoplasma alpha-tubulin" }
-    - { action: "view_variants", family: "tubulin_alpha", position_min: 140, position_max: 180, label: "Browse alpha-tubulin variants near GTP pocket" }
+    - { action: "open_expert", rcsb_id: "6WVM", primary_chain: "A",
+        aligned: [{ rcsb_id: "8FEH", auth_asym_id: "A" }],
+        focus_range: { start: 140, end: 180 },
+        label: "Compare GTP site: human vs Toxoplasma alpha-tubulin",
+        description: "Loads 6WVM chain A and 8FEH chain A aligned in expert mode; residues 140-180 highlighted." }
+    - { action: "view_variants", family: "tubulin_alpha", position_min: 140, position_max: 180,
+        label: "Browse alpha-tubulin variants near GTP pocket",
+        description: "Catalogue filtered to alpha-tubulin variants in residues 140-180." }
 """
 
 
 def _build_global_system_prompt(facets: FacetContext) -> str:
-    return f"""You are the front-page query router for tube.xyz, a tubulin structural biology database. The user types an open-ended question; you produce a single structured response that routes them to the right page with state preloaded.
+    return _build_universal_preamble(facets) + f"""You are the front-page query router for tube.xyz, a tubulin structural biology database. The user types an open-ended question; you produce a single structured response that routes them to the right page with state preloaded.
 
 YOUR OUTPUT: Exactly one tool call to `{EMIT_GLOBAL_TOOL_NAME}`. Only call `{CLARIFY_GLOBAL_TOOL_NAME}` if the request is so ambiguous that no card would be useful.
 
@@ -518,7 +672,7 @@ CARD TYPES:
 INTENT HEURISTICS:
 - "list" / "browse" / "find structures with X" -> open_catalogue
 - Specific PDB id mentioned -> open_structure (default) or open_expert (if alignment/range)
-- "compare" / "align" / "differences between" -> open_expert with `aligned`
+- "compare" / "align" / "differences between" -> open_expert with `aligned` (ALIGNED REFS MUST come from the KNOWN ORGANISMS table — if target organism has no entries, use open_catalogue + source_organism_ids instead)
 - Specific residue numbers / "binding site" / "pocket" -> open_expert with `focus_range`
 - Ligand by trivial name (e.g. "taxol", "paclitaxel" both = TA1) -> inspect_ligand and/or open_expert
 - Mutation / variant / substitution language -> view_variants (+ open_expert if specific structure)
@@ -527,22 +681,18 @@ RANKING / BUDGET:
 - 2-5 cards typical. Never more than 6. Never duplicate intent.
 - Never put `open_expert` as card #1 unless the query contains "align", "compare", "residue", "position", "binding site", or "pocket".
 - `clarify` is always a single-card response.
+- For nucleotides/ions (GTP, GDP, ATP, ADP, MG, ZN, etc.), do NOT emit an `inspect_ligand` card — they are too generic. Fall through to other cards.
 
-DOMAIN CONVENTIONS:
-- Resolution in Angstroms: LOWER = BETTER. "Higher resolution than 3A" / "better than 3A" -> resolution_max=3.0.
-- "Human" = tax_id 9606. Other organism mappings are in the facet table.
-- Ligand trivial names differ from PDB chem ids. Use facet table to resolve.
-- For range expressions ("between 200 and 250"), include both endpoints.
+DESCRIPTION FIELD (REQUIRED on every non-clarify card):
+- Every card MUST have a `description` of ~60-100 chars stating concretely "what you'll see when you click" — name the structure, chain, range, ligand, or filter that the click reveals.
+- Bad: "Detailed structural analysis." (vague)
+- Good: "Loads 6WVM chain A and 8FEH chain A aligned in expert mode; residues 140-180 highlighted."
+- The `label` is the headline; `description` is the precise consequence. Don't repeat the label.
 
-GROUNDING:
-- Use ONLY entity ids visible in the facet table or in the user's query. If you don't know a real PDB id for a desired card, prefer omitting that card over inventing one. The backend validates and drops invented ids.
-- For nucleotides/ions (GTP, GDP, ATP, ADP, MG, ZN, etc.), do NOT emit an `inspect_ligand` card — they are too generic. Fall through to other cards or `clarify`.
-
-VALID VALUES:
+FACET VALUES (use verbatim where applicable):
 - tubulin_families: {facets.tubulin_families}
 - isotypes: {facets.isotypes}
 - exp_methods: {facets.exp_methods}
-- common source organisms (tax_id -> name): {facets.common_source_organisms}
 - top ligands (chemical_id -> chemical_name): {facets.top_ligands}
 - year_range: {facets.year_range}, resolution_range: {facets.resolution_range}
 

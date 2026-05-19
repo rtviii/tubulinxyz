@@ -89,11 +89,12 @@ def load_facet_context() -> FacetContext:
 
 
 def _load_common_organisms() -> List[dict]:
-    """Return top-N source organisms with tax_id + name.
+    """Return top-N source organisms with tax_id + name + representative PDB IDs.
 
-    Uses a small Cypher call through the existing adapter. Kept local to
-    the translator to avoid polluting the main reader API surface for a
-    PoC concern.
+    Representative PDB IDs (up to 3 per organism) are passed to the LLM as
+    grounding so it can name real structures instead of inventing IDs. If
+    an organism isn't in this list, the LLM is instructed to fall back to
+    an open_catalogue filter on source_organism_ids.
     """
     try:
         with db_reader.adapter.driver.session() as session:
@@ -106,15 +107,21 @@ def _load_common_organisms() -> List[dict]:
                   AND size(e.src_organism_ids) > 0
                 WITH e.src_organism_ids[0] AS tax_id,
                      e.src_organism_names[0] AS name,
-                     count(DISTINCT e.parent_rcsb_id) AS cnt
-                RETURN tax_id, name, cnt
+                     e.parent_rcsb_id AS pdb
+                WITH tax_id, name, collect(DISTINCT pdb) AS pdbs
+                RETURN tax_id, name, size(pdbs) AS cnt, pdbs[..3] AS rep_pdbs
                 ORDER BY cnt DESC
                 LIMIT $limit
                 """,
                 limit=_MAX_ORGANISMS,
             )
             return [
-                {"tax_id": r["tax_id"], "name": r["name"], "structure_count": r["cnt"]}
+                {
+                    "tax_id": r["tax_id"],
+                    "name": r["name"],
+                    "structure_count": r["cnt"],
+                    "rep_pdbs": list(r["rep_pdbs"]) if r["rep_pdbs"] else [],
+                }
                 for r in result
             ]
     except Exception:

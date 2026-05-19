@@ -43,10 +43,18 @@ class ViewerTranslationResult:
     """Result of one viewer-action translation call.
 
     - `actions`: validated Pydantic action instances, in emission order.
+    - `entities`: optional EntityRef list (from a MentionEntities tool call),
+      surfaced as interactive pills in the side panel.
+    - `nav_card`: set when the LLM emitted EmitNavigationCard — a single
+      ActionCard (global vocabulary) routing the user away. Mutually
+      exclusive with `actions`: if set, the router skips dispatching actions.
     - `clarification`: set instead of actions when the model can't commit.
     - `summary`: short human readback (empty when clarification is set).
+    Loosely typed (Any) to avoid circular imports with global_actions.py.
     """
     actions: List[BaseModel] = field(default_factory=list)
+    entities: List[Any] = field(default_factory=list)
+    nav_card: Optional[Any] = None
     summary: str = ""
     clarification: Optional[str] = None
 

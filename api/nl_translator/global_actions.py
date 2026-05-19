@@ -141,13 +141,20 @@ class ActionCard(BaseModel):
         description="Chain that contacts this ligand in the chosen structure",
     )
 
-    # view_variants
+    # view_variants  (family also reused by open_catalogue as a filter)
     family: Optional[str] = None
     position_min: Optional[int] = None
     position_max: Optional[int] = None
     variant_type: Optional[str] = Field(
         default=None,
         description="substitution | insertion | deletion",
+    )
+
+    # open_catalogue direct-filter shortcuts (when query_ref isn't worth it).
+    # Mirror the filter fields on UiFilters / StructureFilters.
+    source_organism_ids: Optional[List[int]] = Field(
+        default=None,
+        description="NCBI tax ids to filter the catalogue by (e.g. [5811] for Toxoplasma gondii). Use when you want a catalogue card scoped to an organism without spelling out a full query in queries[].",
     )
 
     # clarify

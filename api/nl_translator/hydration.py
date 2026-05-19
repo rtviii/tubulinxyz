@@ -260,12 +260,25 @@ def hydrate_response(
                 card.primary_chain = None
 
         if ok and a == "open_expert" and card.aligned:
+            originally = list(card.aligned)
             kept = [
-                ar for ar in card.aligned
+                ar for ar in originally
                 if f"{ar.rcsb_id.upper()}:{ar.auth_asym_id}" in found_chains
             ]
-            if len(kept) != len(card.aligned):
-                reasons.append("dropped unknown aligned chains")
+            if not kept:
+                # All requested aligned chains were unknown. The card's
+                # entire premise ("compare X with Y") collapses; surface that
+                # as an invalid card instead of silently loading just X.
+                missing = ", ".join(f"{a.rcsb_id}:{a.auth_asym_id}" for a in originally)
+                ok = False
+                reasons.append(f"aligned structure(s) not found: {missing}")
+            elif len(kept) != len(originally):
+                dropped = [
+                    f"{a.rcsb_id}:{a.auth_asym_id}"
+                    for a in originally
+                    if a not in kept
+                ]
+                reasons.append(f"dropped unknown aligned chains: {', '.join(dropped)}")
             card.aligned = kept or None
 
         if ok and a == "inspect_ligand" and card.chemical_id:

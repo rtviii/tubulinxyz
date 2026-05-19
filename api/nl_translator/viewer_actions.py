@@ -14,6 +14,8 @@ from typing import List, Type
 
 from pydantic import BaseModel, Field
 
+from api.nl_translator.global_actions import EntityRef, ActionCard
+
 
 # ---------------------------------------------------------------------------
 # Camera / focus
@@ -89,6 +91,42 @@ class RequestClarification(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Entity surfacing — companion tool that names the things the LLM acted on.
+# Not a viewer action (it changes nothing in molstar). The frontend renders
+# these as interactive pills with bidirectional sync to the viewer.
+# ---------------------------------------------------------------------------
+
+class MentionEntities(BaseModel):
+    """Surface the chains / residues / ranges / ligands the user should see as
+    interactive pills. Call ONCE per response, alongside your viewer-action
+    tool calls. Do not duplicate entities already implied by actions — just
+    list the things you want surfaced for hover/click in the side panel.
+    """
+    entities: List[EntityRef] = Field(
+        default_factory=list,
+        description="Up to 6 entities to render as pills.",
+    )
+
+
+class EmitNavigationCard(BaseModel):
+    """Use INSTEAD of viewer actions when the user's intent is navigation —
+    they're asking about other structures, want to browse the catalogue, or
+    want to switch to a different PDB entry. The card uses the same vocabulary
+    as the global front-page endpoint and routes the user away from this
+    structure page. Pick ONE card and skip all action tools.
+    """
+    card: ActionCard = Field(
+        ...,
+        description=(
+            "A single ActionCard. Typical choices on a structure page: "
+            "open_catalogue (browse), open_structure (different PDB), or "
+            "open_expert (different chain or alignment). Pick the most "
+            "specific that fits the user's intent."
+        ),
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — drives tool generation in both translator impls.
 # ---------------------------------------------------------------------------
 
@@ -102,6 +140,8 @@ VIEWER_ACTION_MODELS: List[Type[BaseModel]] = [
     HighlightChain,
     HighlightResidueRange,
     ClearHighlight,
+    MentionEntities,
+    EmitNavigationCard,
     RequestClarification,
 ]
 
@@ -117,6 +157,17 @@ VIEWER_ACTION_DESCRIPTIONS: dict[str, str] = {
     "HighlightChain": "Glow-highlight an entire chain.",
     "HighlightResidueRange": "Glow-highlight a residue range.",
     "ClearHighlight": "Remove all transient highlights.",
+    "MentionEntities": (
+        "Surface the entities (chains, residues, ranges, ligands) the user "
+        "should see as interactive pills in the side panel. Call ONCE per "
+        "response if any entities are worth pinning."
+    ),
+    "EmitNavigationCard": (
+        "Use INSTEAD of viewer actions when the user's intent is navigation "
+        "(browse catalogue, switch to another structure, open a different "
+        "chain in expert mode). Emits a single ActionCard the frontend turns "
+        "into a clickable chip. Skip all action tools when using this."
+    ),
     "RequestClarification": (
         "Ask the user a clarifying question. Use when the required chain/ligand "
         "is not present in view_context, or when the request is ambiguous."
@@ -124,3 +175,5 @@ VIEWER_ACTION_DESCRIPTIONS: dict[str, str] = {
 }
 
 CLARIFY_ACTION_NAME = "RequestClarification"
+MENTION_ENTITIES_NAME = "MentionEntities"
+EMIT_NAV_CARD_NAME = "EmitNavigationCard"

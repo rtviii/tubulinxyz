@@ -30,6 +30,8 @@ from api.nl_translator.viewer_actions import (
     VIEWER_ACTION_MODELS,
     VIEWER_ACTION_DESCRIPTIONS,
     CLARIFY_ACTION_NAME,
+    MENTION_ENTITIES_NAME,
+    EMIT_NAV_CARD_NAME,
 )
 
 
@@ -272,7 +274,7 @@ def _build_viewer_system_prompt(view_context: ViewContext) -> str:
 
 Each user turn, emit ONE OR MORE tool calls that together fulfill the request. The frontend will execute them in order against the current viewer.
 
-ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, RequestClarification.
+ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, MentionEntities, EmitNavigationCard, RequestClarification.
 
 CURRENT VIEWER STATE:
 - rcsb_id: {view_context.rcsb_id}
@@ -288,6 +290,18 @@ RULES:
 - Prefer the minimum number of actions that accomplish the intent. Don't add ClearFocus / ClearHighlight unless the user implies reset.
 - If the user asks to "hide everything except X" / "show only X" / "isolate X", use IsolateChain (not a sequence of SetChainVisibility).
 - Do NOT emit any free-form text alongside tool calls.
+
+SURFACING ENTITIES (MentionEntities tool):
+- AFTER your action tool calls, call MentionEntities ONCE with the chains / residues / ranges / ligands the user should be able to hover and click in the side panel.
+- Use this whenever you focused or highlighted something specific. Skip it for pure visibility toggles or camera resets.
+- Cap at 6 entities. Keep them genuinely useful — do not duplicate every action argument verbatim.
+- Entity kinds: 'chain' (auth_asym_id), 'residue_range' (auth_asym_id + start + end), 'ligand' (chemical_id, optional auth_asym_id + auth_seq_id).
+
+NAVIGATION INTENT (EmitNavigationCard tool):
+- If the user's question is about OTHER structures, browsing the catalogue, or switching to a different PDB entry, call EmitNavigationCard with ONE ActionCard and skip all viewer actions.
+- Signs: "what other structures...", "find me X", "show structures with Y", references to a different PDB id than the loaded one.
+- Card uses the global vocabulary (open_catalogue, open_structure, open_expert, inspect_ligand, view_variants). Always fill `description` (~60-100 chars).
+- Do NOT use EmitNavigationCard for in-page operations (focus, highlight, isolate).
 """
 
 
@@ -302,6 +316,8 @@ def _interpret_viewer_anthropic(response, viewer_models_by_name: Dict[str, Type[
         )
 
     actions: List[BaseModel] = []
+    entities: List[Any] = []
+    nav_card: Optional[Any] = None
     clarification: Optional[str] = None
 
     for block in tool_blocks:
@@ -309,8 +325,22 @@ def _interpret_viewer_anthropic(response, viewer_models_by_name: Dict[str, Type[
         inp = block.input if isinstance(block.input, dict) else {}
 
         if name == CLARIFY_ACTION_NAME:
+            # Accumulate; don't break. Lets the LLM emit RequestClarification
+            # PLUS EmitNavigationCard so we get explanation + action together.
             clarification = inp.get("question", "Please clarify.")
-            break
+            continue
+
+        if name == MENTION_ENTITIES_NAME:
+            raw_entities = inp.get("entities", [])
+            if isinstance(raw_entities, list):
+                entities = raw_entities
+            continue
+
+        if name == EMIT_NAV_CARD_NAME:
+            raw_card = inp.get("card")
+            if isinstance(raw_card, dict):
+                nav_card = raw_card
+            continue
 
         model_cls = viewer_models_by_name.get(name)
         if model_cls is None:
@@ -328,10 +358,14 @@ def _interpret_viewer_anthropic(response, viewer_models_by_name: Dict[str, Type[
             )
 
     if clarification is not None:
-        return ViewerTranslationResult(clarification=clarification)
+        return ViewerTranslationResult(clarification=clarification, nav_card=nav_card)
+
+    if nav_card is not None:
+        return ViewerTranslationResult(nav_card=nav_card, summary="")
 
     return ViewerTranslationResult(
         actions=actions,
+        entities=entities,
         summary=_summarize_actions(actions),
     )
 

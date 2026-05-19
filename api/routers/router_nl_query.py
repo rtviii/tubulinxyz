@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 from api.nl_translator import get_translator
 from api.nl_translator.facets_loader import load_facet_context
 from api.nl_translator.interface import ViewContext
-from api.nl_translator.global_actions import GlobalNLResponse
+from api.nl_translator.global_actions import GlobalNLResponse, ActionCard
 from api.nl_translator.hydration import hydrate_response
 
 
@@ -99,8 +99,22 @@ class ViewerActionEnvelope(BaseModel):
 
 
 class NLViewerResponse(BaseModel):
-    kind: Literal["viewer_actions", "clarify"]
+    kind: Literal["viewer_actions", "clarify", "nav_card"]
     actions: List[ViewerActionEnvelope] = Field(default_factory=list)
+    entities: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description=(
+            "EntityRef list surfaced via the MentionEntities tool. Frontend "
+            "renders them as interactive pills in the side panel."
+        ),
+    )
+    card: Optional[ActionCard] = Field(
+        default=None,
+        description=(
+            "Set when kind='nav_card': a single ActionCard from the global "
+            "vocabulary, rendered as a navigation chip in the side panel."
+        ),
+    )
     summary: str = ""
     clarification: Optional[str] = None
 
@@ -136,19 +150,48 @@ def nl_query_to_viewer_actions(req: NLViewerRequest) -> NLViewerResponse:
         raise HTTPException(status_code=502, detail=f"Translator error: {e}")
 
     if result.clarification is not None:
+        # Pass through nav_card if the LLM also emitted one alongside the
+        # clarification. Best-effort validation; bad cards just get dropped.
+        card: Optional[ActionCard] = None
+        if result.nav_card is not None:
+            try:
+                card = ActionCard.model_validate(result.nav_card)
+            except Exception:
+                card = None
         return NLViewerResponse(
             kind="clarify",
             clarification=result.clarification,
             summary=result.summary,
+            card=card,
         )
+
+    if result.nav_card is not None:
+        # Navigation intent — try to validate the card; if it doesn't fit the
+        # ActionCard schema, downgrade to a clarification rather than 500.
+        try:
+            card = ActionCard.model_validate(result.nav_card)
+        except Exception as e:
+            return NLViewerResponse(
+                kind="clarify",
+                clarification=f"Could not parse navigation card: {e}",
+            )
+        return NLViewerResponse(kind="nav_card", card=card, summary=result.summary)
 
     envelopes = [
         ViewerActionEnvelope(type=type(a).__name__, args=a.model_dump())
         for a in result.actions
     ]
+    # Entities arrive as dicts (validated loosely in the interpreter); pass
+    # through. Per-entity validation against EntityRef is best-effort —
+    # malformed entries get filtered.
+    entities: List[Dict[str, Any]] = []
+    for e in result.entities:
+        if isinstance(e, dict) and isinstance(e.get("kind"), str):
+            entities.append(e)
     return NLViewerResponse(
         kind="viewer_actions",
         actions=envelopes,
+        entities=entities,
         summary=result.summary,
     )
 
