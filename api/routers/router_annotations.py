@@ -100,6 +100,8 @@ class PolymerAnnotationsResponse(BaseModel):
     auth_asym_id: str
     entity_id: str
     family: Optional[str]
+    chain_tax_id: Optional[int] = None              # NCBI taxonomy id of this chain's source organism (first entry of src_organism_ids)
+    chain_species_full_name: Optional[str] = None   # canonical scientific name matching chain_tax_id
     variants: List[VariantAnnotation]
     modifications: List[ModificationAnnotation] = []
     total_count: int
@@ -164,12 +166,22 @@ def get_variants_at_position(position: int, family: str) -> List[Dict[str, Any]]
 
 def get_variants_for_polymer(
     rcsb_id: str, auth_asym_id: str
-) -> tuple[List[Dict[str, Any]], Optional[str], Optional[str]]:
+) -> tuple[List[Dict[str, Any]], Optional[str], Optional[str], Optional[int], Optional[str]]:
     """Get all variants for a specific polymer chain.
     Returns structural (entity-linked) + literature (free-standing by family) variants,
-    plus entity_id and family."""
+    plus entity_id, family, chain_tax_id and chain_species_full_name.
 
-    # Step 1: Get entity-linked variants and the entity metadata
+    chain_tax_id is **always coerced up to the 'species' rank** by walking the
+    phylogeny graph (5..species)-[:descendant_of]->(508771..strain), so a strain
+    taxid like 508771 (Toxoplasma gondii ME49) resolves to its species ancestor
+    5811 (Toxoplasma gondii). Necessary because the Morisette PTM data is stored
+    at species level -- without this coercion, structures whose PDB taxid is
+    sub-species (strain/isolate/subspecies) get zero PTM matches even when their
+    species has data. Falls back to the raw first src_organism_id if no species
+    ancestor exists in the phylogeny graph."""
+
+    # Step 1: Get entity-linked variants, entity metadata, AND coerce the
+    # entity's first source organism to species rank.
     structural_query = f"""
     MATCH (i:PolypeptideInstance {{parent_rcsb_id: $rcsb_id, auth_asym_id: $auth_asym_id}})
     MATCH (i)-[:INSTANCE_OF]->(e:PolypeptideEntity)
@@ -179,7 +191,21 @@ def get_variants_for_polymer(
         rcsb_id: e.parent_rcsb_id,
         entity_id: e.entity_id
     }} END) AS variants
-    RETURN variants, e.entity_id AS entity_id, e.family AS family
+    CALL {{
+        WITH e
+        OPTIONAL MATCH (start:PhylogenyNode {{ncbi_tax_id: e.src_organism_ids[0]}})
+                       <-[:descendant_of*0..]-(sp:PhylogenyNode {{rank: 'species'}})
+        RETURN sp.ncbi_tax_id     AS species_tax_id,
+               sp.scientific_name AS species_full_name
+        LIMIT 1
+    }}
+    RETURN variants,
+           e.entity_id AS entity_id,
+           e.family AS family,
+           e.src_organism_ids AS src_organism_ids,
+           e.src_organism_names AS src_organism_names,
+           species_tax_id,
+           species_full_name
     """
 
     # Step 2: Get literature variants by family (free-standing)
@@ -201,11 +227,27 @@ def get_variants_for_polymer(
                 structural_query, {"rcsb_id": rcsb_id.upper(), "auth_asym_id": auth_asym_id}
             ).single()
             if not result:
-                return [], None, None
+                return [], None, None, None, None
 
             structural_variants = [v for v in result["variants"] if v is not None]
             entity_id = result["entity_id"]
             family = result["family"]
+
+            org_ids = result["src_organism_ids"] or []
+            org_names = result["src_organism_names"] or []
+            # Prefer the species-rank ancestor (so strains resolve to their species).
+            # Fall back to the raw first src_organism_id if the phylogeny graph
+            # doesn't contain that taxid yet (rare; new strains not seeded).
+            sp_id = result["species_tax_id"]
+            sp_name = result["species_full_name"]
+            chain_tax_id = (
+                int(sp_id) if sp_id is not None
+                else (int(org_ids[0]) if org_ids else None)
+            )
+            chain_species_full_name = (
+                sp_name if sp_name is not None
+                else (org_names[0] if org_names else None)
+            )
 
             # Only fetch literature variants if the entity belongs to a tubulin family
             literature_variants = []
@@ -215,7 +257,13 @@ def get_variants_for_polymer(
                     for r in tx.run(literature_query, {"family": family})
                 ]
 
-            return structural_variants + literature_variants, entity_id, family
+            return (
+                structural_variants + literature_variants,
+                entity_id,
+                family,
+                chain_tax_id,
+                chain_species_full_name,
+            )
 
         return session.execute_read(run)
 
@@ -307,7 +355,9 @@ async def get_polymer_annotations(
     rcsb_id: str, auth_asym_id: str
 ) -> PolymerAnnotationsResponse:
     """Get all variant and modification annotations for a specific polymer chain."""
-    variants, entity_id, family = get_variants_for_polymer(rcsb_id, auth_asym_id)
+    variants, entity_id, family, chain_tax_id, chain_species_full_name = (
+        get_variants_for_polymer(rcsb_id, auth_asym_id)
+    )
 
     if entity_id is None:
         raise HTTPException(
@@ -324,6 +374,8 @@ async def get_polymer_annotations(
         auth_asym_id=auth_asym_id,
         entity_id=entity_id,
         family=family,
+        chain_tax_id=chain_tax_id,
+        chain_species_full_name=chain_species_full_name,
         variants=[VariantAnnotation(**v) for v in variants],
         modifications=[ModificationAnnotation(**m) for m in modifications],
         total_count=len(variants),
