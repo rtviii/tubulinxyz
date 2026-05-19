@@ -16,6 +16,8 @@ from pydantic import BaseModel, Field
 from api.nl_translator import get_translator
 from api.nl_translator.facets_loader import load_facet_context
 from api.nl_translator.interface import ViewContext
+from api.nl_translator.global_actions import GlobalNLResponse
+from api.nl_translator.hydration import hydrate_response
 
 
 router_nl_query = APIRouter()
@@ -149,3 +151,56 @@ def nl_query_to_viewer_actions(req: NLViewerRequest) -> NLViewerResponse:
         actions=envelopes,
         summary=result.summary,
     )
+
+
+# ---------------------------------------------------------------------------
+# Global front-page query
+# ---------------------------------------------------------------------------
+
+
+class NLGlobalRequest(BaseModel):
+    text: str = Field(..., min_length=1, max_length=2000)
+
+
+class NLGlobalResponseBody(BaseModel):
+    kind: Literal["global", "clarify"]
+    response: Optional[GlobalNLResponse] = None
+    clarification: Optional[str] = None
+
+
+@router_nl_query.post(
+    "/global",
+    response_model=NLGlobalResponseBody,
+    operation_id="nl_query_global",
+)
+def nl_query_global(req: NLGlobalRequest) -> NLGlobalResponseBody:
+    """Front-page entry point. Translates an open-ended question into a
+    `GlobalNLResponse` (blurb + queries + ranked action cards), then validates
+    entity references against the DB before returning. The frontend executes
+    `queries[]` via the existing list endpoints and renders `cards[]` as
+    clickable chips that route to the right page with state preloaded.
+    """
+    try:
+        translator = get_translator()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Translator unavailable: {e}")
+
+    facets = load_facet_context()
+
+    try:
+        result = translator.translate_global(text=req.text, facets=facets)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Translator error: {e}")
+
+    if result.clarification is not None:
+        return NLGlobalResponseBody(kind="clarify", clarification=result.clarification)
+
+    if result.response is None:
+        # Translator returned neither — defensive fallback.
+        return NLGlobalResponseBody(
+            kind="clarify",
+            clarification="The model returned no response. Please rephrase.",
+        )
+
+    hydrated = hydrate_response(result.response, known_families=facets.tubulin_families)
+    return NLGlobalResponseBody(kind="global", response=hydrated)

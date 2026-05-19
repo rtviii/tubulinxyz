@@ -296,7 +296,9 @@ class Modification(BaseModel):
     modification_type: str
 
     uniprot_id: str
-    species: str
+    species: str                            # source abbreviation, e.g. "H. sapiens"
+    tax_id: int                             # NCBI taxonomy id, e.g. 9606
+    species_full_name: str                  # canonical scientific name, e.g. "Homo sapiens"
     tubulin_type: str
 
     family: Optional[str] = None            # e.g. "tubulin_alpha", denormalized for queries

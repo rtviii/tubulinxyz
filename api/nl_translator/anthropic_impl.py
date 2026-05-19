@@ -24,6 +24,7 @@ from api.nl_translator.interface import (
     FilterUnion,
     ViewContext,
     ViewerTranslationResult,
+    GlobalTranslationResult,
 )
 from api.nl_translator.viewer_actions import (
     VIEWER_ACTION_MODELS,
@@ -197,6 +198,22 @@ class AnthropicNLTranslator:
         )
 
         return _interpret_viewer_anthropic(response, self._viewer_models_by_name)
+
+    def translate_global(
+        self,
+        text: str,
+        facets: FacetContext,
+    ) -> GlobalTranslationResult:
+        # Not yet implemented for the native Anthropic SDK path. The global
+        # endpoint currently only ships on the OpenAI-compat impl (which is
+        # what the deployed adapter uses via OpenRouter). Set
+        # NL_TRANSLATOR_PROVIDER=openai_compat to enable.
+        return GlobalTranslationResult(
+            clarification=(
+                "Global NL routing is not enabled on the Anthropic-native path. "
+                "Set NL_TRANSLATOR_PROVIDER=openai_compat to use it."
+            )
+        )
 
     def _interpret(self, response) -> TranslationResult:
         tool_blocks = [b for b in response.content if getattr(b, "type", None) == "tool_use"]

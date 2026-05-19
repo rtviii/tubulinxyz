@@ -65,6 +65,7 @@ NODE_CONSTRAINTS = [
     "CREATE INDEX mod_master_idx IF NOT EXISTS FOR (m:Modification) ON (m.master_index);",
     "CREATE INDEX mod_family_idx IF NOT EXISTS FOR (m:Modification) ON (m.family);",
     "CREATE INDEX mod_uniprot_idx IF NOT EXISTS FOR (m:Modification) ON (m.uniprot_id);",
+    "CREATE INDEX mod_taxid_idx IF NOT EXISTS FOR (m:Modification) ON (m.tax_id);",
 ]
 
 

@@ -30,15 +30,62 @@ python cli.py init-db
 write_status "init_db" "Database initialized. Loading literature data..." 0 0 0 0 false
 
 # Step 1.5: Ingest Morisette literature data (mutations + post-translational
-# modifications) BEFORE the long structure collection phase, since the data
-# is independent of structures and we want the PTM/mutations panel to populate
-# immediately rather than at the very end of a multi-hour run. Idempotent
-# (MERGE). Non-fatal so a Morisette failure can't block the structural bootstrap.
-# Source: Morisette et al. 2023 (doi:10.1371/journal.pone.0295279); CSVs live
-# in data/<family>_tubulin/*.csv and are baked into the image.
+# modifications) BEFORE the long structure collection phase. Idempotent (MERGE).
+# FATAL on failure: PTMs are core data and a silently-empty Modification table
+# is worse than a failed bootstrap (it looks like the app works, but the PTM
+# panel is just empty). Source: Morisette et al. 2023
+# (doi:10.1371/journal.pone.0295279); CSVs in data/<family>_tubulin/*.csv.
 echo "Ingesting Morisette mutation/PTM literature data..."
-python -m lib.etl.ingest_morisette --family tubulin_alpha || echo "WARNING: Morisette alpha ingest failed (non-fatal, see above)"
-python -m lib.etl.ingest_morisette --family tubulin_beta  || echo "WARNING: Morisette beta ingest failed (non-fatal, see above)"
+python -m lib.etl.ingest_morisette --family tubulin_alpha || {
+    write_status "error" "Morisette alpha PTM ingest failed" 0 0 0 1 false
+    echo "FATAL: Morisette alpha ingest failed -- aborting bootstrap so PTMs cannot be silently missing."
+    exit 1
+}
+python -m lib.etl.ingest_morisette --family tubulin_beta || {
+    write_status "error" "Morisette beta PTM ingest failed" 0 0 0 1 false
+    echo "FATAL: Morisette beta ingest failed -- aborting bootstrap so PTMs cannot be silently missing."
+    exit 1
+}
+
+# Post-ingest sanity: ensure each family produced Modification rows AND each
+# row carries the species fingerprint we expect (tax_id + OCCURS_IN edge).
+# Catches: empty CSV, UTN mapper drops every row, schema regression where
+# tax_id stops being written, or PhylogenyNode merge silently fails.
+echo "Verifying PTM ingest landed rows + species linkage in Neo4j..."
+python -c "
+import os, sys
+from neo4j import GraphDatabase
+drv = GraphDatabase.driver(
+    os.environ['NEO4J_URI'],
+    auth=(os.environ['NEO4J_USER'], os.environ['NEO4J_PASSWORD']),
+)
+errors = []
+with drv.session(database=os.environ.get('NEO4J_CURRENTDB', 'neo4j')) as s:
+    for fam in ('tubulin_alpha', 'tubulin_beta'):
+        row = s.run('''
+            MATCH (m:Modification {family: \$f})
+            RETURN count(m)                                              AS n,
+                   sum(CASE WHEN m.tax_id IS NULL THEN 1 ELSE 0 END)      AS no_tax_id,
+                   sum(CASE WHEN NOT (m)-[:OCCURS_IN]->(:PhylogenyNode)
+                            THEN 1 ELSE 0 END)                            AS no_edge
+        ''', f=fam).single()
+        n, no_tax_id, no_edge = row['n'], row['no_tax_id'], row['no_edge']
+        print(f'  {fam}: {n} mods, missing tax_id: {no_tax_id}, missing OCCURS_IN: {no_edge}')
+        if n == 0:
+            errors.append(f'{fam}: 0 Modification rows after ingest')
+        if no_tax_id:
+            errors.append(f'{fam}: {no_tax_id} Modifications without tax_id')
+        if no_edge:
+            errors.append(f'{fam}: {no_edge} Modifications without OCCURS_IN edge')
+drv.close()
+if errors:
+    for e in errors:
+        print(f'FATAL: {e}', file=sys.stderr)
+    sys.exit(1)
+" || {
+    write_status "error" "PTM post-ingest verification failed" 0 0 0 1 false
+    exit 1
+}
 
 # Step 2: Collect every structure that lacks a COMPLETE local profile.
 # Idempotent and resumable:

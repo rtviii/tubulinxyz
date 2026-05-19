@@ -38,11 +38,20 @@ from api.nl_translator.interface import (
     FilterUnion,
     ViewContext,
     ViewerTranslationResult,
+    GlobalTranslationResult,
 )
 from api.nl_translator.viewer_actions import (
     VIEWER_ACTION_MODELS,
     VIEWER_ACTION_DESCRIPTIONS,
     CLARIFY_ACTION_NAME,
+)
+from api.nl_translator.global_actions import (
+    GlobalNLResponse,
+    EMIT_GLOBAL_TOOL_NAME,
+    CLARIFY_GLOBAL_TOOL_NAME,
+    MAX_CARDS,
+    MAX_QUERIES,
+    MAX_BLURB_CHARS,
 )
 
 
@@ -192,6 +201,7 @@ class OpenAICompatNLTranslator:
         self._viewer_models_by_name: Dict[str, Type[BaseModel]] = {
             m.__name__: m for m in VIEWER_ACTION_MODELS
         }
+        self._global_tools = _build_global_tools()
 
     def translate(
         self,
@@ -221,6 +231,27 @@ class OpenAICompatNLTranslator:
         )
 
         return self._interpret(response)
+
+    def translate_global(
+        self,
+        text: str,
+        facets: FacetContext,
+    ) -> GlobalTranslationResult:
+        """Front-page entry: emit `GlobalNLResponse` (blurb + queries + cards)."""
+        system_prompt = _build_global_system_prompt(facets)
+
+        response = self._client.chat.completions.create(
+            model=self._model,
+            max_tokens=self._max_tokens,
+            tools=self._global_tools,
+            tool_choice="auto",
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": text.strip()},
+            ],
+        )
+
+        return _interpret_global_openai(response)
 
     def translate_viewer(
         self,
@@ -402,6 +433,173 @@ def _summarize_actions(actions: List[BaseModel]) -> str:
         kv = ", ".join(f"{k}={v}" for k, v in a.model_dump().items())
         parts.append(f"{type(a).__name__}({kv})" if kv else type(a).__name__)
     return " ; ".join(parts)
+
+
+def _build_global_tools() -> List[dict]:
+    """Two tools: emit the global response, or ask for clarification."""
+    return [
+        _model_to_tool(
+            EMIT_GLOBAL_TOOL_NAME,
+            (
+                "Emit the structured global response (blurb + queries + cards). "
+                "Call this for any query you can act on. The response routes the user "
+                "to the right page with state preloaded."
+            ),
+            GlobalNLResponse,
+        ),
+        {
+            "type": "function",
+            "function": {
+                "name": CLARIFY_GLOBAL_TOOL_NAME,
+                "description": (
+                    "Call instead of emit_global_response only when the request is so "
+                    "ambiguous no action card would be useful. Provide one short question."
+                ),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "question": {
+                            "type": "string",
+                            "description": "One-sentence clarification question.",
+                        }
+                    },
+                    "required": ["question"],
+                },
+            },
+        },
+    ]
+
+
+_GLOBAL_FEW_SHOTS = """\
+FEW-SHOT EXAMPLES (shape only; pick real ids from the facet table for actual responses):
+
+Example 1 — "where does taxol bind"
+  blurb: "Taxol (PDB chem id TA1) binds the beta-tubulin taxane pocket; structures with TA1 listed below."
+  queries: [{ id: "q1", target: "structures", filters_structures: { has_ligand_ids: ["TA1"] } }]
+  cards:
+    - { action: "open_catalogue", query_ref: "q1", label: "Browse structures with taxol" }
+    - { action: "inspect_ligand", chemical_id: "TA1", rcsb_id: "1JFF", suggested_chain: "B", label: "View taxol bound in 1JFF" }
+    - { action: "open_expert", rcsb_id: "1JFF", primary_chain: "B", focus_range: { start: 217, end: 230 }, label: "Inspect M-loop / taxane pocket in expert mode" }
+
+Example 2 — "what kinds of PTMs are in tubulin"
+  blurb: "Tubulin PTMs (acetylation, glutamylation, detyrosination) are annotated per-residue inside expert mode."
+  queries: []
+  cards:
+    - { action: "open_expert", rcsb_id: "6WVM", primary_chain: "A", label: "Open an alpha-tubulin chain with PTM annotations" }
+    - { action: "view_variants", family: "tubulin_alpha", label: "Browse alpha-tubulin sequence variants" }
+
+Example 3 — "differences between the GTP binding site in human and toxoplasma tubulin"
+  blurb: "GTP binds alpha-tubulin's N-terminal pocket; compare human vs Toxoplasma chains in expert mode."
+  queries: []
+  cards:
+    - { action: "open_expert", rcsb_id: "6WVM", primary_chain: "A", aligned: [{ rcsb_id: "8FEH", auth_asym_id: "A" }], focus_range: { start: 140, end: 180 }, label: "Compare GTP site: human vs Toxoplasma alpha-tubulin" }
+    - { action: "view_variants", family: "tubulin_alpha", position_min: 140, position_max: 180, label: "Browse alpha-tubulin variants near GTP pocket" }
+"""
+
+
+def _build_global_system_prompt(facets: FacetContext) -> str:
+    return f"""You are the front-page query router for tube.xyz, a tubulin structural biology database. The user types an open-ended question; you produce a single structured response that routes them to the right page with state preloaded.
+
+YOUR OUTPUT: Exactly one tool call to `{EMIT_GLOBAL_TOOL_NAME}`. Only call `{CLARIFY_GLOBAL_TOOL_NAME}` if the request is so ambiguous that no card would be useful.
+
+THE RESPONSE HAS THREE PARTS:
+1. `blurb` (optional, <={MAX_BLURB_CHARS} chars). One sentence stating what the cards collectively show. No preamble ("Here are..."), state the substance. Leave empty if cards are self-evident.
+2. `queries` (0-{MAX_QUERIES} entries). Filter specs the frontend will run via the existing list endpoints. Each has an `id` (q1, q2, ...) and exactly one of `filters_structures` / `filters_polymers` / `filters_ligands`. Used only by `open_catalogue` cards via `query_ref`.
+3. `cards` (1-{MAX_CARDS} entries, ranked most-specific first). One click each, routing to a page.
+
+CARD TYPES:
+- open_catalogue: aggregate browse. Set `query_ref` -> queries[].id. Use for "list", "browse", "find all".
+- open_structure: one PDB in easy mode. Set `rcsb_id`. Optional `focus_chains`, `focus_ligands`.
+- open_expert: chain-level / alignment / residue ranges. Set `rcsb_id`, `primary_chain`. Optional `aligned` (other chains to load into MSA) and `focus_range`. Use for "compare", "align", "residue X", "binding site Y".
+- inspect_ligand: one chemical. Set `chemical_id`. Optionally `rcsb_id` + `suggested_chain` for one bound instance.
+- view_variants: variant browse. Set `family`. Optional `position_min`/`max`, `variant_type`.
+- clarify: ask a question. Set `question`. (Single-card responses only.)
+
+INTENT HEURISTICS:
+- "list" / "browse" / "find structures with X" -> open_catalogue
+- Specific PDB id mentioned -> open_structure (default) or open_expert (if alignment/range)
+- "compare" / "align" / "differences between" -> open_expert with `aligned`
+- Specific residue numbers / "binding site" / "pocket" -> open_expert with `focus_range`
+- Ligand by trivial name (e.g. "taxol", "paclitaxel" both = TA1) -> inspect_ligand and/or open_expert
+- Mutation / variant / substitution language -> view_variants (+ open_expert if specific structure)
+
+RANKING / BUDGET:
+- 2-5 cards typical. Never more than 6. Never duplicate intent.
+- Never put `open_expert` as card #1 unless the query contains "align", "compare", "residue", "position", "binding site", or "pocket".
+- `clarify` is always a single-card response.
+
+DOMAIN CONVENTIONS:
+- Resolution in Angstroms: LOWER = BETTER. "Higher resolution than 3A" / "better than 3A" -> resolution_max=3.0.
+- "Human" = tax_id 9606. Other organism mappings are in the facet table.
+- Ligand trivial names differ from PDB chem ids. Use facet table to resolve.
+- For range expressions ("between 200 and 250"), include both endpoints.
+
+GROUNDING:
+- Use ONLY entity ids visible in the facet table or in the user's query. If you don't know a real PDB id for a desired card, prefer omitting that card over inventing one. The backend validates and drops invented ids.
+- For nucleotides/ions (GTP, GDP, ATP, ADP, MG, ZN, etc.), do NOT emit an `inspect_ligand` card — they are too generic. Fall through to other cards or `clarify`.
+
+VALID VALUES:
+- tubulin_families: {facets.tubulin_families}
+- isotypes: {facets.isotypes}
+- exp_methods: {facets.exp_methods}
+- common source organisms (tax_id -> name): {facets.common_source_organisms}
+- top ligands (chemical_id -> chemical_name): {facets.top_ligands}
+- year_range: {facets.year_range}, resolution_range: {facets.resolution_range}
+
+{_GLOBAL_FEW_SHOTS}"""
+
+
+def _interpret_global_openai(response) -> GlobalTranslationResult:
+    if not response.choices:
+        return GlobalTranslationResult(clarification="Empty response from model.")
+
+    message = response.choices[0].message
+    tool_calls = getattr(message, "tool_calls", None) or []
+
+    if not tool_calls:
+        text = (message.content or "").strip()
+        return GlobalTranslationResult(
+            clarification=text or "I could not interpret that request. Please rephrase."
+        )
+
+    call = tool_calls[0]
+    name = call.function.name
+    raw_args = call.function.arguments or "{}"
+    try:
+        inp = json.loads(raw_args)
+    except json.JSONDecodeError as e:
+        return GlobalTranslationResult(
+            clarification=f"Model returned unparseable tool arguments: {e}"
+        )
+    if not isinstance(inp, dict):
+        return GlobalTranslationResult(
+            clarification="Tool arguments were not a JSON object."
+        )
+
+    if name == CLARIFY_GLOBAL_TOOL_NAME:
+        return GlobalTranslationResult(
+            clarification=inp.get("question", "Please clarify.")
+        )
+
+    if name != EMIT_GLOBAL_TOOL_NAME:
+        return GlobalTranslationResult(
+            clarification=f"Internal: model invoked unknown tool {name!r}."
+        )
+
+    # The LLM must not set `validation`; strip it if present.
+    inp.pop("validation", None)
+
+    try:
+        resp = GlobalNLResponse.model_validate(inp)
+    except ValidationError as e:
+        return GlobalTranslationResult(
+            clarification=(
+                "The model's response did not validate. "
+                f"Details: {e.errors(include_url=False)[:3]}"
+            )
+        )
+
+    return GlobalTranslationResult(response=resp)
 
 
 def _summarize(filters: FilterUnion) -> str:

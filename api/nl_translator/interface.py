@@ -81,6 +81,19 @@ class TranslationResult:
     clarification: Optional[str] = None
 
 
+@dataclass
+class GlobalTranslationResult:
+    """Result of one global (front-page) translation call.
+
+    `response` is the GlobalNLResponse the LLM produced (blurb + queries +
+    cards); `clarification` is set instead when the model could not commit to
+    any cards.
+    """
+    # Lazy-import the response type to avoid a circular at module load.
+    response: Optional[Any] = None  # GlobalNLResponse | None
+    clarification: Optional[str] = None
+
+
 class NLTranslator(Protocol):
     """Implementations: api.nl_translator.anthropic_impl.AnthropicNLTranslator
     and (later) api.nl_translator.openai_compat_impl.OpenAICompatNLTranslator.
@@ -100,4 +113,11 @@ class NLTranslator(Protocol):
         text: str,
         view_context: ViewContext,
     ) -> ViewerTranslationResult:
+        ...
+
+    def translate_global(
+        self,
+        text: str,
+        facets: FacetContext,
+    ) -> GlobalTranslationResult:
         ...

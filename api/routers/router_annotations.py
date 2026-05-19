@@ -72,7 +72,9 @@ class ModificationAnnotation(BaseModel):
     amino_acid        : str
     modification_type : str   # acetylation, phosphorylation, etc.
     uniprot_id        : Optional[str] = None
-    species           : Optional[str] = None
+    species           : Optional[str] = None      # source abbreviation, e.g. "H. sapiens"
+    tax_id            : Optional[int] = None      # NCBI taxonomy id, e.g. 9606
+    species_full_name : Optional[str] = None      # canonical scientific name
     tubulin_type      : Optional[str] = None
     family            : Optional[str] = None
     phenotype         : Optional[str] = None
@@ -409,6 +411,8 @@ _MODIFICATION_RETURN_FIELDS = """
     modification_type: m.modification_type,
     uniprot_id: m.uniprot_id,
     species: m.species,
+    tax_id: m.tax_id,
+    species_full_name: m.species_full_name,
     tubulin_type: m.tubulin_type,
     family: m.family,
     phenotype: m.phenotype,

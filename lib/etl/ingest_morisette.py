@@ -42,6 +42,39 @@ MORISETTE_MOD_MAP: Dict[str, str] = {
     "TYR": "tyrosination",
 }
 
+# Source CSVs identify species with abbreviated names ("H. sapiens") which are
+# not formal NCBI strings, so ete3's resolver can't translate them. The TaxID
+# column in the CSV is the source of truth at parse time; this map exists so
+# the abbreviation → (taxid, canonical name) lookup is reviewable and so the
+# CSV column can be rebuilt if it ever drifts. Add a row here if a new species
+# appears in the CSVs.
+MORISETTE_SPECIES_TAXIDS: Dict[str, Tuple[int, str]] = {
+    "H. sapiens":      (9606,   "Homo sapiens"),
+    "M. musculus":     (10090,  "Mus musculus"),
+    "R. norvegicus":   (10116,  "Rattus norvegicus"),
+    "S. cerevisiae":   (4932,   "Saccharomyces cerevisiae"),
+    "D. rerio":        (7955,   "Danio rerio"),
+    "B. taurus":       (9913,   "Bos taurus"),
+    "D. melanogaster": (7227,   "Drosophila melanogaster"),
+    "A. thaliana":     (3702,   "Arabidopsis thaliana"),
+    "L. major":        (5664,   "Leishmania major"),
+    "T. brucei":       (5691,   "Trypanosoma brucei"),
+    "P. falciparum":   (5833,   "Plasmodium falciparum"),
+    "D. discoideum":   (44689,  "Dictyostelium discoideum"),
+    "C. griseus":      (10029,  "Cricetulus griseus"),
+    "S. scrofa":       (9823,   "Sus scrofa"),
+    "C. elegans":      (6239,   "Caenorhabditis elegans"),
+    "C. neoformans":   (5207,   "Cryptococcus neoformans"),
+    "X. laevis":       (8355,   "Xenopus laevis"),
+    "T. gondii":       (5811,   "Toxoplasma gondii"),
+    "G. intestinalis": (5741,   "Giardia intestinalis"),
+    "A. fumigatus":    (746128, "Aspergillus fumigatus"),
+    "S. pombe":        (4896,   "Schizosaccharomyces pombe"),
+}
+TAXID_TO_SCIENTIFIC_NAME: Dict[int, str] = {
+    tid: name for tid, name in MORISETTE_SPECIES_TAXIDS.values()
+}
+
 # ---------------------------------------------------------------------------
 # CSV column name normalization (different CSVs use slightly different names)
 # ---------------------------------------------------------------------------
@@ -75,6 +108,8 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
             rename[col] = "aa1"
         elif low == "species":
             rename[col] = "species"
+        elif low == "taxid":
+            rename[col] = "tax_id"
         elif low == "phenotype":
             rename[col] = "phenotype"
     return df.rename(columns=rename)
@@ -178,13 +213,19 @@ def parse_modifications_csv(
     df = df.dropna(axis=1, how="all")
     df = _normalize_columns(df)
 
+    if "tax_id" not in df.columns:
+        raise ValueError(
+            f"{csv_path.name}: missing required 'TaxID' column. Run the one-shot "
+            f"CSV upgrade to populate it (see MORISETTE_SPECIES_TAXIDS)."
+        )
+
     if "utn_isotype" in df.columns:
         df = df[df["utn_isotype"].str.contains(family_prefix, na=False)]
 
     modifications: List[Modification] = []
     skipped = 0
 
-    for _, row in df.iterrows():
+    for row_idx, row in df.iterrows():
         aa1 = str(row.get("aa1", "")).strip()
         parsed = parse_modification_aa1(aa1)
         if not parsed:
@@ -202,12 +243,29 @@ def parse_modifications_csv(
 
         mod_type = MORISETTE_MOD_MAP.get(mod_abbrev, mod_abbrev.lower())
 
+        species_abbrev = _clean(row.get("species")) or ""
+        tax_id_raw = row.get("tax_id")
+        if pd.isna(tax_id_raw) or str(tax_id_raw).strip() == "":
+            raise ValueError(
+                f"{csv_path.name} row {row_idx}: missing TaxID for species "
+                f"{species_abbrev!r}. The CSV must have a populated TaxID column."
+            )
+        tax_id = int(tax_id_raw)
+        species_full_name = TAXID_TO_SCIENTIFIC_NAME.get(tax_id)
+        if species_full_name is None:
+            raise ValueError(
+                f"{csv_path.name} row {row_idx}: taxid {tax_id} (species "
+                f"{species_abbrev!r}) is not in MORISETTE_SPECIES_TAXIDS. Add it there."
+            )
+
         m = Modification(
             master_index=master_idx,
             amino_acid=amino_acid,
             modification_type=mod_type,
             uniprot_id=_clean(row.get("uniprot_id")) or "",
-            species=_clean(row.get("species")) or "",
+            species=species_abbrev,
+            tax_id=tax_id,
+            species_full_name=species_full_name,
             tubulin_type=_clean(row.get("utn_isotype")) or "",
             family=family,
             utn_position=utn_pos,
