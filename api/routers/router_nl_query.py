@@ -18,6 +18,7 @@ from api.nl_translator.facets_loader import load_facet_context
 from api.nl_translator.interface import ViewContext
 from api.nl_translator.global_actions import GlobalNLResponse, ActionCard
 from api.nl_translator.hydration import hydrate_response
+from api.nl_translator.resolve import resolve_response, resolve_card
 
 
 router_nl_query = APIRouter()
@@ -156,6 +157,10 @@ def nl_query_to_viewer_actions(req: NLViewerRequest) -> NLViewerResponse:
         if result.nav_card is not None:
             try:
                 card = ActionCard.model_validate(result.nav_card)
+                # Resolve organism/family selectors to real ids (same as the
+                # global flow); drop the nav card if it can't be resolved.
+                if not resolve_card(card):
+                    card = None
             except Exception:
                 card = None
         return NLViewerResponse(
@@ -174,6 +179,14 @@ def nl_query_to_viewer_actions(req: NLViewerRequest) -> NLViewerResponse:
             return NLViewerResponse(
                 kind="clarify",
                 clarification=f"Could not parse navigation card: {e}",
+            )
+        # Resolve organism/family selectors to real ids; if the card's entity
+        # can't be resolved, downgrade to a clarification rather than ship a
+        # broken nav card.
+        if not resolve_card(card):
+            return NLViewerResponse(
+                kind="clarify",
+                clarification=result.summary or "I couldn't find a matching structure for that.",
             )
         return NLViewerResponse(kind="nav_card", card=card, summary=result.summary)
 
@@ -245,5 +258,11 @@ def nl_query_global(req: NLGlobalRequest) -> NLGlobalResponseBody:
             clarification="The model returned no response. Please rephrase.",
         )
 
-    hydrated = hydrate_response(result.response, known_families=facets.tubulin_families)
+    # Resolve LLM-expressed intent (organism + family + ligand) to REAL
+    # structure ids BEFORE hydration. This is what stops the model from
+    # citing guessed/wrong-organism PDB ids: entity cards get their ids from
+    # the DB, not from the model. Hydration then existence-checks whatever
+    # survives (user-named ids, resolved ids) as a second line of defense.
+    resolved = resolve_response(result.response)
+    hydrated = hydrate_response(resolved, known_families=facets.tubulin_families)
     return NLGlobalResponseBody(kind="global", response=hydrated)

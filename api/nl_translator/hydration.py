@@ -213,8 +213,9 @@ def hydrate_response(
       land on the structure page) instead of dropping the whole card.
     - aligned chains that don't exist: drop those entries from `aligned`.
     - Any card whose only point was a missing primary entity (e.g. structure
-      doesn't exist at all) is marked ok=False with a reason; frontend hides
-      it.
+      doesn't exist at all) is dropped from `cards` entirely, so the UI never
+      renders the hallucinated ids. `validation` is re-keyed to the kept
+      cards' new contiguous indices.
     """
     if not resp.cards:
         return resp
@@ -226,9 +227,9 @@ def hydrate_response(
     found_families = _check_families(refs["family"], known_families)
 
     new_validation: Dict[str, Dict[str, Any]] = {}
+    kept_cards: List[ActionCard] = []
 
-    for i, card in enumerate(resp.cards):
-        key = f"card_{i}"
+    for card in resp.cards:
         ok = True
         reasons: List[str] = []
         a = card.action
@@ -291,11 +292,23 @@ def hydrate_response(
                 ok = False
                 reasons.append(f"family {card.family} not in known set")
 
-        rec: Dict[str, Any] = {"ok": ok}
+        # Drop broken cards entirely. A card that failed existence checks
+        # (invented PDB id, missing chain that collapsed the card's premise,
+        # unknown ligand/family) must NEVER reach the front page — a dimmed
+        # card still leaks the hallucinated ids to the user. Partial
+        # downgrades (ok=True with a reason, e.g. some aligned chains dropped)
+        # are kept and stay clickable.
+        if not ok:
+            continue
+
+        key = f"card_{len(kept_cards)}"
+        rec: Dict[str, Any] = {"ok": True}
         if reasons:
             rec["reason"] = "; ".join(reasons)
         new_validation[key] = rec
+        kept_cards.append(card)
 
+    resp.cards = kept_cards
     resp.validation = new_validation
     return resp
 

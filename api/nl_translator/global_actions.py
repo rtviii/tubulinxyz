@@ -157,6 +157,19 @@ class ActionCard(BaseModel):
         description="NCBI tax ids to filter the catalogue by (e.g. [5811] for Toxoplasma gondii). Use when you want a catalogue card scoped to an organism without spelling out a full query in queries[].",
     )
 
+    # DB-resolution selectors (open_structure / open_expert / inspect_ligand).
+    # The backend resolves these to a REAL (rcsb_id, chain) by querying Neo4j,
+    # so the model NEVER has to guess a PDB id. `family` (above) is the other
+    # half of the selector. Leave rcsb_id null when you set these.
+    primary_organism_id: Optional[int] = Field(
+        default=None,
+        description="NCBI tax id of the primary structure's organism (e.g. 9606 for human). The backend picks the best real structure+chain of `family` from this organism. Set this INSTEAD of guessing rcsb_id, unless the user named a specific PDB id.",
+    )
+    aligned_organism_ids: Optional[List[int]] = Field(
+        default=None,
+        description="open_expert comparisons: NCBI tax ids of the organism(s) to load aligned alongside the primary. The backend resolves each to a real structure+chain of `family`. Use this for 'compare human vs X' instead of guessing aligned PDB ids.",
+    )
+
     # clarify
     question: Optional[str] = Field(
         default=None, description="One-sentence clarification when intent is ambiguous"
