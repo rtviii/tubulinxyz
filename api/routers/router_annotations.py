@@ -1,7 +1,7 @@
 # api/routers/router_annotations.py
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Dict, Any, Optional
-from pydantic import BaseModel
+from typing import List, Dict, Any, Optional, Literal, Tuple, Union, Annotated, Set
+from pydantic import BaseModel, Field
 from neo4j import Transaction
 
 from neo4j_tubxz.db_lib_reader import db_reader
@@ -539,4 +539,467 @@ async def get_modifications_at_position_endpoint(
         family=family,
         modifications=[ModificationAnnotation(**m) for m in mods],
         total_count=len(mods),
+    )
+
+
+# =============================================================================
+# Annotation Tracks (filter -> master positions)
+# =============================================================================
+#
+# A "track" is a chain-independent aux row whose paint targets are the set of
+# master columns matching a typed FilterSpec. The same spec is consumed by:
+#   - the frontend Add Track modal (preview + creation)
+#   - the LLM viewer action AddAnnotationTrack (no position invention)
+#   - URL deep-links (Phase 6)
+#
+# Composition: AND across fields, implicit OR within array-valued fields.
+# No cross-field boolean OR in v1.
+#
+# Deferred to follow-up: aa_property_change, conservation_range,
+# variability_range, min_substitution_count, chemical_classes, heatmap counts.
+
+
+VariantSourceType = Literal['structural', 'literature']
+
+
+class VariantFilterSpec(BaseModel):
+    """Filter spec for variant-based annotation tracks (structural + literature)."""
+
+    kind: Literal['variants'] = 'variants'
+    family: str = Field(..., description="e.g. 'tubulin_alpha', 'tubulin_beta'")
+
+    # --- AA-level (typed) ---
+    wild_type_aas: Optional[List[str]] = Field(None, description="Wild-type AA in set (one-letter codes)")
+    observed_aas: Optional[List[str]] = Field(None, description="Observed AA in set (one-letter codes)")
+    substitution_pairs: Optional[List[Tuple[str, str]]] = Field(
+        None, description="Specific (wt, obs) pairs; matches any pair in the list"
+    )
+    indel_present: Optional[bool] = Field(
+        None,
+        description="True: only insertion/deletion records. False: only substitutions. None: any.",
+    )
+
+    # --- Provenance / scoping (typed) ---
+    sources: Optional[List[VariantSourceType]] = Field(
+        None, description="Variant provenance; defaults to both. 'literature' maps to morisette internally."
+    )
+    uniprot_ids: Optional[List[str]] = Field(None, description="Restrict to specific UniProt ids (e.g. ['Q13509'] for TUBB3)")
+    species_names: Optional[List[str]] = Field(
+        None,
+        description="Match variant.species text (e.g. 'H. sapiens'). Variants don't carry tax_id; use modifications spec for tax_id filtering.",
+    )
+    position_range: Optional[Tuple[int, int]] = Field(None, description="Master column [min, max], inclusive")
+    co_occurs_with_mod_type: Optional[List[str]] = Field(
+        None, description="Keep only positions where any of these PTM types is also recorded"
+    )
+
+    # --- Text overlay (secondary, opt-in) ---
+    phenotype_contains: Optional[List[str]] = Field(
+        None,
+        description="Phenotype substring search (case-insensitive); OR within array. Only useful when sources includes 'literature'.",
+    )
+
+
+class ModificationFilterSpec(BaseModel):
+    """Filter spec for modification (PTM) tracks."""
+
+    kind: Literal['modifications'] = 'modifications'
+    family: str
+
+    modification_types: Optional[List[str]] = Field(None, description="e.g. ['phosphorylation', 'acetylation']")
+    uniprot_ids: Optional[List[str]] = None
+    species_tax_ids: Optional[List[int]] = Field(None, description="NCBI taxIds; modifications carry tax_id directly")
+    species_names: Optional[List[str]] = Field(None, description="Fallback text match against species abbreviation")
+    position_range: Optional[Tuple[int, int]] = None
+    co_occurs_with_variant: Optional[bool] = Field(
+        None, description="Keep only positions where any variant is also recorded"
+    )
+    evidence_source: Optional[List[str]] = Field(
+        None, description="Morisette database_source column (e.g. 'SwissPalm', 'PhosphoSitePlus')"
+    )
+    phenotype_contains: Optional[List[str]] = None
+
+
+class BindingContactFilterSpec(BaseModel):
+    """Filter spec for ligand binding-contact tracks (chemical_ids only in v1)."""
+
+    kind: Literal['binding_contacts'] = 'binding_contacts'
+    family: str
+
+    chemical_ids: List[str] = Field(..., description="Ligand chem comp ids (e.g. ['TA1', 'GTP', 'TXL'])")
+    structure_ids: Optional[List[str]] = Field(None, description="Restrict to specific PDB ids")
+
+
+TrackFilterSpec = Annotated[
+    Union[VariantFilterSpec, ModificationFilterSpec, BindingContactFilterSpec],
+    Field(discriminator='kind'),
+]
+
+
+class ResolvedPosition(BaseModel):
+    master_index: int
+    match_count: int
+    matched_records: List[Dict[str, Any]]
+
+
+class ResolveResponse(BaseModel):
+    family: str
+    kind: str
+    matched: int
+    positions: List[ResolvedPosition]
+
+
+class ResolveRequest(BaseModel):
+    """Body for POST /annotations/track/resolve.
+
+    The spec field is a discriminated union — Pydantic picks the variant by 'kind'.
+    """
+    spec: TrackFilterSpec
+
+
+# -----------------------------------------------------------------------------
+# Variant resolve
+# -----------------------------------------------------------------------------
+
+# Frontend-facing source label -> backend storage value
+_VARIANT_SOURCE_MAP = {
+    'structural': 'structural',
+    'literature': 'morisette',
+}
+
+
+def _build_variant_where(spec: VariantFilterSpec) -> Tuple[str, Dict[str, Any]]:
+    """Build the WHERE clause for a Variant match, plus the Cypher params.
+    Returns ('TRUE' if no conditions, else 'cond1 AND cond2 ...')."""
+    conditions: List[str] = ["v.master_index IS NOT NULL"]
+    params: Dict[str, Any] = {}
+
+    if spec.sources:
+        backend_sources = [_VARIANT_SOURCE_MAP[s] for s in spec.sources]
+        conditions.append("v.source IN $sources")
+        params['sources'] = backend_sources
+
+    if spec.wild_type_aas:
+        conditions.append("v.wild_type IN $wt_aas")
+        params['wt_aas'] = [a.upper() for a in spec.wild_type_aas]
+    if spec.observed_aas:
+        conditions.append("v.observed IN $obs_aas")
+        params['obs_aas'] = [a.upper() for a in spec.observed_aas]
+    if spec.substitution_pairs:
+        pairs = [{"wt": wt.upper(), "obs": obs.upper()} for wt, obs in spec.substitution_pairs]
+        conditions.append(
+            "ANY(p IN $sub_pairs WHERE v.wild_type = p.wt AND v.observed = p.obs)"
+        )
+        params['sub_pairs'] = pairs
+    if spec.indel_present is True:
+        conditions.append("v.type IN ['insertion', 'deletion']")
+    elif spec.indel_present is False:
+        conditions.append("v.type = 'substitution'")
+
+    if spec.uniprot_ids:
+        conditions.append("v.uniprot_id IN $uniprot_ids")
+        params['uniprot_ids'] = spec.uniprot_ids
+    if spec.species_names:
+        conditions.append("v.species IN $species_names")
+        params['species_names'] = spec.species_names
+    if spec.position_range:
+        conditions.append("v.master_index >= $pos_min AND v.master_index <= $pos_max")
+        params['pos_min'] = spec.position_range[0]
+        params['pos_max'] = spec.position_range[1]
+
+    if spec.phenotype_contains:
+        conditions.append(
+            "v.phenotype IS NOT NULL AND ANY(p IN $phen_patterns WHERE toLower(v.phenotype) CONTAINS toLower(p))"
+        )
+        params['phen_patterns'] = spec.phenotype_contains
+
+    return " AND ".join(conditions), params
+
+
+def _positions_with_mod_types(family: str, mod_types: List[str]) -> Set[int]:
+    """Master positions where at least one Modification of the given types exists."""
+    query = """
+    MATCH (m:Modification)
+    WHERE m.family = $family AND m.modification_type IN $mod_types
+      AND m.master_index IS NOT NULL
+    RETURN DISTINCT m.master_index AS pos
+    """
+    with db_reader.adapter.driver.session() as session:
+        def run(tx: Transaction):
+            return {r["pos"] for r in tx.run(query, {"family": family, "mod_types": mod_types})}
+        return session.execute_read(run)
+
+
+def _positions_with_any_variant(family: str) -> Set[int]:
+    """Master positions where at least one Variant exists for the family."""
+    query = """
+    MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+    WHERE e.family = $family AND v.master_index IS NOT NULL
+    RETURN DISTINCT v.master_index AS pos
+    UNION
+    MATCH (v:Variant)
+    WHERE v.family = $family AND v.master_index IS NOT NULL
+      AND NOT EXISTS { MATCH (:PolypeptideEntity)-[:HAS_VARIANT]->(v) }
+    RETURN DISTINCT v.master_index AS pos
+    """
+    with db_reader.adapter.driver.session() as session:
+        def run(tx: Transaction):
+            return {r["pos"] for r in tx.run(query, {"family": family})}
+        return session.execute_read(run)
+
+
+def resolve_variant_track(spec: VariantFilterSpec) -> List[Dict[str, Any]]:
+    """Resolve a variant FilterSpec to master positions + their matched records.
+
+    Two-arm query unions entity-linked (structural-typically) and free-standing
+    (literature-typically) Variant nodes. Co-occurrence with PTM types is applied
+    as a post-filter via _positions_with_mod_types.
+    """
+    where_clause, params = _build_variant_where(spec)
+    params["family"] = spec.family
+
+    structural_arm = f"""
+    MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
+    WHERE e.family = $family AND {where_clause}
+    RETURN v.master_index AS master_index, {{
+        wild_type: v.wild_type,
+        observed: v.observed,
+        type: v.type,
+        source: v.source,
+        uniprot_id: v.uniprot_id,
+        phenotype: v.phenotype,
+        species: v.species,
+        utn_position: v.utn_position,
+        rcsb_id: e.parent_rcsb_id,
+        entity_id: e.entity_id
+    }} AS record
+    """
+
+    literature_arm = f"""
+    MATCH (v:Variant)
+    WHERE v.family = $family
+      AND NOT EXISTS {{ MATCH (:PolypeptideEntity)-[:HAS_VARIANT]->(v) }}
+      AND {where_clause}
+    RETURN v.master_index AS master_index, {{
+        wild_type: v.wild_type,
+        observed: v.observed,
+        type: v.type,
+        source: v.source,
+        uniprot_id: v.uniprot_id,
+        phenotype: v.phenotype,
+        species: v.species,
+        utn_position: v.utn_position,
+        rcsb_id: null,
+        entity_id: null
+    }} AS record
+    """
+
+    query = f"{structural_arm}\nUNION ALL\n{literature_arm}"
+
+    with db_reader.adapter.driver.session() as session:
+        def run(tx: Transaction):
+            by_pos: Dict[int, List[Dict[str, Any]]] = {}
+            for r in tx.run(query, params):
+                pos = r["master_index"]
+                by_pos.setdefault(pos, []).append(dict(r["record"]))
+            return by_pos
+
+        by_pos = session.execute_read(run)
+
+    # Post-filter: co-occurrence with PTM types
+    if spec.co_occurs_with_mod_type:
+        mod_positions = _positions_with_mod_types(spec.family, spec.co_occurs_with_mod_type)
+        by_pos = {p: recs for p, recs in by_pos.items() if p in mod_positions}
+
+    return [
+        {"master_index": p, "match_count": len(recs), "matched_records": recs}
+        for p, recs in sorted(by_pos.items())
+    ]
+
+
+# -----------------------------------------------------------------------------
+# Modification resolve
+# -----------------------------------------------------------------------------
+
+
+def _build_modification_where(spec: ModificationFilterSpec) -> Tuple[str, Dict[str, Any]]:
+    conditions: List[str] = ["m.master_index IS NOT NULL"]
+    params: Dict[str, Any] = {}
+
+    if spec.modification_types:
+        conditions.append("m.modification_type IN $mod_types")
+        params['mod_types'] = spec.modification_types
+    if spec.uniprot_ids:
+        conditions.append("m.uniprot_id IN $uniprot_ids")
+        params['uniprot_ids'] = spec.uniprot_ids
+    if spec.species_tax_ids:
+        conditions.append("m.tax_id IN $tax_ids")
+        params['tax_ids'] = spec.species_tax_ids
+    if spec.species_names:
+        conditions.append("m.species IN $species_names")
+        params['species_names'] = spec.species_names
+    if spec.position_range:
+        conditions.append("m.master_index >= $pos_min AND m.master_index <= $pos_max")
+        params['pos_min'] = spec.position_range[0]
+        params['pos_max'] = spec.position_range[1]
+    if spec.evidence_source:
+        conditions.append("m.database_source IN $ev_sources")
+        params['ev_sources'] = spec.evidence_source
+    if spec.phenotype_contains:
+        conditions.append(
+            "m.phenotype IS NOT NULL AND ANY(p IN $phen_patterns WHERE toLower(m.phenotype) CONTAINS toLower(p))"
+        )
+        params['phen_patterns'] = spec.phenotype_contains
+
+    return " AND ".join(conditions), params
+
+
+def resolve_modification_track(spec: ModificationFilterSpec) -> List[Dict[str, Any]]:
+    where_clause, params = _build_modification_where(spec)
+    params["family"] = spec.family
+
+    query = f"""
+    MATCH (m:Modification)
+    WHERE m.family = $family AND {where_clause}
+    RETURN m.master_index AS master_index, {{
+        modification_type: m.modification_type,
+        amino_acid: m.amino_acid,
+        uniprot_id: m.uniprot_id,
+        species: m.species,
+        tax_id: m.tax_id,
+        species_full_name: m.species_full_name,
+        phenotype: m.phenotype,
+        database_source: m.database_source,
+        utn_position: m.utn_position
+    }} AS record
+    """
+
+    with db_reader.adapter.driver.session() as session:
+        def run(tx: Transaction):
+            by_pos: Dict[int, List[Dict[str, Any]]] = {}
+            for r in tx.run(query, params):
+                pos = r["master_index"]
+                by_pos.setdefault(pos, []).append(dict(r["record"]))
+            return by_pos
+
+        by_pos = session.execute_read(run)
+
+    if spec.co_occurs_with_variant:
+        var_positions = _positions_with_any_variant(spec.family)
+        by_pos = {p: recs for p, recs in by_pos.items() if p in var_positions}
+
+    return [
+        {"master_index": p, "match_count": len(recs), "matched_records": recs}
+        for p, recs in sorted(by_pos.items())
+    ]
+
+
+# -----------------------------------------------------------------------------
+# Binding contact resolve
+# -----------------------------------------------------------------------------
+
+
+def resolve_binding_contact_track(spec: BindingContactFilterSpec) -> List[Dict[str, Any]]:
+    """Resolve ligand-contact positions across structures for a set of chemical ids.
+
+    Mirrors get_canonical_binding_site: NonpolymerInstance -[INSTANCE_OF]-> NonpolymerEntity
+    -[DEFINED_BY_CHEMICAL]-> Chemical, then NonpolymerInstance -[NEAR_POLYMER]-> PolypeptideInstance.
+    Contact master indices are parsed from r.residues_json.
+    """
+    import json as _json
+
+    structure_clause = ""
+    params: Dict[str, Any] = {
+        "family": spec.family,
+        "chemical_ids": [c.upper() for c in spec.chemical_ids],
+    }
+    if spec.structure_ids:
+        structure_clause = "AND li.parent_rcsb_id IN $structure_ids"
+        params['structure_ids'] = [s.upper() for s in spec.structure_ids]
+
+    query = f"""
+    MATCH (li:NonpolymerInstance)-[:INSTANCE_OF]->(ne:NonpolymerEntity)
+          -[:DEFINED_BY_CHEMICAL]->(c:Chemical)
+    WHERE c.chemical_id IN $chemical_ids
+    MATCH (li)-[r:NEAR_POLYMER]->(pi:PolypeptideInstance)
+          -[:INSTANCE_OF]->(pe:PolypeptideEntity)
+    WHERE pe.family = $family
+      {structure_clause}
+    RETURN li.parent_rcsb_id AS rcsb_id,
+           c.chemical_id AS chemical_id,
+           pi.auth_asym_id AS auth_asym_id,
+           r.residues_json AS residues_json
+    """
+
+    with db_reader.adapter.driver.session() as session:
+        def run(tx: Transaction):
+            by_pos: Dict[int, List[Dict[str, Any]]] = {}
+            for row in tx.run(query, params):
+                residues_json = row["residues_json"]
+                if not residues_json:
+                    continue
+                try:
+                    residues = _json.loads(residues_json)
+                except (ValueError, TypeError):
+                    continue
+                # Dedup master indices within this (ligand, chain) — multiple
+                # contact atoms can hit the same residue.
+                local_indices: Set[int] = set()
+                for res in residues:
+                    mi = res.get("master_index") if isinstance(res, dict) else None
+                    if mi is not None:
+                        local_indices.add(int(mi))
+                for mi in local_indices:
+                    by_pos.setdefault(mi, []).append({
+                        "chemical_id": row["chemical_id"],
+                        "rcsb_id": row["rcsb_id"],
+                        "auth_asym_id": row["auth_asym_id"],
+                    })
+            return by_pos
+
+        by_pos = session.execute_read(run)
+
+    return [
+        {"master_index": p, "match_count": len(recs), "matched_records": recs}
+        for p, recs in sorted(by_pos.items())
+    ]
+
+
+# -----------------------------------------------------------------------------
+# Resolve endpoint
+# -----------------------------------------------------------------------------
+
+
+@router_annotations.post(
+    "/track/resolve",
+    response_model=ResolveResponse,
+    operation_id="resolve_annotation_track",
+)
+async def resolve_annotation_track(req: ResolveRequest) -> ResolveResponse:
+    """Resolve a track FilterSpec to the set of master columns it paints.
+
+    The spec is discriminated by `kind`:
+      - 'variants': filter Variant nodes (structural + literature)
+      - 'modifications': filter Modification nodes
+      - 'binding_contacts': aggregate NEAR_POLYMER contacts for given chemical ids
+
+    Returns master positions with their matched records as metadata payload.
+    Composition: AND across fields, implicit OR within array-valued fields.
+    """
+    spec = req.spec
+
+    if isinstance(spec, VariantFilterSpec):
+        positions = resolve_variant_track(spec)
+    elif isinstance(spec, ModificationFilterSpec):
+        positions = resolve_modification_track(spec)
+    elif isinstance(spec, BindingContactFilterSpec):
+        positions = resolve_binding_contact_track(spec)
+    else:
+        raise HTTPException(400, f"Unknown FilterSpec kind: {getattr(spec, 'kind', '?')}")
+
+    return ResolveResponse(
+        family=spec.family,
+        kind=spec.kind,
+        matched=len(positions),
+        positions=[ResolvedPosition(**p) for p in positions],
     )
