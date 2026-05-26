@@ -350,7 +350,7 @@ def _build_viewer_system_prompt(view_context: ViewContext, facets: FacetContext)
 
 Each user turn, emit ONE OR MORE tool calls that together fulfill the request. The frontend executes them in order against the current viewer.
 
-ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, MentionEntities, EmitNavigationCard, RequestClarification.
+ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, AlignChain, MentionEntities, EmitNavigationCard, RequestClarification.
 
 CURRENT VIEWER STATE:
 - rcsb_id: {view_context.rcsb_id}
@@ -358,6 +358,7 @@ CURRENT VIEWER STATE:
 - loaded ligand keys: {ligands}
 - view_mode: {view_context.view_mode}
 - active_monomer_chain: {view_context.active_monomer_chain}
+- active_family: {view_context.active_family}
 
 VIEWER-SPECIFIC RULES:
 - auth_asym_id arguments MUST be one of the loaded chain ids above. If the user names a chain that is not loaded, emit exactly one `RequestClarification` tool call instead, naming the available chains.
@@ -382,6 +383,14 @@ NAVIGATION INTENT (EmitNavigationCard tool):
   - For a family-filtered catalogue, set `family: "tubulin_beta"`.
   - For a specific PDB id, set `rcsb_id`.
 - Example: on 1JFF, user asks "other structures with taxol" — emit EmitNavigationCard(card={{action:"open_catalogue", label:"Browse structures with taxol", description:"Catalogue filtered to all PDB entries containing taxol.", query_ref:null, focus_ligands:["TA1"]}}).
+
+ADDING A SEQUENCE TO THE CURRENT ALIGNMENT (AlignChain tool) — EXPERT MODE ONLY (view_mode == "monomer"):
+- When the user asks to ADD / LOAD / INCLUDE / "also show" another organism's sequence or structure in the CURRENT alignment (e.g. "add a bovine sequence", "also load human alpha", "compare with yeast tubulin", "add cow"), call AlignChain. This adds a new aligned row to the MSA + a ghost overlay in 3D and KEEPS everything already loaded.
+- Set `organism_id` to the NCBI tax id (see ORGANISM TAX IDS). Leave `family`, `rcsb_id`, `auth_asym_id` null — the backend resolves a real structure+chain of the active family (active_family={view_context.active_family}).
+- Do NOT use EmitNavigationCard for this — that navigates away and loses the already-loaded sequences. Do NOT emit RequestClarification — the intent is clear: add to the current view.
+- Emit ONLY the AlignChain tool call for this intent (optionally one MentionEntities after). Do not emit clarification or a nav card alongside it, or the action will be dropped.
+- If view_mode is NOT "monomer", treat "add a sequence" as navigation instead: use EmitNavigationCard(open_expert).
+- Example (expert mode, active_family=tubulin_alpha): user "add a bovine sequence" -> AlignChain(organism_id=9913). user "also show human" -> AlignChain(organism_id=9606).
 
 HANDLING "WHERE WOULD X BIND" / "SHOW ME X'S SITE" WHEN X IS NOT LOADED:
 - The loaded structure does NOT have ligand X bound. The user wants you to project the binding site from biological knowledge onto the loaded chain.
@@ -515,6 +524,9 @@ def _summarize_actions(actions: List[BaseModel]) -> str:
         return "(no actions)"
     parts = []
     for a in actions:
+        if type(a).__name__ == "AlignChain":
+            parts.append("Adding a sequence to the alignment")
+            continue
         kv = ", ".join(f"{k}={v}" for k, v in a.model_dump().items())
         parts.append(f"{type(a).__name__}({kv})" if kv else type(a).__name__)
     return " ; ".join(parts)

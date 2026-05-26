@@ -18,7 +18,7 @@ from api.nl_translator.facets_loader import load_facet_context
 from api.nl_translator.interface import ViewContext
 from api.nl_translator.global_actions import GlobalNLResponse, ActionCard
 from api.nl_translator.hydration import hydrate_response
-from api.nl_translator.resolve import resolve_response, resolve_card
+from api.nl_translator.resolve import resolve_response, resolve_card, resolve_representative
 
 
 router_nl_query = APIRouter()
@@ -86,6 +86,7 @@ class ViewContextBody(BaseModel):
     ligand_keys: List[str] = Field(default_factory=list)
     view_mode: Optional[str] = None
     active_monomer_chain: Optional[str] = None
+    active_family: Optional[str] = None
 
 
 class NLViewerRequest(BaseModel):
@@ -143,6 +144,7 @@ def nl_query_to_viewer_actions(req: NLViewerRequest) -> NLViewerResponse:
         ligand_keys=req.view_context.ligand_keys,
         view_mode=req.view_context.view_mode,
         active_monomer_chain=req.view_context.active_monomer_chain,
+        active_family=req.view_context.active_family,
     )
 
     try:
@@ -190,9 +192,26 @@ def nl_query_to_viewer_actions(req: NLViewerRequest) -> NLViewerResponse:
             )
         return NLViewerResponse(kind="nav_card", card=card, summary=result.summary)
 
+    # Resolve AlignChain selector actions (organism + active family) to real
+    # (rcsb_id, auth_asym_id), same anti-hallucination path as the cards. Drop
+    # any that can't be resolved rather than ship a guessed/empty alignment.
+    resolved_actions = []
+    for a in result.actions:
+        if type(a).__name__ == "AlignChain":
+            if getattr(a, "organism_id", None) is not None:
+                fam = getattr(a, "family", None) or view_context.active_family
+                rep = resolve_representative(organism_id=a.organism_id, family=fam)
+                if rep is None:
+                    continue
+                a.rcsb_id, a.auth_asym_id = rep
+            elif not (getattr(a, "rcsb_id", None) and getattr(a, "auth_asym_id", None)):
+                # No organism selector and no concrete chain — nothing usable.
+                continue
+        resolved_actions.append(a)
+
     envelopes = [
         ViewerActionEnvelope(type=type(a).__name__, args=a.model_dump())
-        for a in result.actions
+        for a in resolved_actions
     ]
     # Entities arrive as dicts (validated loosely in the interpreter); pass
     # through. Per-entity validation against EntityRef is best-effort —

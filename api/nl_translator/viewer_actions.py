@@ -10,7 +10,7 @@ dispatcher is a dumb switch on `type`.
 """
 from __future__ import annotations
 
-from typing import List, Type
+from typing import List, Optional, Type
 
 from pydantic import BaseModel, Field
 
@@ -82,6 +82,34 @@ class ClearHighlight(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Alignment — add another organism's chain to the current expert-mode view.
+# ---------------------------------------------------------------------------
+
+class AlignChain(BaseModel):
+    """Add another organism's chain to the CURRENT expert-mode alignment — a new
+    aligned row in the MSA plus a ghost overlay in 3D, keeping everything already
+    loaded. Use when the user asks to add / load / include another organism's
+    sequence or structure while in expert (monomer) mode (e.g. "add a bovine
+    sequence", "also show human alpha", "compare with yeast tubulin"). Do NOT
+    navigate away and do NOT ask for clarification — this adds in place.
+
+    Express the organism as an NCBI tax id; the backend resolves it to a real
+    structure + chain of the active family. Leave rcsb_id / auth_asym_id null.
+    """
+    organism_id: Optional[int] = Field(
+        default=None,
+        description="NCBI tax id of the organism to add (e.g. 9606 human, 9913 cattle/bovine, 4932 yeast). Backend resolves it to a real structure+chain of the active family.",
+    )
+    family: Optional[str] = Field(
+        default=None,
+        description="Tubulin family; leave null to use the active chain's family from view_context.",
+    )
+    # Server-filled after resolution; the model leaves these null.
+    rcsb_id: Optional[str] = None
+    auth_asym_id: Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
 # Clarification — no-op action, frontend renders the question.
 # ---------------------------------------------------------------------------
 
@@ -140,6 +168,7 @@ VIEWER_ACTION_MODELS: List[Type[BaseModel]] = [
     HighlightChain,
     HighlightResidueRange,
     ClearHighlight,
+    AlignChain,
     MentionEntities,
     EmitNavigationCard,
     RequestClarification,
@@ -157,6 +186,12 @@ VIEWER_ACTION_DESCRIPTIONS: dict[str, str] = {
     "HighlightChain": "Glow-highlight an entire chain.",
     "HighlightResidueRange": "Glow-highlight a residue range.",
     "ClearHighlight": "Remove all transient highlights.",
+    "AlignChain": (
+        "Expert mode only. Add another organism's chain to the CURRENT alignment "
+        "(new MSA row + 3D ghost overlay) without navigating away. Use for 'add a "
+        "<organism> sequence/structure'. Set organism_id (NCBI tax id); backend "
+        "resolves it to a real structure+chain of the active family."
+    ),
     "MentionEntities": (
         "Surface the entities (chains, residues, ranges, ligands) the user "
         "should see as interactive pills in the side panel. Call ONCE per "

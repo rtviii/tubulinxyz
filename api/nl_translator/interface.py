@@ -36,6 +36,7 @@ class ViewContext:
     ligand_keys: List[str] = field(default_factory=list)
     view_mode: Optional[str] = None  # "structure" | "monomer"
     active_monomer_chain: Optional[str] = None
+    active_family: Optional[str] = None  # active chain's tubulin family, e.g. "tubulin_alpha"
 
 
 @dataclass
