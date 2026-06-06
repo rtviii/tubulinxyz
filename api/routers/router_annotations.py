@@ -586,9 +586,24 @@ class VariantFilterSpec(BaseModel):
     uniprot_ids: Optional[List[str]] = Field(None, description="Restrict to specific UniProt ids (e.g. ['Q13509'] for TUBB3)")
     species_names: Optional[List[str]] = Field(
         None,
-        description="Match variant.species text (e.g. 'H. sapiens'). Variants don't carry tax_id; use modifications spec for tax_id filtering.",
+        description="Match variant.species text (e.g. 'H. sapiens'). Use species_tax_ids for structural variants.",
+    )
+    species_tax_ids: Optional[List[int]] = Field(
+        None,
+        description=(
+            "NCBI tax ids; filters structural variants by the parent entity's src_organism_ids "
+            "(e.g. [9606] for human). When set, literature variants are dropped from the result "
+            "since they don't carry entity/tax info — use species_names for literature."
+        ),
     )
     position_range: Optional[Tuple[int, int]] = Field(None, description="Master column [min, max], inclusive")
+    positions: Optional[List[int]] = Field(
+        None,
+        description=(
+            "Restrict to an explicit set of master indices. When set together with position_range, "
+            "both are ANDed. Useful for site-scoped queries (e.g. residues of a binding site)."
+        ),
+    )
     co_occurs_with_mod_type: Optional[List[str]] = Field(
         None, description="Keep only positions where any of these PTM types is also recorded"
     )
@@ -611,6 +626,12 @@ class ModificationFilterSpec(BaseModel):
     species_tax_ids: Optional[List[int]] = Field(None, description="NCBI taxIds; modifications carry tax_id directly")
     species_names: Optional[List[str]] = Field(None, description="Fallback text match against species abbreviation")
     position_range: Optional[Tuple[int, int]] = None
+    positions: Optional[List[int]] = Field(
+        None,
+        description=(
+            "Restrict to an explicit set of master indices. ANDed with position_range when both set."
+        ),
+    )
     co_occurs_with_variant: Optional[bool] = Field(
         None, description="Keep only positions where any variant is also recorded"
     )
@@ -628,6 +649,13 @@ class BindingContactFilterSpec(BaseModel):
 
     chemical_ids: List[str] = Field(..., description="Ligand chem comp ids (e.g. ['TA1', 'GTP', 'TXL'])")
     structure_ids: Optional[List[str]] = Field(None, description="Restrict to specific PDB ids")
+    positions: Optional[List[int]] = Field(
+        None,
+        description=(
+            "Restrict to an explicit set of master indices. Only contacts at these positions "
+            "are returned (post-filter on parsed residues_json)."
+        ),
+    )
 
 
 TrackFilterSpec = Annotated[
@@ -706,6 +734,9 @@ def _build_variant_where(spec: VariantFilterSpec) -> Tuple[str, Dict[str, Any]]:
         conditions.append("v.master_index >= $pos_min AND v.master_index <= $pos_max")
         params['pos_min'] = spec.position_range[0]
         params['pos_max'] = spec.position_range[1]
+    if spec.positions:
+        conditions.append("v.master_index IN $positions")
+        params['positions'] = spec.positions
 
     if spec.phenotype_contains:
         conditions.append(
@@ -758,9 +789,16 @@ def resolve_variant_track(spec: VariantFilterSpec) -> List[Dict[str, Any]]:
     where_clause, params = _build_variant_where(spec)
     params["family"] = spec.family
 
+    # species_tax_ids is an entity-level filter (Variant nodes don't carry tax_id),
+    # so it's injected into the structural arm only and drops the literature arm.
+    structural_extra = ""
+    if spec.species_tax_ids:
+        structural_extra = " AND ANY(t IN $tax_ids WHERE t IN e.src_organism_ids)"
+        params["tax_ids"] = spec.species_tax_ids
+
     structural_arm = f"""
     MATCH (e:PolypeptideEntity)-[:HAS_VARIANT]->(v:Variant)
-    WHERE e.family = $family AND {where_clause}
+    WHERE e.family = $family AND {where_clause}{structural_extra}
     RETURN v.master_index AS master_index, {{
         wild_type: v.wild_type,
         observed: v.observed,
@@ -794,7 +832,7 @@ def resolve_variant_track(spec: VariantFilterSpec) -> List[Dict[str, Any]]:
     }} AS record
     """
 
-    query = f"{structural_arm}\nUNION ALL\n{literature_arm}"
+    query = structural_arm if spec.species_tax_ids else f"{structural_arm}\nUNION ALL\n{literature_arm}"
 
     with db_reader.adapter.driver.session() as session:
         def run(tx: Transaction):
@@ -842,6 +880,9 @@ def _build_modification_where(spec: ModificationFilterSpec) -> Tuple[str, Dict[s
         conditions.append("m.master_index >= $pos_min AND m.master_index <= $pos_max")
         params['pos_min'] = spec.position_range[0]
         params['pos_max'] = spec.position_range[1]
+    if spec.positions:
+        conditions.append("m.master_index IN $positions")
+        params['positions'] = spec.positions
     if spec.evidence_source:
         conditions.append("m.database_source IN $ev_sources")
         params['ev_sources'] = spec.evidence_source
@@ -917,6 +958,10 @@ def resolve_binding_contact_track(spec: BindingContactFilterSpec) -> List[Dict[s
         structure_clause = "AND li.parent_rcsb_id IN $structure_ids"
         params['structure_ids'] = [s.upper() for s in spec.structure_ids]
 
+    positions_filter: Optional[Set[int]] = (
+        set(spec.positions) if spec.positions else None
+    )
+
     query = f"""
     MATCH (li:NonpolymerInstance)-[:INSTANCE_OF]->(ne:NonpolymerEntity)
           -[:DEFINED_BY_CHEMICAL]->(c:Chemical)
@@ -949,6 +994,8 @@ def resolve_binding_contact_track(spec: BindingContactFilterSpec) -> List[Dict[s
                     mi = res.get("master_index") if isinstance(res, dict) else None
                     if mi is not None:
                         local_indices.add(int(mi))
+                if positions_filter is not None:
+                    local_indices &= positions_filter
                 for mi in local_indices:
                     by_pos.setdefault(mi, []).append({
                         "chemical_id": row["chemical_id"],

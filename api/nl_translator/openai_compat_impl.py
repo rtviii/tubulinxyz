@@ -350,7 +350,7 @@ def _build_viewer_system_prompt(view_context: ViewContext, facets: FacetContext)
 
 Each user turn, emit ONE OR MORE tool calls that together fulfill the request. The frontend executes them in order against the current viewer.
 
-ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, AlignChain, MentionEntities, EmitNavigationCard, RequestClarification.
+ACTIONS AVAILABLE (tool names): FocusChain, FocusResidue, FocusResidueRange, ClearFocus, SetChainVisibility, IsolateChain, HighlightChain, HighlightResidueRange, ClearHighlight, AlignChain, AddAnnotationTrack, RemoveAnnotationTrack, FocusBindingSite, MentionEntities, EmitNavigationCard, RequestClarification.
 
 CURRENT VIEWER STATE:
 - rcsb_id: {view_context.rcsb_id}
@@ -391,6 +391,38 @@ ADDING A SEQUENCE TO THE CURRENT ALIGNMENT (AlignChain tool) — EXPERT MODE ONL
 - Emit ONLY the AlignChain tool call for this intent (optionally one MentionEntities after). Do not emit clarification or a nav card alongside it, or the action will be dropped.
 - If view_mode is NOT "monomer", treat "add a sequence" as navigation instead: use EmitNavigationCard(open_expert).
 - Example (expert mode, active_family=tubulin_alpha): user "add a bovine sequence" -> AlignChain(organism_id=9913). user "also show human" -> AlignChain(organism_id=9606).
+
+ANNOTATION TRACKS (AddAnnotationTrack / RemoveAnnotationTrack) — EXPERT MODE ONLY (view_mode == "monomer"):
+- A track is a chain-independent MSA aux row that paints master columns matching a typed FilterSpec, and colors the corresponding residues on the primary 3D chain. It is the right tool for "show me X residues" overlay questions — variants, PTMs, ligand binding sites — scoped by organism, family, or position set.
+- The `spec.kind` discriminator picks the FilterSpec type:
+  - 'variants' (VariantSpec): wild_type_aas, observed_aas, sources (['structural','literature']), species_tax_ids (NCBI tax id list), positions, position_range, co_occurs_with_mod_type, phenotype_contains.
+  - 'modifications' (ModificationSpec): modification_types (e.g. ['phosphorylation','acetylation','polyglutamylation']), species_tax_ids, positions, position_range, co_occurs_with_variant, phenotype_contains.
+  - 'binding_contacts' (BindingContactSpec): chemical_ids (e.g. ['GTP','TA1','LOC']), positions.
+- ALWAYS set `spec.family` (e.g. 'tubulin_alpha' / 'tubulin_beta'). For the active chain use active_family from view_context. The track will paint only master columns of that family.
+- ALWAYS pick a hex `color`. For COMPARATIVE queries emit MULTIPLE AddAnnotationTrack calls (one per organism / one per ligand) with visually distinct colors.
+- `label` is what the user sees in the MSA aux panel — keep short (~30 chars). Encode any disambiguating dimension in the label (e.g. "GTP site · human", "GTP site · Toxoplasma"). Comparative tracks SHOULD share a common label prefix and differ only in the disambiguating tail.
+- If view_mode is NOT "monomer", do NOT emit AddAnnotationTrack — emit EmitNavigationCard(open_expert) so the user enters expert mode first.
+- Do NOT emit RequestClarification when the user's intent is clearly an annotation overlay; emit the track(s). Do NOT emit AddAnnotationTrack alongside EmitNavigationCard — they are mutually exclusive (the nav card preempts).
+
+EXAMPLES (expert mode):
+- "Show PTMs in human alpha tubulin associated with fibrosis":
+  AddAnnotationTrack(label="PTMs · human · fibrosis", color="#E74C3C", spec={{kind:"modifications", family:"tubulin_alpha", species_tax_ids:[9606], phenotype_contains:["fibrosis"]}})
+- "Where does GTP bind on alpha tubulin?" (when GTP is in ligand_keys — use the 3D focus verb):
+  FocusBindingSite(chemical_id="GTP")
+- "Where does GTP bind on alpha tubulin?" (when GTP is NOT in ligand_keys — use the family-wide track instead):
+  AddAnnotationTrack(label="GTP site", color="#1ABC9C", spec={{kind:"binding_contacts", family:"tubulin_alpha", chemical_ids:["GTP"]}})
+- "Compare the GTP site in human vs Toxoplasma" — AlignChain to add the other organism, then FocusBindingSite on the primary so the binding pocket is visible across both:
+  AlignChain(organism_id=5811)
+  FocusBindingSite(chemical_id="GTP")
+- "Show structural variants in human beta tubulin between positions 200 and 280":
+  AddAnnotationTrack(label="Variants · human · 200-280", color="#8E44AD", spec={{kind:"variants", family:"tubulin_beta", species_tax_ids:[9606], sources:["structural"], position_range:[200,280]}})
+- "Hide the GTP site track" — RemoveAnnotationTrack(label_match="GTP site")
+
+FOCUS BINDING SITE (FocusBindingSite tool):
+- Use when the ligand is ACTUALLY BOUND on the loaded structure (it appears in ligand_keys above). This anchors the 3D camera + draws the contact representation + jumps the MSA to the contact span.
+- Pair with AlignChain in comparative queries: align the other organism FIRST, then FocusBindingSite on the active chain — the binding site is then visible on the primary while the alignment row carries the comparison.
+- Defaults auth_asym_id to active_monomer_chain; only set it explicitly if the user names a different chain that's also loaded.
+- If the ligand is NOT in ligand_keys, do NOT call FocusBindingSite — the per-chain contact data doesn't exist. Fall back to AddAnnotationTrack(binding_contacts) for a family-wide MSA overlay, or use the HighlightResidueRange + nav-card pattern.
 
 HANDLING "WHERE WOULD X BIND" / "SHOW ME X'S SITE" WHEN X IS NOT LOADED:
 - The loaded structure does NOT have ligand X bound. The user wants you to project the binding site from biological knowledge onto the loaded chain.

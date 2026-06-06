@@ -10,9 +10,10 @@ dispatcher is a dumb switch on `type`.
 """
 from __future__ import annotations
 
-from typing import List, Optional, Type
+import json as _json
+from typing import Annotated, Any, List, Literal, Optional, Tuple, Type, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from api.nl_translator.global_actions import EntityRef, ActionCard
 
@@ -110,6 +111,151 @@ class AlignChain(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# Annotation tracks — chain-independent aux rows painted on MSA master columns.
+#
+# TrackSpec mirrors api/routers/router_annotations.py:VariantFilterSpec /
+# ModificationFilterSpec / BindingContactFilterSpec. We re-declare here (rather
+# than import) to keep viewer_actions.py independent of routers, matching the
+# pattern used for EntityRef/ActionCard. Kept narrow on purpose — the LLM
+# should not need to think about every filter; the truly load-bearing fields
+# are family + (modification_types | chemical_ids | species_tax_ids | etc.).
+# ---------------------------------------------------------------------------
+
+class VariantSpec(BaseModel):
+    kind: Literal['variants'] = 'variants'
+    family: str = Field(..., description="e.g. 'tubulin_alpha', 'tubulin_beta'")
+    wild_type_aas: Optional[List[str]] = None
+    observed_aas: Optional[List[str]] = None
+    substitution_pairs: Optional[List[Tuple[str, str]]] = None
+    indel_present: Optional[bool] = None
+    sources: Optional[List[Literal['structural', 'literature']]] = None
+    uniprot_ids: Optional[List[str]] = None
+    species_names: Optional[List[str]] = Field(
+        None, description="Text species match (e.g. 'H. sapiens'). Prefer species_tax_ids for structural variants."
+    )
+    species_tax_ids: Optional[List[int]] = Field(
+        None, description="NCBI tax ids; restricts structural variants by entity src_organism_ids (e.g. [9606])."
+    )
+    position_range: Optional[Tuple[int, int]] = None
+    positions: Optional[List[int]] = Field(
+        None, description="Restrict to specific master indices (e.g. residues of a binding site)."
+    )
+    co_occurs_with_mod_type: Optional[List[str]] = None
+    phenotype_contains: Optional[List[str]] = Field(
+        None, description="Case-insensitive substring search; OR within array. Useful with literature variants."
+    )
+
+
+class ModificationSpec(BaseModel):
+    kind: Literal['modifications'] = 'modifications'
+    family: str
+    modification_types: Optional[List[str]] = Field(
+        None, description="e.g. ['phosphorylation', 'acetylation', 'polyglutamylation']"
+    )
+    uniprot_ids: Optional[List[str]] = None
+    species_tax_ids: Optional[List[int]] = Field(
+        None, description="NCBI tax ids; modifications carry tax_id directly."
+    )
+    species_names: Optional[List[str]] = None
+    position_range: Optional[Tuple[int, int]] = None
+    positions: Optional[List[int]] = None
+    co_occurs_with_variant: Optional[bool] = None
+    evidence_source: Optional[List[str]] = None
+    phenotype_contains: Optional[List[str]] = None
+
+
+class BindingContactSpec(BaseModel):
+    kind: Literal['binding_contacts'] = 'binding_contacts'
+    family: str
+    chemical_ids: List[str] = Field(..., description="Ligand chem comp ids (e.g. ['TA1', 'GTP', 'TXL']).")
+    structure_ids: Optional[List[str]] = None
+    positions: Optional[List[int]] = None
+
+
+TrackSpec = Annotated[
+    Union[VariantSpec, ModificationSpec, BindingContactSpec],
+    Field(discriminator='kind'),
+]
+
+
+class AddAnnotationTrack(BaseModel):
+    """Add a chain-independent annotation row to the MSA aux panel. The track
+    paints master columns matching `spec` (variants / PTMs / ligand contacts)
+    on every displayed chain of `spec.family` and colors the corresponding 3D
+    residues on the primary chain. Expert (monomer) view only.
+
+    Use for organism-scoped, family-scoped, or site-scoped annotation overlays:
+    "Show PTMs in human alpha tubulin associated with fibrosis", "Where does GTP
+    bind on alpha tubulin?", "Compare the GTP site in human vs Toxoplasma" (emit
+    two tracks with distinct colors).
+
+    Do NOT navigate away. Do NOT ask for clarification when the request is a
+    direct annotation overlay request — emit the track. Multiple AddAnnotationTrack
+    calls in a single response are encouraged for comparative queries (one per
+    organism / one per ligand / etc.) — pick distinct colors.
+
+    Pick a short human-readable label (e.g. "PTMs · human · fibrosis", "GTP site"
+    "GTP site · Toxoplasma"). The user sees this in the MSA labels.
+    """
+    label: str = Field(..., description="Short label shown in the MSA aux panel (<= 40 chars).")
+    spec: TrackSpec = Field(..., description="The typed filter spec; discriminated by 'kind'.")
+    color: str = Field(
+        ..., description="Hex color (e.g. '#E74C3C'). For comparative tracks, pick visually distinct colors."
+    )
+    description: Optional[str] = Field(
+        None, description="One-sentence rationale for grounding (not shown in UI)."
+    )
+
+    @field_validator("spec", mode="before")
+    @classmethod
+    def _parse_spec_if_string(cls, v: Any) -> Any:
+        # Some LLM/tool runtimes hand nested-object tool args back as escaped
+        # JSON strings instead of dicts. Decode here so the discriminated
+        # union still picks the right variant.
+        if isinstance(v, str):
+            try:
+                return _json.loads(v)
+            except (ValueError, TypeError):
+                pass
+        return v
+
+
+class RemoveAnnotationTrack(BaseModel):
+    """Remove an existing annotation track from the MSA. Substring-matches
+    against existing track labels (case-insensitive). Use when the user asks to
+    'hide', 'remove', 'drop', or 'clear' a specific track."""
+    label_match: str = Field(
+        ...,
+        description=(
+            "Substring of the track label to remove (case-insensitive). E.g. 'GTP site' "
+            "matches both 'GTP site' and 'GTP site · Toxoplasma'."
+        ),
+    )
+
+
+class FocusBindingSite(BaseModel):
+    """Focus the camera + draw the binding-site representation for a named
+    ligand on a loaded chain, using contact data already fetched per chain
+    (no extra round trip). Also jumps the MSA viewport to the contact range.
+
+    Use whenever the user asks to:
+      - "focus / show / highlight the <ligand> binding site"
+      - "compare X site in human vs Y" (after AlignChain, focus the site on the
+        primary/active chain so the alignment context is visually anchored)
+      - "where does <ligand> bind" — when the ligand IS bound on the loaded
+        structure (if it isn't, use the highlight + nav-card pattern instead).
+
+    Required: chemical_id (e.g. 'GTP', 'TA1', 'LOC'). Optional auth_asym_id —
+    defaults to the active monomer chain from view_context.
+    """
+    chemical_id: str = Field(..., description="Ligand chem comp id, e.g. 'GTP', 'TA1', 'LOC'.")
+    auth_asym_id: Optional[str] = Field(
+        default=None,
+        description="Chain to focus the binding site on. Defaults to active_monomer_chain.",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Clarification — no-op action, frontend renders the question.
 # ---------------------------------------------------------------------------
 
@@ -169,6 +315,9 @@ VIEWER_ACTION_MODELS: List[Type[BaseModel]] = [
     HighlightResidueRange,
     ClearHighlight,
     AlignChain,
+    AddAnnotationTrack,
+    RemoveAnnotationTrack,
+    FocusBindingSite,
     MentionEntities,
     EmitNavigationCard,
     RequestClarification,
@@ -191,6 +340,25 @@ VIEWER_ACTION_DESCRIPTIONS: dict[str, str] = {
         "(new MSA row + 3D ghost overlay) without navigating away. Use for 'add a "
         "<organism> sequence/structure'. Set organism_id (NCBI tax id); backend "
         "resolves it to a real structure+chain of the active family."
+    ),
+    "AddAnnotationTrack": (
+        "Expert mode only. Add a chain-independent MSA aux row painted at master "
+        "columns matching a typed FilterSpec (variants / modifications / "
+        "binding_contacts). Use for annotation overlays scoped by organism, family, "
+        "or site (e.g. 'PTMs in human alpha tubulin', 'GTP binding site', 'variants "
+        "in the taxol pocket'). Emit MULTIPLE calls for comparative queries (one "
+        "per organism / per ligand) with distinct colors."
+    ),
+    "RemoveAnnotationTrack": (
+        "Remove an existing annotation track by case-insensitive label substring "
+        "match. Use when the user asks to hide/clear/drop a track."
+    ),
+    "FocusBindingSite": (
+        "Focus the camera on the binding site of a named ligand on a loaded chain "
+        "(uses already-fetched per-chain contact data; no extra round trip). Also "
+        "jumps the MSA to the contact span. Pair with AlignChain for comparative "
+        "queries so the binding-site context is anchored on the primary chain "
+        "after the alignment is loaded."
     ),
     "MentionEntities": (
         "Surface the entities (chains, residues, ranges, ligands) the user "
