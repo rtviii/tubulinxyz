@@ -117,7 +117,7 @@ class RespondArgs(BaseModel):
     Every fact in answer_markdown MUST come from a read-tool result you received."""
     answer_markdown: Optional[str] = Field(None, description="Grounded answer in light markdown.")
     summary: Optional[str] = Field(None, description="One-line human readback (used when there's no answer text).")
-    data: Optional[Dict[str, Any]] = Field(None, description="Optional structured data backing the answer.")
+    data: Optional[Dict[str, Any]] = Field(None, description="Structured data backing the answer. For tabular results use {\"table\": {\"columns\": [...], \"rows\": [[...]]}} — NEVER put tables in answer_markdown.")
     viewer_actions: Optional[List[ViewerActionCall]] = Field(None, description="Molstar actions to auto-apply (structure page).")
     suggested_actions: Optional[List[SuggestedAction]] = Field(None, description="Molstar actions offered as clickable chips (structure page).")
     cards: Optional[List[ActionCard]] = Field(None, description="Routing cards.")
@@ -189,7 +189,7 @@ VIEWER ACTION VOCABULARY (fill viewer_actions as a list of {type, args}; structu
 - SetChainVisibility {auth_asym_id, visible} / IsolateChain {auth_asym_id, keep_ligands}
 - FocusBindingSite {chemical_id, auth_asym_id?}  -- only for a ligand actually bound on that chain (check get_structure_chains first)
 - AddAnnotationTrack {label, color (#RRGGBB), spec}  -- expert mode only. spec.family is REQUIRED. spec is one of:
-    {kind:"binding_contacts", family, chemical_ids:[...]}            <- note PLURAL chemical_ids, always a list
+    {kind:"binding_contacts", family, chemical_ids:[...], structure_ids?:[...]}   <- chemical_ids is a PLURAL list. Pin structure_ids=[one rcsb_id] to show ONE structure's real pocket instead of the diffuse family-wide union.
     {kind:"modifications", family, modification_types?:[...], species_tax_ids?:[...], position_range?:[min,max], positions?:[...]}
     {kind:"variants", family, sources?:[...], species_tax_ids?:[...], position_range?:[min,max], wild_type_aas?:[...], observed_aas?:[...]}
 - RemoveAnnotationTrack {label_match}
@@ -197,8 +197,19 @@ VIEWER ACTION VOCABULARY (fill viewer_actions as a list of {type, args}; structu
 """
 
 
+_ANSWER_FORMATTING = """\
+ANSWER FORMATTING — tables go in `data`, NOT in markdown:
+- NEVER build a table inside answer_markdown with `|` pipes or literal newline characters — it renders as raw text. Hard rule.
+- When the answer is tabular (a per-type breakdown, a list of structures/chains, a side-by-side comparison), put the rows in the `data` field:
+    data = {"table": {"columns": ["Type", "Count", "Positions"], "rows": [["Acetylation", 12, "40, 252"], ["Phosphorylation", 7, "172, 444"]]}}
+- Keep answer_markdown to a SHORT prose lead-in (one or two sentences); the table carries the rows.
+- columns is a list of strings; rows is a list of rows, each row a list of cells (strings or numbers) aligned to columns. No markdown inside cells.
+"""
+
+
 _CATALOGUE_CARDS = """\
 CATALOGUE CARDS (open_catalogue) — encode the FULL filter set; never drop a field:
+- MANDATORY: whenever you report a COUNT or a LIST of structures matching a filter, you MUST also emit an open_catalogue card + its query. Do NOT data-dump a list/table of structures as prose — give the user a card to browse them.
 - An open_catalogue card MUST reference a query. Put the filters in queries[] and set the card's query_ref to that query's id.
 - The query's filters_structures MUST contain EVERY filter you used to compute the count. If you called find_structures(has_ligand_ids=["TA1"], source_organism_ids=[9606]), the query MUST set BOTH has_ligand_ids AND source_organism_ids — dropping the ligand is a bug.
 - StructureFilters fields you can set: search, rcsb_ids, has_ligand_ids, has_polymer_family, has_isotype, source_organism_ids, exp_method, resolution_min, resolution_max, year_min, year_max, has_variants.
@@ -231,6 +242,7 @@ VISUALIZE, DON'T JUST DESCRIBE (this is the point of the app):
   - If you're answering a data/overview question ("how many PTMs...", "what variants...") → offer the visualization in suggested_actions (chips the user clicks), so you don't mutate their view unasked.
 - The grounded data you fetched (e.g. count_modifications positions) maps directly to an AddAnnotationTrack with the SAME filter spec — that paints the MSA and the 3D chain. Prefer that over listing numbers alone.
 
+{_ANSWER_FORMATTING}
 READ TOOLS: {", ".join(t.name for t in RETRIEVAL_TOOLS)}.
 - get_structure_chains: which chain is which family and which ligands actually contact it — call this before focusing/aligning a ligand.
 - get_binding_site / get_binding_contacts: real binding residues (master positions). Never recall these.
@@ -258,7 +270,13 @@ CURRENT VIEWER STATE:
 
 PAGE GUIDANCE (structure page):
 - Pair text with visualization (see VISUALIZE above). "how many PTMs in human alpha tubulin" → answer_markdown with the counts AND a suggested_action AddAnnotationTrack(modifications, family=tubulin_alpha, species_tax_ids=[9606]) labelled e.g. "Show these PTMs on the MSA".
-- "focus / show the <ligand> binding site": call get_structure_chains. If the ligand IS bound on a loaded chain, viewer_actions=[FocusBindingSite(chemical_id, auth_asym_id=<that chain>)]. If it is NOT bound on any loaded chain, DO NOT decline — call get_binding_site(chemical_id, family) and emit viewer_actions=[AddAnnotationTrack(binding_contacts, family=<the family that binds it>, chemical_ids=[chemical_id])] so the canonical site is shown, and say in the text that the ligand isn't bound here so the conserved site is projected from {{n}} structures.
+- "focus / show the <ligand> binding site": call get_structure_chains first (it gives each chain's family, tax_id, and bound ligands).
+  - If the ligand IS bound on a loaded chain -> viewer_actions=[FocusBindingSite(chemical_id, auth_asym_id=<that chain>)]; that uses real per-chain contacts.
+  - If it is NOT bound on any loaded chain, DO NOT decline and DO NOT paint the cross-structure union (it is diffuse and useless). Show ONE real structure's pocket instead:
+    1) resolve_structure(family=<the family that binds it>, ligand=<chemical_id>, organism_id=<tax_id of that family's loaded chain from get_structure_chains>) to get a representative bound structure of the SAME organism. If it returns found:false, call resolve_structure(family, ligand) AGAIN without organism_id (fall back to any organism).
+    2) viewer_actions=[AddAnnotationTrack(binding_contacts, family=<that family>, chemical_ids=[chemical_id], structure_ids=[<the resolved rcsb_id>])]. Pinning structure_ids to that ONE rcsb_id paints only that structure's real contacts (a crisp pocket), NOT the diffuse family-wide union.
+    3) In the text, name the structure honestly: "<ligand> isn't bound in <loaded rcsb_id>; showing its binding pocket from PDB <resolved rcsb_id> (best-resolved <organism> <family> with <ligand> bound) — its actual contact residues mapped onto this chain's alignment." Do NOT say "projected from N structures".
+  - get_binding_site (the cross-structure canonical/union site, frequency-weighted) is for OVERVIEW questions ("where does X bind on <family> in general"), NOT for this painted track.
 - AddAnnotationTrack / AlignChain require view_mode == 'monomer'. If view_mode is 'structure' (easy mode), do NOT emit them — instead offer a card to open expert mode, or answer in text + a suggested card.
 - Don't recreate a track that's already in "annotation tracks already loaded"; if the user wants to replace it, RemoveAnnotationTrack(label_match) first.
 - For questions about OTHER structures, respond with cards (+ queries), no viewer_actions.
@@ -354,6 +372,30 @@ def _result_summary(obj: Any) -> str:
     return s if len(s) <= 200 else s[:197] + "..."
 
 
+# Markers that indicate the model tried (and failed) to emit a tool call as text
+# instead of using the structured tool-call channel. When the provider can't parse
+# such a fragment it leaves it in message.content, where our bare-text fallback
+# would otherwise surface it as prose.
+_TOOL_LEAK_MARKERS = (
+    "<parameter", "<invoke", "<function", "<antml",
+    '"action":"open_', '"viewer_actions"', '"suggested_actions"',
+)
+
+
+def _strip_tool_call_leak(content: str) -> str:
+    """Clean bare prose before surfacing it as an answer. Truncate from the first
+    tool-call-like marker onward (the leak trails the real prose), and unescape
+    literal '\\n'/'\\t' the model sometimes emits as two characters."""
+    text = content or ""
+    cut = len(text)
+    for marker in _TOOL_LEAK_MARKERS:
+        i = text.find(marker)
+        if i != -1:
+            cut = min(cut, i)
+    text = text[:cut].replace("\\n", "\n").replace("\\t", "\t")
+    return text.strip()
+
+
 def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> AssistantResult:
     ctx = PageContext.model_validate(page_context or {})
     facets = load_facet_context()
@@ -385,8 +427,10 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
         if not tool_calls:
             # The model replied in prose instead of calling a commit tool. If it
             # had already gathered data, treat that prose as the answer (it IS
-            # answering); otherwise it's a genuine clarification/refusal.
-            content = (message.content or "").strip()
+            # answering); otherwise it's a genuine clarification/refusal. Strip any
+            # malformed tool-call fragment the provider left in the content first —
+            # never surface a leaked `<parameter .../>`-style fragment as prose.
+            content = _strip_tool_call_leak(message.content or "")
             if trace and content:
                 return AssistantResult(kind="respond", answer_markdown=content, trace=trace)
             return AssistantResult(kind="clarify", clarification=content or "Please rephrase that.", trace=trace)
