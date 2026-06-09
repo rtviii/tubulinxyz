@@ -14,6 +14,7 @@ from api.routers import (
 )
 
 from api.routers.router_annotations import router_annotations
+from api.routers.router_assistant import router_assistant
 app = FastAPI(
     title="TubXYZ API",
     version="0.2.0",
@@ -36,6 +37,7 @@ app.include_router(router_ligands, prefix="/ligands", tags=["Ligands"])
 app.include_router(router_msa, prefix="/msa", tags=["MSA Alignment"])
 app.include_router(router_annotations, prefix="/annotations", tags=["Annotations"])
 app.include_router(router_nl_query, prefix="/nl_query", tags=["NL Query"])
+app.include_router(router_assistant, prefix="/assistant", tags=["Assistant"])
 for route in app.routes:
     print(f"  {getattr(route, 'methods', '')} {route.path}")
 
