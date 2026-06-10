@@ -11,11 +11,60 @@ dispatcher is a dumb switch on `type`.
 from __future__ import annotations
 
 import json as _json
+import re
 from typing import Annotated, Any, List, Literal, Optional, Tuple, Type, Union
 
 from pydantic import BaseModel, Field, field_validator
 
 from api.nl_translator.global_actions import EntityRef, ActionCard
+
+
+# ---------------------------------------------------------------------------
+# Small field normalizers shared across action models. Kept permissive: they
+# repair common case/format slips (lowercase ligand ids, bare family names,
+# malformed hex) instead of rejecting, so a cosmetic mistake never drops an
+# otherwise-valid action. Genuinely unrecognizable families still raise (the
+# action is dropped with a reason rather than silently querying nothing).
+# ---------------------------------------------------------------------------
+
+def _normalize_family(v: Any) -> Any:
+    if not isinstance(v, str):
+        return v
+    s = v.strip().lower().replace("-", "_").replace(" ", "_")
+    if s.startswith("tubulin_"):
+        core = s[len("tubulin_"):]
+    elif s.endswith("_tubulin"):
+        core = s[: -len("_tubulin")]
+    else:
+        core = s
+    if re.fullmatch(r"[a-z0-9]+", core):
+        return "tubulin_" + core
+    raise ValueError(f"unrecognized tubulin family: {v!r}")
+
+
+def _normalize_chem(v: Any) -> Any:
+    return v.strip().upper() if isinstance(v, str) else v
+
+
+def _normalize_hex_color(v: Any) -> str:
+    if not isinstance(v, str):
+        return "#888888"
+    s = v.strip()
+    if not s.startswith("#"):
+        s = "#" + s
+    body = s[1:]
+    if re.fullmatch(r"[0-9A-Fa-f]{3}", body):  # #RGB -> #RRGGBB
+        s = "#" + "".join(c * 2 for c in body)
+    return s.upper() if re.fullmatch(r"#[0-9A-Fa-f]{6}", s) else "#888888"
+
+
+class _FamilyValidatedSpec(BaseModel):
+    """Mixin: normalize the `family` field of any track spec that has one."""
+
+    @field_validator("family", mode="before", check_fields=False)
+    @classmethod
+    def _vf_family(cls, v: Any) -> Any:
+        return _normalize_family(v)
 
 
 # ---------------------------------------------------------------------------
@@ -121,7 +170,7 @@ class AlignChain(BaseModel):
 # are family + (modification_types | chemical_ids | species_tax_ids | etc.).
 # ---------------------------------------------------------------------------
 
-class VariantSpec(BaseModel):
+class VariantSpec(_FamilyValidatedSpec):
     kind: Literal['variants'] = 'variants'
     family: str = Field(..., description="e.g. 'tubulin_alpha', 'tubulin_beta'")
     wild_type_aas: Optional[List[str]] = None
@@ -146,7 +195,7 @@ class VariantSpec(BaseModel):
     )
 
 
-class ModificationSpec(BaseModel):
+class ModificationSpec(_FamilyValidatedSpec):
     kind: Literal['modifications'] = 'modifications'
     family: str
     modification_types: Optional[List[str]] = Field(
@@ -164,12 +213,17 @@ class ModificationSpec(BaseModel):
     phenotype_contains: Optional[List[str]] = None
 
 
-class BindingContactSpec(BaseModel):
+class BindingContactSpec(_FamilyValidatedSpec):
     kind: Literal['binding_contacts'] = 'binding_contacts'
     family: str
     chemical_ids: List[str] = Field(..., description="Ligand chem comp ids (e.g. ['TA1', 'GTP', 'TXL']).")
     structure_ids: Optional[List[str]] = None
     positions: Optional[List[int]] = None
+
+    @field_validator("chemical_ids", mode="before")
+    @classmethod
+    def _upper_chems(cls, v: Any) -> Any:
+        return [_normalize_chem(x) for x in v] if isinstance(v, list) else v
 
 
 TrackSpec = Annotated[
@@ -219,6 +273,13 @@ class AddAnnotationTrack(BaseModel):
                 pass
         return v
 
+    @field_validator("color", mode="before")
+    @classmethod
+    def _norm_color(cls, v: Any) -> str:
+        # Color is cosmetic — normalize a malformed hex (or fall back to grey)
+        # rather than drop the whole track over it.
+        return _normalize_hex_color(v)
+
 
 class RemoveAnnotationTrack(BaseModel):
     """Remove an existing annotation track from the MSA. Substring-matches
@@ -253,6 +314,11 @@ class FocusBindingSite(BaseModel):
         default=None,
         description="Chain to focus the binding site on. Defaults to active_monomer_chain.",
     )
+
+    @field_validator("chemical_id", mode="before")
+    @classmethod
+    def _upper_chem(cls, v: Any) -> Any:
+        return _normalize_chem(v)
 
 
 # ---------------------------------------------------------------------------

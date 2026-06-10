@@ -24,8 +24,17 @@ from typing import Any, Dict, List, Optional, Tuple, Type
 from pydantic import BaseModel, Field, ValidationError
 
 from api.nl_translator.facets_loader import load_facet_context
-from api.nl_translator.global_actions import ActionCard, EntityRef, QuerySpec
+from api.nl_translator.global_actions import (
+    ActionCard,
+    EntityRef,
+    GlobalNLResponse,
+    MAX_CARDS,
+    QuerySpec,
+    dedupe_entities,
+)
+from api.nl_translator.hydration import hydrate_response
 from api.nl_translator.interface import FacetContext
+from api.nl_translator.resolve import resolve_response
 from api.nl_translator.retrieval import RETRIEVAL_TOOLS, run_retrieval_tool
 from api.nl_translator.viewer_actions import VIEWER_ACTION_MODELS
 
@@ -97,6 +106,9 @@ class AssistantResult(BaseModel):
     viewer_actions: List[ViewerActionCall] = Field(default_factory=list)
     suggested_actions: List[SuggestedAction] = Field(default_factory=list)
     dropped_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    # Per-card {ok, reason}, keyed by card.id — filled by hydrate_response. Mirrors
+    # GlobalNLResponse.validation; the landing panel keys card dimming on it.
+    validation: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
     trace: List[TraceEntry] = Field(default_factory=list)
 
 
@@ -221,6 +233,21 @@ CATALOGUE CARDS (open_catalogue) — encode the FULL filter set; never drop a fi
 """
 
 
+_ARRIVAL_ACTIONS = """\
+ARRIVAL ACTIONS (landing -> expert view) — make a comparison / binding-site card LAND already visualized:
+- For "compare/show the <ligand> site across organisms" (or any open_expert card that should arrive with the site painted), DON'T stop at a bare navigation card — attach grounded arrival_actions that auto-apply AFTER the page loads in expert mode.
+- Build it grounded, baking the REAL ids in (never guess):
+  1) resolve_structure(family=<family>, organism_id=<tax id>, ligand=<chem id>) for EACH organism -> a real (rcsb_id, auth_asym_id).
+  2) Emit ONE open_expert card with the resolved ids baked DIRECTLY: rcsb_id + primary_chain = the primary organism's; aligned = [{"rcsb_id":..., "auth_asym_id":...}, ...] for the rest. Do NOT set primary_organism_id / aligned_organism_ids here, and do NOT set focus_range (FocusBindingSite below replaces it).
+  3) card.arrival_actions = a list of {type, args}:
+     - one AddAnnotationTrack per organism, pinned to THAT organism's structure and given a DISTINCT color:
+         {"type":"AddAnnotationTrack","args":{"label":"<organism> <ligand> site","color":"#E74C3C","spec":{"kind":"binding_contacts","family":"<family>","chemical_ids":["<chem id>"],"structure_ids":["<that organism's rcsb_id>"]}}}
+     - then ONE FocusBindingSite: {"type":"FocusBindingSite","args":{"chemical_id":"<chem id>"}}  (no auth_asym_id -> focuses the primary chain's real pocket)
+- Use the SAME rcsb_id for the card and for that organism's track structure_ids, so the painted contacts match the loaded structures. Pick visually distinct colors per organism (e.g. #E74C3C vs #3498DB).
+- arrival_actions run on the DESTINATION page only, never on landing. Still write a short grounded answer_markdown alongside the card.
+"""
+
+
 def _build_system_prompt(ctx: PageContext, facets: FacetContext) -> str:
     page = ctx.page or "landing"
     grounding = f"""You are the assistant for tube.xyz, a tubulin structural-biology database. You answer questions and drive the UI by calling tools.
@@ -300,7 +327,9 @@ PAGE GUIDANCE (landing page).
 - Route the user with cards: open_catalogue (browse — see CATALOGUE CARDS), open_structure / open_expert (a real structure — use resolve_structure or organism+family selectors, NEVER guess rcsb_id), inspect_ligand, view_variants.
 - For data/overview/comparison questions, answer in answer_markdown (look up the real numbers first), optionally attaching cards.
 - Rank cards most-specific first; never emit two cards with the same intent.
+- For "compare/show the <ligand> binding site across organisms" intent, emit an open_expert card carrying arrival_actions so it lands already visualized — see ARRIVAL ACTIONS below.
 
+{_ARRIVAL_ACTIONS}
 {_CATALOGUE_CARDS}"""
 
     return grounding + view
@@ -469,7 +498,7 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
         # If any commit tool is present, that ends the loop — build the result.
         commit = next((c for c in tool_calls if c.function.name in _COMMIT_TOOLS), None)
         if commit is not None:
-            return _build_terminal_result(commit, trace)
+            return _build_terminal_result(commit, trace, facets)
 
         # Otherwise: execute all retrieval calls, append results, continue.
         for c in tool_calls:
@@ -494,7 +523,7 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
     return AssistantResult(kind="cannot", reason="Ran out of steps without a conclusion.", trace=trace)
 
 
-def _build_terminal_result(commit, trace: List[TraceEntry]) -> AssistantResult:
+def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext) -> AssistantResult:
     name = commit.function.name
     try:
         raw = json.loads(commit.function.arguments or "{}")
@@ -522,9 +551,12 @@ def _build_terminal_result(commit, trace: List[TraceEntry]) -> AssistantResult:
         else:
             dropped.extend([{**d, "suggested": True, "label": s.label} for d in sd])
 
+    cards, validation, card_drops = _finalize_cards(args.cards, facets)
+    dropped.extend(card_drops)
+
     proposed_auto = len(args.viewer_actions or [])
     has_text = bool(args.answer_markdown)
-    has_cards = bool(args.cards)
+    has_cards = bool(cards)
     # Honesty: if the model ONLY tried to auto-apply viewer actions and they all
     # failed (no text, no cards, no surviving chips), surface the failure rather
     # than a silent no-op.
@@ -544,12 +576,69 @@ def _build_terminal_result(commit, trace: List[TraceEntry]) -> AssistantResult:
         data=args.data,
         viewer_actions=kept,
         suggested_actions=suggested,
-        cards=args.cards or [],
+        cards=cards,
         queries=args.queries or [],
-        entities=args.entities or [],
+        entities=dedupe_entities(args.entities),
         dropped_actions=dropped,
+        validation=validation,
         trace=trace,
     )
+
+
+def _finalize_cards(
+    raw_cards: Optional[List[ActionCard]],
+    facets: FacetContext,
+) -> Tuple[List[ActionCard], Dict[str, Dict[str, Any]], List[Dict[str, Any]]]:
+    """Resolve organism selectors -> real (rcsb_id, chain), existence-check, and
+    validate per-card arrival_actions. Returns (cards, validation, dropped).
+
+    The grounded loop previously only deduped cards, so organism-selector cards
+    reached the frontend unresolved (no rcsb_id -> broken nav URL). We reuse the
+    legacy /nl_query/global pipeline: resolve_response (intent -> real ids) then
+    hydrate_response (existence check, drop hallucinated ids, assign stable card
+    ids, fill validation). Then each surviving card's arrival_actions go through
+    the same validation gate as viewer_actions.
+    """
+    dropped: List[Dict[str, Any]] = []
+    # GlobalNLResponse enforces max_length on cards; cap defensively so an
+    # over-eager model can't turn a respond into a hard validation error.
+    resp = GlobalNLResponse(cards=list(raw_cards or [])[:MAX_CARDS])
+    resolve_response(resp)
+    hydrate_response(resp, known_families=facets.tubulin_families)
+
+    # Comparison integrity: drop an open_expert card whose aligned side fully
+    # collapsed during resolution (it asked to compare against organism(s) but
+    # none resolved). A "compare A vs B" card that silently became "just A" is
+    # dishonest — better to drop the card and keep the textual answer.
+    cards: List[ActionCard] = []
+    for c in resp.cards:
+        if c.action == "open_expert" and c.aligned_organism_ids and not c.aligned:
+            dropped.append({
+                "type": "open_expert",
+                "reason": "comparison collapsed: no aligned organism resolved",
+                "card": True,
+            })
+            continue
+        cards.append(c)
+
+    validation = {c.id: resp.validation.get(c.id, {"ok": True}) for c in cards if c.id}
+
+    # Validate each card's arrival_actions through the viewer-action gate. Drop
+    # invalid ones (surfaced in dropped_actions) and re-serialize from the kept
+    # calls — _normalize_action_args mutates args in place.
+    for c in cards:
+        if not c.arrival_actions:
+            continue
+        calls = [
+            ViewerActionCall(type=d.get("type", ""), args=d.get("args", {}) or {})
+            for d in c.arrival_actions
+            if isinstance(d, dict)
+        ]
+        akept, adropped = _validate_viewer_actions(calls)
+        c.arrival_actions = [k.model_dump() for k in akept]
+        dropped.extend([{**d, "arrival_card": c.id} for d in adropped])
+
+    return cards, validation, dropped
 
 
 __all__ = ["run_assistant", "AssistantResult", "PageContext", "ViewerActionCall", "SuggestedAction"]

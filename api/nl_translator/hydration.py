@@ -18,7 +18,12 @@ from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from neo4j_tubxz.db_lib_reader import db_reader
 
-from api.nl_translator.global_actions import ActionCard, GlobalNLResponse
+from api.nl_translator.global_actions import (
+    ActionCard,
+    GlobalNLResponse,
+    card_identity_key,
+    card_stable_id,
+)
 
 
 # (kind, key) -> (exists, inserted_ts). Negative results not cached; the LLM
@@ -228,6 +233,7 @@ def hydrate_response(
 
     new_validation: Dict[str, Dict[str, Any]] = {}
     kept_cards: List[ActionCard] = []
+    seen_keys: Set[str] = set()
 
     for card in resp.cards:
         ok = True
@@ -301,11 +307,17 @@ def hydrate_response(
         if not ok:
             continue
 
-        key = f"card_{len(kept_cards)}"
+        # Drop true duplicates and key validation by the card's stable id (not a
+        # positional index) so the frontend can't mis-map after dedup/reorder.
+        ident = card_identity_key(card)
+        if ident in seen_keys:
+            continue
+        seen_keys.add(ident)
+        card.id = card_stable_id(card)
         rec: Dict[str, Any] = {"ok": True}
         if reasons:
             rec["reason"] = "; ".join(reasons)
-        new_validation[key] = rec
+        new_validation[card.id] = rec
         kept_cards.append(card)
 
     resp.cards = kept_cards

@@ -18,6 +18,7 @@ Backend code interprets which fields are meaningful for each kind/action.
 """
 from __future__ import annotations
 
+import hashlib
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field
@@ -113,6 +114,11 @@ class ActionCard(BaseModel):
         description="Optional 1-line subtitle under the label",
     )
 
+    # Server-filled stable id (hash of the card's semantic key). The LLM leaves
+    # this null; dedupe_cards() assigns it. The frontend keys React lists and the
+    # validation map on it, so duplicate/reordered cards can't mis-map.
+    id: Optional[str] = Field(default=None, description="Server-filled; leave null.")
+
     # open_catalogue
     query_ref: Optional[str] = Field(
         default=None,
@@ -175,6 +181,98 @@ class ActionCard(BaseModel):
         default=None, description="One-sentence clarification when intent is ambiguous"
     )
 
+    # Grounded viewer actions to AUTO-APPLY after the user clicks this card and
+    # the target page finishes loading (precompute-on-landing / replay-on-arrival).
+    # Raw {type, args} dicts, validated server-side against VIEWER_ACTION_MODELS.
+    # The card's URL still carries the navigation (mode/chain/align); these layer
+    # the rich viewer state (annotation tracks, binding-site focus) on top once the
+    # view has settled. Payload only — excluded from card_identity_key.
+    arrival_actions: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Viewer actions ({type,args}) auto-applied on the destination page after navigation.",
+    )
+
+
+# ---------------------------------------------------------------------------
+# Card / entity identity + dedup. Shared by the orchestrator (/assistant/query)
+# and the global path (/nl_query/global) so duplicate suggestions die in one
+# place. Two items with the same semantic key do the same thing — we keep the
+# first and give each survivor a stable id derived from that key (used as the
+# frontend React key and the validation-map key).
+# ---------------------------------------------------------------------------
+
+def _norm_list(v: Optional[List[Any]]) -> str:
+    return ",".join(sorted(str(x) for x in v)) if v else ""
+
+
+def card_identity_key(card: "ActionCard") -> str:
+    """The fields that make two cards meaningfully the same action. Comprehensive
+    on purpose: we only collapse TRUE duplicates, never near-misses that might
+    differ in a way the user cares about."""
+    parts = [
+        card.action or "",
+        (card.rcsb_id or "").upper(),
+        card.query_ref or "",
+        str(card.primary_organism_id or ""),
+        _norm_list(card.aligned_organism_ids),
+        _norm_list(card.source_organism_ids),
+        card.family or "",
+        (card.chemical_id or "").upper(),
+        card.variant_type or "",
+        str(card.position_min or ""),
+        str(card.position_max or ""),
+        _norm_list(card.focus_chains),
+        _norm_list(card.focus_ligands),
+    ]
+    return "|".join(parts)
+
+
+def card_stable_id(card: "ActionCard") -> str:
+    return "card_" + hashlib.sha1(card_identity_key(card).encode()).hexdigest()[:8]
+
+
+def dedupe_cards(cards: Optional[List["ActionCard"]]) -> List["ActionCard"]:
+    """Drop cards with a duplicate semantic key (keep first); assign each
+    survivor its stable id in place."""
+    seen: set = set()
+    out: List["ActionCard"] = []
+    for c in cards or []:
+        key = card_identity_key(c)
+        if key in seen:
+            continue
+        seen.add(key)
+        c.id = card_stable_id(c)
+        out.append(c)
+    return out
+
+
+def entity_identity_key(e: "EntityRef") -> str:
+    parts = [
+        e.kind or "",
+        (e.rcsb_id or "").upper(),
+        e.auth_asym_id or "",
+        e.entity_id or "",
+        (e.chemical_id or "").upper(),
+        "" if e.auth_seq_id is None else str(e.auth_seq_id),
+        e.family or "",
+        "" if e.master_index is None else str(e.master_index),
+        "" if e.start is None else str(e.start),
+        "" if e.end is None else str(e.end),
+    ]
+    return "|".join(parts)
+
+
+def dedupe_entities(entities: Optional[List["EntityRef"]]) -> List["EntityRef"]:
+    seen: set = set()
+    out: List["EntityRef"] = []
+    for e in entities or []:
+        key = entity_identity_key(e)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(e)
+    return out
+
 
 # ---------------------------------------------------------------------------
 # Query specs the frontend will run against existing list endpoints.
@@ -235,6 +333,11 @@ __all__ = [
     "AlignedRef",
     "RangeRef",
     "ActionCard",
+    "card_identity_key",
+    "card_stable_id",
+    "dedupe_cards",
+    "entity_identity_key",
+    "dedupe_entities",
     "QueryTarget",
     "QuerySpec",
     "GlobalNLResponse",
