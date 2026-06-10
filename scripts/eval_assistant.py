@@ -19,6 +19,9 @@ the model is non-deterministic. What it asserts:
 `soft` expectations warn but never fail — for model-discretion niceties (a suggested
 chip, a table) we'd like but won't gate on.
 
+One invariant is checked on every case regardless of `expect`: `no_tool_leak` — the
+answer text must never carry a leaked tool-call fragment or literal \n/\t escape.
+
 Run with Neo4j up and .env sourced:
 
     set -a; source .env; set +a
@@ -217,6 +220,23 @@ def evaluate(result, expect: Dict[str, Any]) -> List[str]:
     return fails
 
 
+def no_tool_leak(result) -> List[str]:
+    """Hard invariant on EVERY case (case-independent, so it lives outside the
+    per-case `expect`): a respond terminal's answer_markdown/summary must never
+    carry a tool-call leak (`<parameter`/`<invoke`/...) or literal `\\n`/`\\t`
+    escapes. Guards the sanitizer in orchestrator._build_terminal_result."""
+    fails: List[str] = []
+    for text, label in [(result.answer_markdown, "answer_markdown"),
+                        (result.summary, "summary")]:
+        if not text:
+            continue
+        if any(m in text for m in ("<parameter", "<invoke", "<function", "<antml")):
+            fails.append(f"{label}: tool-call marker fragment leaked into text")
+        if "\\n" in text or "\\t" in text:
+            fails.append(f"{label}: literal \\n/\\t escape in text")
+    return fails
+
+
 # ---------------------------------------------------------------------------
 # Deterministic retrieval pre-check — fail fast on a DB/Cypher problem before
 # spending any LLM calls.
@@ -312,7 +332,7 @@ def main() -> int:
                 try:
                     ctx = build_context(case, rcsb)
                     result = run_assistant(case["query"], ctx)
-                    hard = evaluate(result, case.get("expect", {}))
+                    hard = evaluate(result, case.get("expect", {})) + no_tool_leak(result)
                     soft = evaluate(result, case.get("soft", {}))
                     record = {
                         "case": case["id"], "run": n, "query": case["query"],

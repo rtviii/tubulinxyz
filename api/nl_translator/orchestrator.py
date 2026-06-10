@@ -432,16 +432,42 @@ _TOOL_LEAK_MARKERS = (
 
 
 def _strip_tool_call_leak(content: str) -> str:
-    """Clean bare prose before surfacing it as an answer. Truncate from the first
-    tool-call-like marker onward (the leak trails the real prose), and unescape
-    literal '\\n'/'\\t' the model sometimes emits as two characters."""
+    """Clean prose before surfacing it as an answer. Truncate from the first
+    tool-call-like marker onward (the leak trails the real prose), unescape literal
+    '\\n'/'\\t' the model sometimes emits as two characters, and undo a value the
+    model double-encoded as a JSON string literal (stray wrapping/trailing quotes).
+    Applied to every respond terminal's answer_markdown/summary, not just the
+    bare-text fallback, so leaks/escapes can't pass through a successful `respond`."""
     text = content or ""
     cut = len(text)
     for marker in _TOOL_LEAK_MARKERS:
         i = text.find(marker)
         if i != -1:
             cut = min(cut, i)
-    text = text[:cut].replace("\\n", "\n").replace("\\t", "\t")
+    leaked = cut < len(text)
+    text = text[:cut].strip()
+    # A value the model double-encoded as a JSON string literal ("...\n...") —
+    # decode it (json handles its own \n/\t escapes) so the wrapping quotes and
+    # escapes don't survive as text. Otherwise unescape the literal \n/\t the
+    # model sometimes emits as two characters.
+    decoded = False
+    if len(text) >= 2 and text.startswith('"') and text.endswith('"'):
+        try:
+            d = json.loads(text)
+            if isinstance(d, str):
+                text, decoded = d, True
+        except (ValueError, TypeError):
+            pass
+    if not decoded:
+        text = text.replace("\\n", "\n").replace("\\t", "\t")
+    text = text.strip()
+    if leaked:
+        # The chars just before the marker are usually the JSON string
+        # terminator ('",' or '"'); strip that trailing leak debris.
+        text = text.rstrip(' \t\r\n",')
+    elif text.endswith('"') and text.count('"') % 2 == 1:
+        # A lone unbalanced trailing quote (the cryo-EM '...9WDB"' tail).
+        text = text[:-1].rstrip()
     return text.strip()
 
 
@@ -554,8 +580,15 @@ def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext
     cards, validation, card_drops = _finalize_cards(args.cards, facets)
     dropped.extend(card_drops)
 
+    # Sanitize text on EVERY respond terminal (not just the bare-text fallback): a
+    # successful respond can still carry a tool-call leak or literal \n escapes in
+    # answer_markdown/summary. Clean BEFORE the honesty gate so an answer that was
+    # nothing but a leak collapses to None and the gate handles it correctly.
+    clean_answer = (_strip_tool_call_leak(args.answer_markdown) or None) if args.answer_markdown else None
+    clean_summary = (_strip_tool_call_leak(args.summary) or None) if args.summary else None
+
     proposed_auto = len(args.viewer_actions or [])
-    has_text = bool(args.answer_markdown)
+    has_text = bool(clean_answer)
     has_cards = bool(cards)
     # Honesty: if the model ONLY tried to auto-apply viewer actions and they all
     # failed (no text, no cards, no surviving chips), surface the failure rather
@@ -571,8 +604,8 @@ def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext
 
     return AssistantResult(
         kind="respond",
-        answer_markdown=args.answer_markdown,
-        summary=args.summary,
+        answer_markdown=clean_answer,
+        summary=clean_summary,
         data=args.data,
         viewer_actions=kept,
         suggested_actions=suggested,
