@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from typing import Any, Dict, List, Optional, Tuple, Type
 
 from pydantic import BaseModel, Field, ValidationError
@@ -325,6 +326,25 @@ def _make_client() -> Tuple[Any, str, int]:
     return client, model, _DEFAULT_MAX_TOKENS
 
 
+def _chat_completion_with_retry(client: Any, kwargs: Dict[str, Any], attempts: int = 3) -> Any:
+    """Call the chat-completions endpoint, retrying transient provider errors
+    (OpenRouter/upstream 5xx, timeouts, rate limits) with linear backoff. A single
+    provider hiccup was otherwise failing the whole query and surfacing to the user
+    as 'Assistant error: InternalServerError'. Re-raises the last error if all
+    attempts fail (the router turns it into a kind='cannot' result)."""
+    from openai import APIConnectionError, APITimeoutError, InternalServerError, RateLimitError
+    transient = (APIConnectionError, APITimeoutError, InternalServerError, RateLimitError)
+    last_err: Optional[Exception] = None
+    for i in range(attempts):
+        try:
+            return client.chat.completions.create(**kwargs)
+        except transient as e:
+            last_err = e
+            if i < attempts - 1:
+                time.sleep(1.0 * (i + 1))
+    raise last_err  # type: ignore[misc]
+
+
 # ---------------------------------------------------------------------------
 # Action validation (Phase 0: validate type+args; full chain-map grounding is Phase 1)
 # ---------------------------------------------------------------------------
@@ -420,7 +440,7 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
                 "content": "You have used all lookups. Finish now with `respond` (include any visualization in viewer_actions/suggested_actions) or `cannot_answer`, based only on results you already have.",
             })
 
-        response = client.chat.completions.create(**kwargs)
+        response = _chat_completion_with_retry(client, kwargs)
         message = response.choices[0].message
         tool_calls = getattr(message, "tool_calls", None) or []
 

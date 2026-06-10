@@ -96,6 +96,7 @@ class CountVariantsArgs(BaseModel):
     species_tax_ids: Optional[List[int]] = Field(None, description="NCBI tax ids (structural variants only)")
     species_names: Optional[List[str]] = Field(None, description="Text species match for literature variants, e.g. ['H. sapiens']")
     position_range: Optional[Tuple[int, int]] = None
+    positions: Optional[List[int]] = Field(None, description="Explicit master positions (e.g. a binding site); ANDed with position_range. Use to scope a count to a site.")
     wild_type_aas: Optional[List[str]] = None
     observed_aas: Optional[List[str]] = None
     phenotype_contains: Optional[List[str]] = None
@@ -259,6 +260,7 @@ def count_variants(a: CountVariantsArgs) -> Dict[str, Any]:
         species_tax_ids=a.species_tax_ids,
         species_names=a.species_names,
         position_range=a.position_range,
+        positions=a.positions,
         wild_type_aas=a.wild_type_aas,
         observed_aas=a.observed_aas,
         phenotype_contains=a.phenotype_contains,
