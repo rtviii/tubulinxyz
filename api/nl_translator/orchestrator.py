@@ -32,9 +32,11 @@ from api.nl_translator.global_actions import (
     QuerySpec,
     dedupe_entities,
 )
+from api.nl_translator.grounding import ground_master_positions
+from api.nl_translator.regions import assign_region
 from api.nl_translator.hydration import hydrate_response
 from api.nl_translator.interface import FacetContext
-from api.nl_translator.resolve import resolve_response
+from api.nl_translator.resolve import resolve_representative, resolve_response
 from api.nl_translator.retrieval import RETRIEVAL_TOOLS, run_retrieval_tool
 from api.nl_translator.viewer_actions import VIEWER_ACTION_MODELS
 
@@ -65,6 +67,14 @@ class PageContext(BaseModel):
     loaded_tracks: List[str] = Field(default_factory=list)
     # catalogue-page current filters (freeform; merged/overwritten as user intends)
     current_filters: Optional[Dict[str, Any]] = None
+    # landing-page live demo viewer: the structure currently shown beside the
+    # chat, and its chains. Lets the model point at the demo (highlight a chain,
+    # ground binding residues onto it) instead of only routing away with cards.
+    demo_rcsb_id: Optional[str] = None
+    demo_chains: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Demo chains as [{auth_asym_id, family}], e.g. [{'auth_asym_id':'A','family':'tubulin_alpha'}].",
+    )
 
 
 class ViewerActionCall(BaseModel):
@@ -189,6 +199,308 @@ def _organism_table(facets: FacetContext) -> str:
         tail = f" [e.g. {', '.join(rep)}]" if rep else " [none indexed]"
         lines.append(f"  - {o.get('tax_id')} -> {o.get('name')}{tail}")
     return "\n".join(lines) if lines else "  (none)"
+
+
+# Whole-chain actions that are safe to run on the spinning landing demo: they
+# touch no residue coordinates and don't depend on expert-mode MSA state.
+# Residue-level visualization on the demo goes through GROUNDED entities, never
+# through actions (see _ground_landing_entities + the landing prompt).
+_LANDING_SAFE_ACTION_TYPES = {
+    "FocusChain", "HighlightChain", "SetChainVisibility", "IsolateChain",
+    "ClearFocus", "ClearHighlight",
+}
+
+_FAMILY_LABELS = {
+    "tubulin_alpha": "alpha-tubulin",
+    "tubulin_beta": "beta-tubulin",
+    "tubulin_gamma": "gamma-tubulin",
+    "tubulin_delta": "delta-tubulin",
+    "tubulin_epsilon": "epsilon-tubulin",
+}
+
+
+def _family_label(fam: Optional[str]) -> str:
+    return _FAMILY_LABELS.get(fam or "", fam or "?")
+
+
+def _demo_chain_families(ctx: PageContext) -> Dict[str, Optional[str]]:
+    """{auth_asym_id -> family} for the landing demo's chains."""
+    out: Dict[str, Optional[str]] = {}
+    for ch in ctx.demo_chains or []:
+        if isinstance(ch, dict):
+            aid = ch.get("auth_asym_id")
+            if aid:
+                out[str(aid)] = ch.get("family")
+    return out
+
+
+def _demo_summary(ctx: PageContext) -> str:
+    """One-line description of the demo for the prompt, or '' if no demo."""
+    chains = _demo_chain_families(ctx)
+    if not ctx.demo_rcsb_id or not chains:
+        return ""
+    parts = ", ".join(f"{aid}={_family_label(fam)}" for aid, fam in chains.items())
+    return f"{ctx.demo_rcsb_id.upper()} ({parts})"
+
+
+def _ground_landing_entities(
+    entities: List[EntityRef], ctx: PageContext
+) -> Tuple[List[EntityRef], List[Dict[str, Any]]]:
+    """Keep only entities we can HONESTLY show on the landing demo viewer.
+
+    - chain: kept iff it is one of the demo's chains.
+    - residue_range: grounded from master_index onto a demo chain
+      (master_index -> auth_seq_id via the profile); start=end set to the real
+      residue number. Dropped if the chain isn't in the demo, master_index is
+      missing, or the position isn't modeled on that chain. We NEVER trust a
+      model-supplied start/end on landing (it'd be a recalled/unsupported number).
+    - other kinds (structure/family/ligand/variant/polymer_entity): pass through
+      untouched — the frontend renders them as plain text / navigation, not as a
+      demo highlight.
+    """
+    chains = _demo_chain_families(ctx)
+    rcsb = (ctx.demo_rcsb_id or "").upper()
+    kept: List[EntityRef] = []
+    dropped: List[Dict[str, Any]] = []
+    for e in entities:
+        if e.kind == "chain":
+            if e.auth_asym_id in chains:
+                kept.append(e)
+            else:
+                dropped.append({"type": "entity:chain", "reason": f"{e.auth_asym_id} not a demo chain", "entity": True})
+            continue
+        if e.kind == "residue_range":
+            aid = e.auth_asym_id
+            if not rcsb or aid not in chains or e.master_index is None:
+                dropped.append({"type": "entity:residue_range", "reason": "needs a demo chain + master_index to ground", "entity": True})
+                continue
+            mapped = ground_master_positions(rcsb, aid, chains.get(aid), [e.master_index]).get(e.master_index)
+            if mapped is None:
+                dropped.append({"type": "entity:residue_range", "reason": f"master {e.master_index} not modeled on {aid}", "entity": True})
+                continue
+            e.start = mapped
+            e.end = mapped
+            kept.append(e)
+            continue
+        if e.kind in ("residue_set", "region"):
+            if e.auth_asym_id in chains and e.positions:
+                kept.append(e)
+            else:
+                dropped.append({"type": f"entity:{e.kind}", "reason": "needs a demo chain + positions", "entity": True})
+            continue
+        kept.append(e)
+    return kept, dropped
+
+
+# Tools whose results carry master positions we can ground onto the demo.
+_HARVEST_TOOLS = {"get_binding_site", "get_binding_contacts", "count_modifications", "count_variants"}
+_HARVEST_CAP = 40
+
+# The category a harvested residue belongs to, by the tool that surfaced it — so
+# the frontend can tint binding / PTM / variant residues distinctly.
+_TOOL_CATEGORY = {
+    "get_binding_site": "binding",
+    "get_binding_contacts": "binding",
+    "count_modifications": "modification",
+    "count_variants": "variant",
+}
+
+
+def _collapse_runs(pairs: List[Tuple[int, int]]) -> List[Tuple[int, int, int]]:
+    """Collapse contiguous auth_seq_id runs so a span like 423-444 becomes one
+    range, not 22 isolated numbers. `pairs` are (master, auth); returns
+    (start_auth, end_auth, master_of_start) per run, sorted by auth."""
+    runs: List[Tuple[int, int, int]] = []
+    for master, auth in sorted(pairs, key=lambda p: p[1]):
+        if runs and auth == runs[-1][1] + 1:
+            s, _e, m0 = runs[-1]
+            runs[-1] = (s, auth, m0)
+        else:
+            runs.append((auth, auth, master))
+    return runs
+
+
+def _harvest_demo_entities(
+    tool_results: List[Dict[str, Any]], ctx: PageContext
+) -> List[EntityRef]:
+    """Deterministically turn looked-up master positions into grounded demo
+    residue entities — so interactions appear RELIABLY whenever the model fetched
+    binding/PTM/variant data for a family the demo shows, instead of depending on
+    a weaker model to remember to emit ~40 residue entities by hand.
+
+    For each harvest-tool result whose `family` matches a demo chain, ground its
+    `positions` (master) to that chain's auth_seq_id and emit one residue entity
+    per position (gaps dropped, capped)."""
+    chains = _demo_chain_families(ctx)
+    rcsb = (ctx.demo_rcsb_id or "").upper()
+    if not rcsb or not chains:
+        return []
+    # family -> the demo chain that shows it (first match).
+    fam_to_chain: Dict[str, str] = {}
+    for aid, fam in chains.items():
+        if fam and fam not in fam_to_chain:
+            fam_to_chain[fam] = aid
+
+    out: List[EntityRef] = []
+    seen: set = set()
+    pocket_seen: set = set()
+    region_seen: set = set()
+    for tr in tool_results:
+        tool = tr.get("tool")
+        if tool not in _HARVEST_TOOLS:
+            continue
+        res = tr.get("result") or {}
+        fam = res.get("family")
+        positions = res.get("positions") or []
+        aid = fam_to_chain.get(fam) if fam else None
+        if not aid or not positions:
+            continue
+        category = _TOOL_CATEGORY.get(tool)
+        grounded = ground_master_positions(rcsb, aid, fam, list(positions)[:_HARVEST_CAP])
+        # (master, auth) pairs for positions modeled on this chain.
+        pairs = [(m, a) for m, a in grounded.items() if a is not None]
+        if not pairs:
+            continue
+        auth_positions = sorted({a for _, a in pairs})
+
+        # 1) residue_range entities — collapse contiguous runs so spans light up
+        # as one unit. Dedup individual residues across tools (first tool wins).
+        new_pairs = [(m, a) for m, a in pairs if (aid, a) not in seen]
+        for _m, a in new_pairs:
+            seen.add((aid, a))
+        for start, end, m0 in _collapse_runs(new_pairs):
+            out.append(EntityRef(
+                kind="residue_range", auth_asym_id=aid, family=fam,
+                master_index=m0, start=start, end=end, category=category,
+            ))
+
+        # 2) region entities — group grounded residues that fall in a NAMED
+        # structural region (UniProt-derived: C-terminal tail, GTP/nucleotide
+        # site, MREI motif). Residues in no named region are left to their inline
+        # residue_range run (which already collapses + frames a span), so a pill
+        # is only ever a real named region, not a redundant span chip. One pill
+        # per (chain, region) with >=2 residues, deduped across tools.
+        by_region: Dict[str, List[int]] = {}
+        for m, a in pairs:
+            lab = assign_region(fam, m)
+            if lab:
+                by_region.setdefault(lab, []).append(a)
+        for lab, auths in by_region.items():
+            uniq = sorted(set(auths))
+            if len(uniq) < 2 or (aid, lab) in region_seen:
+                continue
+            region_seen.add((aid, lab))
+            out.append(EntityRef(
+                kind="region", auth_asym_id=aid, family=fam,
+                label=lab, positions=uniq, category=category,
+            ))
+
+        # 3) For a ligand binding lookup, also surface the WHOLE pocket as one
+        # residue_set keyed to the ligand — so hovering the ligand name (or a
+        # pocket pill) lights up the entire site at once, not one number at a time.
+        chem = _binding_chem(tool, tr.get("args") or {}, res)
+        if chem and auth_positions and (aid, chem.upper()) not in pocket_seen:
+            pocket_seen.add((aid, chem.upper()))
+            out.append(EntityRef(
+                kind="residue_set", auth_asym_id=aid, family=fam,
+                chemical_id=chem.upper(), positions=sorted(set(auth_positions)),
+                category="binding",
+            ))
+    return out
+
+
+def _binding_chem(tool: str, args: Dict[str, Any], res: Dict[str, Any]) -> Optional[str]:
+    """The ligand a binding-tool call was about (single chem id), or None."""
+    if tool == "get_binding_site":
+        return args.get("chemical_id") or res.get("chemical_id")
+    if tool == "get_binding_contacts":
+        cids = args.get("chemical_ids") or res.get("chemical_ids") or []
+        return cids[0] if cids else None
+    return None
+
+
+def _ligand_card(rcsb: str, chain: Optional[str], lig: str, fam: Optional[str]) -> ActionCard:
+    rcsb = rcsb.upper()
+    lig = lig.upper()
+    return ActionCard(
+        action="open_structure", rcsb_id=rcsb,
+        focus_chains=[chain] if chain else None,
+        focus_ligands=[lig],
+        label=f"Open {rcsb} — {lig} bound",
+        description=f"See {lig} in a real {_family_label(fam)} structure ({rcsb}).",
+    )
+
+
+def _harvest_demo_cards(
+    tool_results: List[Dict[str, Any]], ctx: PageContext
+) -> List[ActionCard]:
+    """Safety net so a "where does X bind / show me a structure" answer ALWAYS
+    gives the user a way in, even when the model forgets the card. Only called
+    when the model emitted zero cards. Two sources, in order:
+      1) a structure the model already resolved (resolve_structure found:true);
+      2) failing that, a binding lookup (get_binding_site / get_binding_contacts)
+         whose (family, ligand) we resolve to a real bound structure ourselves.
+    """
+    # 1) Model-resolved structure.
+    for tr in tool_results:
+        if tr.get("tool") != "resolve_structure":
+            continue
+        res = tr.get("result") or {}
+        if not res.get("found") or not res.get("rcsb_id"):
+            continue
+        args = tr.get("args") or {}
+        rcsb = str(res["rcsb_id"]).upper()
+        chain = res.get("auth_asym_id")
+        lig = args.get("ligand")
+        if lig:
+            return [_ligand_card(rcsb, chain, str(lig), args.get("family"))]
+        return [ActionCard(
+            action="open_structure", rcsb_id=rcsb,
+            focus_chains=[chain] if chain else None,
+            label=f"Open {rcsb}",
+            description=f"A representative {_family_label(args.get('family'))} structure ({rcsb}).",
+        )]
+
+    # 2) Resolve a bound structure ourselves from a binding lookup.
+    for tr in tool_results:
+        tool = tr.get("tool")
+        if tool not in ("get_binding_site", "get_binding_contacts"):
+            continue
+        args = tr.get("args") or {}
+        res = tr.get("result") or {}
+        fam = args.get("family") or res.get("family")
+        if tool == "get_binding_site":
+            chem = args.get("chemical_id") or res.get("chemical_id")
+        else:
+            cids = args.get("chemical_ids") or res.get("chemical_ids") or []
+            chem = cids[0] if cids else None
+        if not fam or not chem:
+            continue
+        rep = resolve_representative(family=fam, ligand=str(chem))
+        if rep:
+            return [_ligand_card(rep[0], rep[1], str(chem), fam)]
+    return []
+
+
+def _filter_landing_actions(
+    calls: List[ViewerActionCall], ctx: PageContext
+) -> Tuple[List[ViewerActionCall], List[Dict[str, Any]]]:
+    """Restrict landing viewer/suggested actions to whole-chain ops on the demo's
+    own chains. Anything else (expert-only verbs, residue-coordinate actions, or a
+    chain not in the demo) is dropped so it can't silently no-op or mislead."""
+    chains = set(_demo_chain_families(ctx).keys())
+    kept: List[ViewerActionCall] = []
+    dropped: List[Dict[str, Any]] = []
+    for c in calls:
+        if c.type not in _LANDING_SAFE_ACTION_TYPES:
+            dropped.append({"type": c.type, "reason": "not a demo-safe landing action", "landing": True})
+            continue
+        aid = c.args.get("auth_asym_id")
+        if aid is not None and aid not in chains:
+            dropped.append({"type": c.type, "reason": f"{aid} not a demo chain", "landing": True})
+            continue
+        kept.append(c)
+    return kept, dropped
 
 
 _VIEWER_ACTION_VOCAB = """\
@@ -322,13 +634,27 @@ PAGE GUIDANCE (catalogue page). Current filters: {cf}
 
 {_CATALOGUE_CARDS}"""
     else:  # landing
+        demo = _demo_summary(ctx)
+        demo_block = ""
+        if demo:
+            chain_map = _demo_chain_families(ctx)
+            demo_chain_ids = ", ".join(chain_map.keys())
+            demo_fams = ", ".join(sorted({_family_label(f) for f in chain_map.values() if f}))
+            demo_block = f"""
+LIVE DEMO VIEWER (beside the chat): currently showing {demo}. Its chains are {demo_chain_ids}.
+- AUTOMATIC RESIDUE HIGHLIGHTS: every master position you LOOK UP for a family the demo shows ({demo_fams}) — via get_binding_site / get_binding_contacts / count_modifications / count_variants — is automatically grounded onto the demo and made hover-interactive in your answer text. So you do NOT emit residue entities or residue actions yourself; just look the positions up (always do) and write them in your prose. They become interactive for free.
+- ALWAYS GIVE A WAY TO GO DEEPER (this is the point of the app — never answer a structural question with prose alone): for "where does <ligand> bind", "what residues / variants / PTMs...", or anything about a specific structure, you MUST also offer an open_expert (or open_structure) card so the user can open a REAL structure where it's bound/visible. Use resolve_structure to get a real (rcsb_id, chain) — never guess an id. For "compare ... across organisms", attach arrival_actions (see ARRIVAL ACTIONS).
+- EXPLICIT CHAIN REQUESTS ("highlight the beta chain"): offer suggested_actions=[{{"label":"Highlight β-tubulin (chain B)","action":{{"type":"HighlightChain","args":{{"auth_asym_id":"B"}}}}}}] and/or a chain entity {{"kind":"chain","auth_asym_id":"B"}}.
+- Demo actions are whole-chain ONLY (FocusChain, HighlightChain, SetChainVisibility, IsolateChain). NEVER emit AddAnnotationTrack / AlignChain / FocusBindingSite on landing — those are expert-mode only; residue highlighting is already automatic.
+- HONESTY: only the demo's chains ({demo_chain_ids}) are shown here; for a DIFFERENT structure/family, don't fake it on the demo — answer in text and offer a card.
+"""
         view = f"""
 PAGE GUIDANCE (landing page).
 - Route the user with cards: open_catalogue (browse — see CATALOGUE CARDS), open_structure / open_expert (a real structure — use resolve_structure or organism+family selectors, NEVER guess rcsb_id), inspect_ligand, view_variants.
 - For data/overview/comparison questions, answer in answer_markdown (look up the real numbers first), optionally attaching cards.
 - Rank cards most-specific first; never emit two cards with the same intent.
 - For "compare/show the <ligand> binding site across organisms" intent, emit an open_expert card carrying arrival_actions so it lands already visualized — see ARRIVAL ACTIONS below.
-
+{demo_block}
 {_ARRIVAL_ACTIONS}
 {_CATALOGUE_CARDS}"""
 
@@ -483,6 +809,9 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
         {"role": "user", "content": text.strip()},
     ]
     trace: List[TraceEntry] = []
+    # Full retrieval results (not the truncated trace summaries) so the terminal
+    # builder can deterministically harvest demo entities from looked-up positions.
+    tool_results: List[Dict[str, Any]] = []
 
     for step in range(_MAX_STEPS):
         force_terminal = step == _MAX_STEPS - 1
@@ -524,7 +853,7 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
         # If any commit tool is present, that ends the loop — build the result.
         commit = next((c for c in tool_calls if c.function.name in _COMMIT_TOOLS), None)
         if commit is not None:
-            return _build_terminal_result(commit, trace, facets)
+            return _build_terminal_result(commit, trace, facets, ctx, tool_results)
 
         # Otherwise: execute all retrieval calls, append results, continue.
         for c in tool_calls:
@@ -539,6 +868,7 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
             except Exception as e:  # KeyError (unknown tool) or ValidationError or DB error
                 result = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
                 trace.append(TraceEntry(tool=name, args=raw_args, ok=False, summary=_result_summary(result)))
+            tool_results.append({"tool": name, "args": raw_args, "result": result})
             messages.append({
                 "role": "tool",
                 "tool_call_id": c.id,
@@ -549,7 +879,7 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
     return AssistantResult(kind="cannot", reason="Ran out of steps without a conclusion.", trace=trace)
 
 
-def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext) -> AssistantResult:
+def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext, ctx: PageContext, tool_results: Optional[List[Dict[str, Any]]] = None) -> AssistantResult:
     name = commit.function.name
     try:
         raw = json.loads(commit.function.arguments or "{}")
@@ -577,7 +907,35 @@ def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext
         else:
             dropped.extend([{**d, "suggested": True, "label": s.label} for d in sd])
 
-    cards, validation, card_drops = _finalize_cards(args.cards, facets)
+    entities = dedupe_entities(args.entities)
+    raw_cards = list(args.cards or [])
+
+    # Landing demo gating: restrict actions to whole-chain ops on the demo's own
+    # chains, and ground residue entities (master_index -> real auth_seq_id),
+    # dropping anything we can't honestly show. Runs BEFORE the honesty gate so a
+    # filtered-out auto-action is accounted for there.
+    if (ctx.page or "landing") == "landing":
+        kept, lva_drop = _filter_landing_actions(kept, ctx)
+        dropped.extend(lva_drop)
+        safe_suggested: List[SuggestedAction] = []
+        for s in suggested:
+            sk, sd = _filter_landing_actions([s.action], ctx)
+            if sk:
+                safe_suggested.append(s)
+            else:
+                dropped.extend([{**d, "suggested": True, "label": s.label} for d in sd])
+        suggested = safe_suggested
+        entities, ent_drop = _ground_landing_entities(entities, ctx)
+        dropped.extend(ent_drop)
+        # Deterministically surface the residues the model just looked up, so
+        # interactions appear even when the model didn't emit entities itself.
+        entities = dedupe_entities(entities + _harvest_demo_entities(tool_results or [], ctx))
+        # Same safety net for cards: if the model resolved a real structure but
+        # emitted no card, synthesize one so there's always a way in.
+        if not raw_cards:
+            raw_cards = _harvest_demo_cards(tool_results or [], ctx)
+
+    cards, validation, card_drops = _finalize_cards(raw_cards, facets)
     dropped.extend(card_drops)
 
     # Sanitize text on EVERY respond terminal (not just the bare-text fallback): a
@@ -611,7 +969,7 @@ def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext
         suggested_actions=suggested,
         cards=cards,
         queries=args.queries or [],
-        entities=dedupe_entities(args.entities),
+        entities=entities,
         dropped_actions=dropped,
         validation=validation,
         trace=trace,

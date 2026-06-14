@@ -74,10 +74,23 @@ def _structure_ctx(rcsb: str, prefer_family: Optional[str] = None) -> Dict[str, 
     }
 
 
+# The landing page always presents the 9MLF heterodimer demo (A=alpha, B=beta);
+# the frontend sends this in page_context so the orchestrator can ground binding
+# residues onto it and offer demo-safe actions.
+LANDING_DEMO: Dict[str, Any] = {
+    "page": "landing",
+    "demo_rcsb_id": "9MLF",
+    "demo_chains": [
+        {"auth_asym_id": "A", "family": "tubulin_alpha"},
+        {"auth_asym_id": "B", "family": "tubulin_beta"},
+    ],
+}
+
+
 def build_context(case: Dict[str, Any], rcsb: str) -> Dict[str, Any]:
     page = case["page"]
     if page == "landing":
-        return {"page": "landing"}
+        return dict(LANDING_DEMO)
     if page == "structure_alpha":
         return _structure_ctx(rcsb, prefer_family="tubulin_alpha")
     return _structure_ctx(rcsb)
@@ -129,6 +142,27 @@ CASES: List[Dict[str, Any]] = [
          expect=dict(kind="cannot"),
          soft=dict()),
 
+    # --- landing demo viewer (9MLF dimer) ---
+    dict(id="demo_which_chain_alpha", page="landing",
+         query="In the structure shown here, which chain is alpha-tubulin?",
+         expect=dict(kind="respond"),
+         soft=dict(entity_chain_in=["A", "B"])),
+
+    dict(id="demo_highlight_beta", page="landing",
+         query="Highlight the beta-tubulin chain in this structure",
+         expect=dict(kind="respond"),
+         soft=dict(action_types=[["HighlightChain", "FocusChain"]],
+                   entity_chain_in=["B"])),
+
+    # Negative honesty: binding residues are master positions; on the demo they
+    # must arrive GROUNDED (auth_seq_id, demo chain) or not as demo residues at
+    # all — never raw master numbers as viewer coordinates. landing_demo_honesty
+    # enforces the grounding invariant on every landing case.
+    dict(id="demo_taxol_residues_honest", page="landing",
+         query="Show me the taxol binding residues on the beta chain in this structure",
+         expect=dict(kind="respond"),
+         soft=dict()),
+
     # --- smoketest carryovers ---
     dict(id="smoke_ptm_count", page="structure",
          query="how many PTMs are recorded for human alpha-tubulin?",
@@ -159,6 +193,21 @@ def _action_types(result) -> List[str]:
     types = [a.type for a in result.viewer_actions]
     types += [s.action.type for s in result.suggested_actions]
     return types
+
+
+def _entity_kinds(result) -> List[str]:
+    return [e.kind for e in result.entities]
+
+
+def _chain_entity_ids(result) -> List[str]:
+    return [e.auth_asym_id for e in result.entities if e.kind == "chain" and e.auth_asym_id]
+
+
+# Whole-chain ops the landing demo may run; mirrors orchestrator._LANDING_SAFE_ACTION_TYPES.
+_LANDING_SAFE = {
+    "FocusChain", "HighlightChain", "SetChainVisibility", "IsolateChain",
+    "ClearFocus", "ClearHighlight",
+}
 
 
 def _result_text(result) -> str:
@@ -199,6 +248,12 @@ def evaluate(result, expect: Dict[str, Any]) -> List[str]:
         if not (tbl and tbl.get("columns") and tbl.get("rows")):
             fails.append("table: expected data.table with columns + rows")
 
+    fails += _require_membership("entity_kinds", expect.get("entity_kinds", []), _entity_kinds(result))
+
+    chain_in = expect.get("entity_chain_in")
+    if chain_in and not any(cid in chain_in for cid in _chain_entity_ids(result)):
+        fails.append(f"entity_chain_in: no chain entity with auth_asym_id in {chain_in} (got {_chain_entity_ids(result)})")
+
     for ca in expect.get("cards_action", []):
         if not any(c.action == ca for c in result.cards):
             fails.append(f"cards_action: expected a card with action={ca!r}")
@@ -217,6 +272,36 @@ def evaluate(result, expect: Dict[str, Any]) -> List[str]:
         if not ok:
             fails.append(f"query_has: no catalogue query carries all of {qkeys}")
 
+    return fails
+
+
+def landing_demo_honesty(result, demo_chain_ids: List[str]) -> List[str]:
+    """Hard invariant on every LANDING case: anything pointed at the demo viewer
+    must be honestly groundable. residue entities must carry a real (grounded)
+    start/end on a demo chain; chain entities must be demo chains; demo actions
+    must be whole-chain ops on demo chains. Guards the grounding + filtering in
+    orchestrator._build_terminal_result."""
+    fails: List[str] = []
+    allowed = set(demo_chain_ids)
+    for e in result.entities:
+        if e.kind == "residue_range":
+            if e.auth_asym_id not in allowed:
+                fails.append(f"residue entity on non-demo chain {e.auth_asym_id!r}")
+            elif e.start is None or e.end is None:
+                fails.append(f"residue entity {e.auth_asym_id} reached the client ungrounded (no start/end)")
+        elif e.kind == "chain" and e.auth_asym_id not in allowed:
+            fails.append(f"chain entity {e.auth_asym_id!r} is not a demo chain")
+        elif e.kind in ("residue_set", "region") and (e.auth_asym_id not in allowed or not e.positions):
+            fails.append(f"{e.kind} {e.label or e.chemical_id!r} on {e.auth_asym_id!r} not grounded to a demo chain")
+        # Harvested residues are tagged by source; the tint must be a known one.
+        if getattr(e, "category", None) and e.category not in ("binding", "modification", "variant"):
+            fails.append(f"entity {e.kind} carries unknown category {e.category!r}")
+    for a in result.viewer_actions:
+        if a.type not in _LANDING_SAFE:
+            fails.append(f"non-demo-safe viewer_action {a.type} on landing")
+    for s in result.suggested_actions:
+        if s.action.type not in _LANDING_SAFE:
+            fails.append(f"non-demo-safe suggested_action {s.action.type} on landing")
     return fails
 
 
@@ -333,6 +418,9 @@ def main() -> int:
                     ctx = build_context(case, rcsb)
                     result = run_assistant(case["query"], ctx)
                     hard = evaluate(result, case.get("expect", {})) + no_tool_leak(result)
+                    if case["page"] == "landing":
+                        demo_chain_ids = [c["auth_asym_id"] for c in ctx.get("demo_chains", [])]
+                        hard += landing_demo_honesty(result, demo_chain_ids)
                     soft = evaluate(result, case.get("soft", {}))
                     record = {
                         "case": case["id"], "run": n, "query": case["query"],

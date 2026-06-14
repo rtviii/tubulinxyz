@@ -42,6 +42,8 @@ EntityKind = Literal[
     "ligand",
     "variant",
     "residue_range",
+    "residue_set",  # a discrete set of residues on one chain (e.g. a binding pocket)
+    "region",  # a named structural region (e.g. "C-terminal tail") grouping residues on one chain
 ]
 
 
@@ -74,6 +76,15 @@ class EntityRef(BaseModel):
     # Residue range
     start: Optional[int] = Field(default=None, description="Range start (inclusive, auth_seq_id)")
     end: Optional[int] = Field(default=None, description="Range end (inclusive, auth_seq_id)")
+
+    # Residue set (residue_set kind) — a discrete pocket of residues on auth_asym_id.
+    positions: Optional[List[int]] = Field(default=None, description="auth_seq_ids of a residue set (e.g. a binding pocket)")
+
+    # Demo-interaction metadata (backend-computed in harvest, never model-set).
+    # category: where a grounded residue came from, so the frontend can tint
+    # binding/PTM/variant residues distinctly. label: human name for a `region`.
+    category: Optional[str] = Field(default=None, description="'binding' | 'modification' | 'variant'")
+    label: Optional[str] = Field(default=None, description="Human region name, e.g. 'C-terminal tail' (region kind)")
 
 
 # ---------------------------------------------------------------------------
@@ -258,6 +269,9 @@ def entity_identity_key(e: "EntityRef") -> str:
         "" if e.master_index is None else str(e.master_index),
         "" if e.start is None else str(e.start),
         "" if e.end is None else str(e.end),
+        _norm_list(e.positions),
+        e.category or "",
+        e.label or "",
     ]
     return "|".join(parts)
 

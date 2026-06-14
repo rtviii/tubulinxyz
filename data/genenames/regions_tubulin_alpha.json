@@ -1,0 +1,67 @@
+{
+  "family": "tubulin_alpha",
+  "reference": {
+    "accession": "Q71U36",
+    "gene": "TUBA1A"
+  },
+  "master_length": 451,
+  "regions": [
+    {
+      "label": "C-terminal tail",
+      "kind": "REGION",
+      "source": "uniprot:REGION",
+      "ref_span": [
+        432,
+        451
+      ],
+      "master_indices": [
+        432,
+        433,
+        434,
+        435,
+        436,
+        437,
+        438,
+        439,
+        440,
+        441,
+        442,
+        443,
+        444,
+        445,
+        446,
+        447,
+        448,
+        449,
+        450,
+        451
+      ],
+      "master_span": [
+        432,
+        451
+      ],
+      "precedence": 30
+    },
+    {
+      "label": "GTP/nucleotide-binding",
+      "kind": "BINDING",
+      "source": "uniprot:BINDING",
+      "ref_span": null,
+      "master_indices": [
+        11,
+        71,
+        140,
+        144,
+        145,
+        179,
+        206,
+        228
+      ],
+      "master_span": [
+        11,
+        228
+      ],
+      "precedence": 25
+    }
+  ]
+}
