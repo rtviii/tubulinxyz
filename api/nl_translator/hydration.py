@@ -194,6 +194,58 @@ def _check_ligands(cids: Set[str]) -> Set[str]:
     return cached_hits | found
 
 
+def _check_binding_triples(triples: Set[str]) -> Set[str]:
+    """`triples` are 'RCSB:AUTH:CHEM'. Return the subset where chain AUTH in
+    structure RCSB actually contacts ligand CHEM — the same NEAR_POLYMER traversal
+    resolve_representative uses. Catches the "right structure/chain/ligand but they
+    don't go together" case that per-entity existence checks miss.
+
+    Fail-OPEN on DB error (returns all triples): this is a precision refinement on
+    top of the per-entity existence checks, which already gate the card. A dropped
+    DB connection shouldn't turn a structurally-valid card into a dropped one.
+    """
+    unknown = {t for t in triples if _cache_get("triple", t) is None}
+    if not unknown:
+        return set(triples)
+    rows = []
+    for t in unknown:
+        parts = t.split(":")
+        if len(parts) == 3:
+            rows.append({"rcsb": parts[0], "chain": parts[1], "chem": parts[2]})
+    if not rows:
+        return {t for t in triples if _cache_get("triple", t) is True}
+    cypher = """
+    UNWIND $rows AS r
+    MATCH (pi:PolypeptideInstance {parent_rcsb_id: r.rcsb, auth_asym_id: r.chain})
+    MATCH (ni:NonpolymerInstance)-[:NEAR_POLYMER]->(pi)
+    MATCH (ni)-[:INSTANCE_OF]->(:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c:Chemical {chemical_id: r.chem})
+    RETURN DISTINCT r.rcsb + ':' + r.chain + ':' + r.chem AS key
+    """
+    try:
+        with db_reader.adapter.driver.session() as session:
+            found = {r["key"] for r in session.run(cypher, rows=rows)}
+    except Exception:
+        return set(triples)
+    _cache_put_positives("triple", found)
+    cached_hits = {t for t in triples if _cache_get("triple", t) is True}
+    return cached_hits | found
+
+
+def _collect_binding_triples(cards: List[ActionCard]) -> Set[str]:
+    """'RCSB:AUTH:CHEM' triples to verify for inspect_ligand cards that name a
+    specific contacting chain (suggested_chain)."""
+    out: Set[str] = set()
+    for c in cards:
+        if (
+            c.action == "inspect_ligand"
+            and c.rcsb_id
+            and c.suggested_chain
+            and c.chemical_id
+        ):
+            out.add(f"{c.rcsb_id.upper()}:{c.suggested_chain}:{c.chemical_id.upper()}")
+    return out
+
+
 def _check_families(families: Set[str], known_families: List[str]) -> Set[str]:
     """Family is a controlled vocabulary — check against the facet list, no
     DB call needed.
@@ -230,6 +282,7 @@ def hydrate_response(
     found_chains = _check_chains(refs["chain"])
     found_ligands = _check_ligands(refs["ligand"])
     found_families = _check_families(refs["family"], known_families)
+    found_triples = _check_binding_triples(_collect_binding_triples(resp.cards))
 
     new_validation: Dict[str, Dict[str, Any]] = {}
     kept_cards: List[ActionCard] = []
@@ -292,6 +345,18 @@ def hydrate_response(
             if card.chemical_id.upper() not in found_ligands:
                 ok = False
                 reasons.append(f"ligand {card.chemical_id} not found")
+            elif card.rcsb_id and card.suggested_chain:
+                # The card claims this chain contacts this ligand in this
+                # structure (suggested_chain's contract). Verify the actual
+                # binding edge — a real structure + real chain + real ligand that
+                # simply don't go together is the "suggested a structure with no
+                # ligand" failure. Drop it rather than ship a dead pocket focus.
+                triple = f"{card.rcsb_id.upper()}:{card.suggested_chain}:{card.chemical_id.upper()}"
+                if triple not in found_triples:
+                    ok = False
+                    reasons.append(
+                        f"{card.chemical_id} not bound to chain {card.suggested_chain} in {card.rcsb_id}"
+                    )
 
         if ok and a == "view_variants" and card.family:
             if card.family not in found_families:

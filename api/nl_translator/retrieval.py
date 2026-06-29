@@ -46,7 +46,8 @@ class FindStructuresArgs(BaseModel):
     """Filter the PDB structure catalogue. All fields optional; AND-combined."""
     search: Optional[str] = Field(None, description="Free-text search over title/keywords")
     has_ligand_ids: Optional[List[str]] = Field(None, description="PDB chem comp ids that must be bound, e.g. ['TA1','GTP']")
-    has_polymer_family: Optional[List[str]] = Field(None, description="e.g. ['tubulin_alpha','tubulin_beta']")
+    has_polymer_family: Optional[List[str]] = Field(None, description="Exact family enums, AND-combined, e.g. ['tubulin_alpha','tubulin_beta'] or ['map_eb_family']")
+    has_any_map: Optional[bool] = Field(None, description="True -> only structures containing ANY MAP (any map_* family). Use for 'structures with MAPs'; do NOT list every map family in has_polymer_family (that ANDs them).")
     has_isotype: Optional[List[str]] = Field(None, description="Isotype codes, e.g. ['TUBB3']")
     source_organism_ids: Optional[List[int]] = Field(None, description="NCBI tax ids, e.g. [9606]")
     exp_method: Optional[List[str]] = Field(None, description="e.g. ['ELECTRON MICROSCOPY','X-RAY DIFFRACTION']")
@@ -76,6 +77,14 @@ class GetBindingSiteArgs(BaseModel):
     source of binding residues — never recall them from memory."""
     chemical_id: str = Field(..., description="PDB chem comp id, e.g. 'TA1', 'GTP', 'LOC'")
     family: str = Field(..., description="e.g. 'tubulin_beta'")
+
+
+class GetPartnerBindingSiteArgs(BaseModel):
+    """Canonical (cross-structure) TUBULIN interface residues that a MAP family
+    contacts, as master-alignment positions with frequency. This is the GROUNDED
+    source of MAP-on-tubulin interface residues — never recall them from memory."""
+    map_family: str = Field(..., description="MAP family enum, e.g. 'map_eb_family', 'map_stathmin', 'map_kinesin13'")
+    tubulin_family: str = Field(..., description="Tubulin family the interface is reported ON, e.g. 'tubulin_beta', 'tubulin_alpha'")
 
 
 class CountModificationsArgs(BaseModel):
@@ -147,12 +156,65 @@ def _summarize_positions(recs: List[Dict[str, Any]], type_key: Optional[str]) ->
     return out
 
 
+# How many ACTUAL records (not just positions) to surface alongside the counts.
+_RECORD_SAMPLE = 12
+# Cap records per master position so a sample spreads across the variant LANDSCAPE
+# instead of dumping every row at one hotspot (2 still shows a position IS a hotspot).
+_MAX_RECORDS_PER_POSITION = 2
+# Per-domain whitelist of the human-meaningful fields to carry out of a record.
+# Order is presentation order; phenotype is the clinical/disease signal.
+_VARIANT_RECORD_FIELDS = ("wild_type", "observed", "type", "source", "phenotype", "species", "rcsb_id")
+_MODIFICATION_RECORD_FIELDS = ("modification_type", "amino_acid", "phenotype", "database_source", "species")
+
+
+def _sample_records(
+    recs: List[Dict[str, Any]], fields: Tuple[str, ...], limit: int = _RECORD_SAMPLE
+) -> Tuple[List[Dict[str, Any]], bool]:
+    """Surface a representative sample of the ACTUAL annotation records (not just a
+    count) so the model can NAME specific variants/PTMs and quote their phenotype
+    text. Flattens matched_records onto their master_index, drops empty fields,
+    dedups identical surfaced rows, and PRIORITIZES records carrying a phenotype
+    (the disease/functional signal) so the sample doesn't fill up with blanks.
+    Returns (sample, truncated)."""
+    flat: List[Dict[str, Any]] = []
+    for r in recs:
+        mi = r.get("master_index")
+        for rec in r.get("matched_records", []):
+            row: Dict[str, Any] = {"master_index": mi}
+            for f in fields:
+                v = rec.get(f)
+                if v not in (None, "", []):
+                    row[f] = v
+            flat.append(row)
+    seen: set = set()
+    uniq: List[Dict[str, Any]] = []
+    for row in flat:
+        key = tuple(sorted((k, str(v)) for k, v in row.items()))
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(row)
+    uniq.sort(key=lambda x: (0 if x.get("phenotype") else 1, x.get("master_index") or 0))
+    per_pos: Dict[Any, int] = {}
+    sample: List[Dict[str, Any]] = []
+    overflow = False
+    for row in uniq:
+        mi = row.get("master_index")
+        if len(sample) >= limit or per_pos.get(mi, 0) >= _MAX_RECORDS_PER_POSITION:
+            overflow = True
+            continue
+        per_pos[mi] = per_pos.get(mi, 0) + 1
+        sample.append(row)
+    return sample, overflow
+
+
 def find_structures(a: FindStructuresArgs) -> Dict[str, Any]:
     filters = StructureFilters(
         limit=_SAMPLE,
         search=a.search,
         has_ligand_ids=a.has_ligand_ids,
         has_polymer_family=a.has_polymer_family,
+        has_any_map=a.has_any_map,
         has_isotype=a.has_isotype,
         source_organism_ids=a.source_organism_ids,
         exp_method=a.exp_method,
@@ -238,6 +300,30 @@ def get_binding_site(a: GetBindingSiteArgs) -> Dict[str, Any]:
     }
 
 
+def get_partner_binding_site(a: GetPartnerBindingSiteArgs) -> Dict[str, Any]:
+    site = db_reader.get_canonical_partner_site(a.map_family, a.tubulin_family)
+    if site is None:
+        return {
+            "found": False,
+            "map_family": a.map_family,
+            "tubulin_family": a.tubulin_family,
+            "family": a.tubulin_family,  # harvest join key -- MUST be the tubulin family
+        }
+    residues = sorted(site.residues, key=lambda r: r.frequency, reverse=True)
+    return {
+        "found": True,
+        "map_family": site.map_family,
+        "tubulin_family": site.tubulin_family,
+        "family": site.tubulin_family,  # harvest join key -- MUST be the tubulin family
+        "structure_count": site.structure_count,
+        "positions": sorted(r.master_index for r in site.residues)[:_MAX_POSITIONS],
+        "top_positions": [
+            {"master_index": r.master_index, "frequency": round(r.frequency, 3)}
+            for r in residues[:_SAMPLE]
+        ],
+    }
+
+
 def count_modifications(a: CountModificationsArgs) -> Dict[str, Any]:
     spec = ModificationFilterSpec(
         family=a.family,
@@ -250,6 +336,7 @@ def count_modifications(a: CountModificationsArgs) -> Dict[str, Any]:
     recs = resolve_modification_track(spec)
     out = _summarize_positions(recs, type_key="modification_type")
     out["family"] = a.family
+    out["records"], out["records_truncated"] = _sample_records(recs, _MODIFICATION_RECORD_FIELDS)
     return out
 
 
@@ -268,6 +355,7 @@ def count_variants(a: CountVariantsArgs) -> Dict[str, Any]:
     recs = resolve_variant_track(spec)
     out = _summarize_positions(recs, type_key="type")
     out["family"] = a.family
+    out["records"], out["records_truncated"] = _sample_records(recs, _VARIANT_RECORD_FIELDS)
     return out
 
 
@@ -330,6 +418,11 @@ RETRIEVAL_TOOLS: List[RetrievalTool] = [
         name="get_binding_site",
         description="Canonical cross-structure binding residues (master positions + frequency) for a ligand on a family. The grounded source of binding residues.",
         args_model=GetBindingSiteArgs, fn=lambda x: get_binding_site(x),
+    ),
+    RetrievalTool(
+        name="get_partner_binding_site",
+        description="Canonical cross-structure TUBULIN interface residues (master positions + frequency) that a MAP family contacts. The grounded source of MAP-on-tubulin interface residues; never recall them. Pass map_family (e.g. 'map_eb_family') and the tubulin_family the interface is reported ON (e.g. 'tubulin_beta').",
+        args_model=GetPartnerBindingSiteArgs, fn=lambda x: get_partner_binding_site(x),
     ),
     RetrievalTool(
         name="count_modifications",

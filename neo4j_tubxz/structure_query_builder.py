@@ -67,6 +67,14 @@ class StructureQueryBuilder:
         if f.has_polymer_family:
             self._add_polymer_family_filter(f.has_polymer_family)
 
+        if f.has_any_map:
+            self._where_clauses.append("""
+                EXISTS {
+                    MATCH (s)-[:DEFINES_ENTITY]->(map_e:PolypeptideEntity)
+                    WHERE map_e.family STARTS WITH 'map_'
+                }
+            """)
+
         if f.has_uniprot:
             self._add_uniprot_filter(f.has_uniprot)
 

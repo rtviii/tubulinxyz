@@ -77,6 +77,11 @@ class TubulinStructureAssetPaths:
         return os.path.join(self.base_dir, f"{self.rcsb_id}_ligand_binding_sites.json")
 
     @property
+    def partner_contacts_file(self) -> str:
+        """Path to MAP->tubulin partner contacts file."""
+        return os.path.join(self.base_dir, f"{self.rcsb_id}_partner_contacts.json")
+
+    @property
     def classification_report(self) -> str:
         """Path to the HMM classification report."""
         return os.path.join(self.base_dir, f"{self.rcsb_id}_classification_report.json")
@@ -371,6 +376,21 @@ TUBULIN_SEARCH_QUERY = {
                     "attribute": "rcsb_uniprot_annotation.type",
                     "operator": "exact_match",
                     "value": "InterPro",
+                    "negation": False,
+                },
+            },
+            # Exclude integrative/computational models (e.g. the 9A** gammaTuSC and
+            # doublecortin-microtubule series). They are deposited in the PDB archive
+            # and so count as "experimental" content type, but they carry no exptl
+            # method, no resolution, and no standard atom_site chains Molstar can read
+            # -- they would only ever produce empty, broken catalogue entries.
+            {
+                "type": "terminal",
+                "service": "text",
+                "parameters": {
+                    "attribute": "rcsb_entry_info.structure_determination_methodology",
+                    "operator": "exact_match",
+                    "value": "experimental",
                     "negation": False,
                 },
             },

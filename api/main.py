@@ -15,6 +15,7 @@ from api.routers import (
 
 from api.routers.router_annotations import router_annotations
 from api.routers.router_assistant import router_assistant
+from api.routers.router_partners import router_partners
 app = FastAPI(
     title="TubXYZ API",
     version="0.2.0",
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(router_structures, prefix="/structures", tags=["Structures"])
 app.include_router(router_polymers, prefix="/polymers", tags=["Polymers"])
 app.include_router(router_ligands, prefix="/ligands", tags=["Ligands"])
+app.include_router(router_partners, prefix="/partners", tags=["Partners"])
 app.include_router(router_msa, prefix="/msa", tags=["MSA Alignment"])
 app.include_router(router_annotations, prefix="/annotations", tags=["Annotations"])
 app.include_router(router_nl_query, prefix="/nl_query", tags=["NL Query"])

@@ -68,6 +68,11 @@ class StructureFilters(BaseModel):
     has_polymer_family: Optional[List[str]] = None
     has_uniprot: Optional[List[str]] = None
     has_isotype: Optional[List[str]] = None
+    has_any_map: Optional[bool] = Field(
+        default=None,
+        description="True -> only structures that contain at least one MAP "
+                    "(non-tubulin, family STARTS WITH 'map_') polymer entity.",
+    )
 
     # Variant filters (renamed from mutation)
     has_variants: Optional[bool] = Field(default=None, description="Has any variants")
@@ -347,5 +352,18 @@ class CanonicalBindingSite(BaseModel):
     chemical_id: str
     chemical_name: Optional[str] = None
     family: str
+    structure_count: int
+    residues: List[CanonicalBindingSiteResidue]
+
+
+class CanonicalPartnerSite(BaseModel):
+    """Aggregated tubulin interface contacted by a MAP family across all structures.
+
+    Keyed by BOTH families: master positions are on `tubulin_family`'s alignment
+    (alpha and beta have separate master alignments). Residues reuse
+    CanonicalBindingSiteResidue so the frontend heatmap path is unchanged.
+    """
+    map_family: str
+    tubulin_family: str
     structure_count: int
     residues: List[CanonicalBindingSiteResidue]

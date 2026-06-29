@@ -107,6 +107,7 @@ def list_structures(
     has_polymer_family: Optional[List[str]] = Query(None, alias="family"),
     has_uniprot: Optional[List[str]] = Query(None, alias="uniprot"),
     has_isotype: Optional[List[str]] = Query(None, alias="isotype"),
+    has_any_map: Optional[bool] = Query(None, alias="hasAnyMap"),
     # Variant filters
     has_variants: Optional[bool] = Query(None, alias="hasVariants"),
     variant_family: Optional[str] = Query(None, alias="variantFamily"),
@@ -153,6 +154,7 @@ def list_structures(
         has_polymer_family=parsed_families,
         has_uniprot=parsed_uniprot,
         has_isotype=parsed_isotype,
+        has_any_map=has_any_map,
         has_variants=has_variants,
         variant_family=variant_family,
         variant_type=VariantTypeFilter(variant_type) if variant_type else None,

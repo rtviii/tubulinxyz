@@ -40,8 +40,14 @@ from neo4j_tubxz.structure_query_builder import (
 )
 from lib.etl.constants import NEO4J_CURRENTDB, NEO4J_PASSWORD, NEO4J_URI, NEO4J_USER
 
-from neo4j_tubxz.models import CanonicalBindingSite, CanonicalBindingSiteResidue
+from neo4j_tubxz.models import CanonicalBindingSite, CanonicalBindingSiteResidue, CanonicalPartnerSite
 from collections import Counter
+
+# Minimum number of distinct structures that must contribute a master-mapped
+# MAP->tubulin contact before a canonical partner site is considered meaningful.
+# Below this, get_canonical_partner_site returns None and the assistant falls back
+# to the honest "only seen in N structures, here's how to browse" path.
+MIN_PARTNER_STRUCTURES = 5
 
 
 sys.dont_write_bytecode = True
@@ -700,6 +706,88 @@ ORDER BY c.chemical_id
                     chemical_id=chemical_id.upper(),
                     chemical_name=chemical_name,
                     family=family,
+                    structure_count=structure_count,
+                    residues=residues,
+                )
+
+            return session.execute_read(run_query)
+
+    def get_canonical_partner_site(
+        self, map_family: str, tubulin_family: str
+    ) -> Optional[CanonicalPartnerSite]:
+        """
+        Aggregate the tubulin interface residues contacted by a MAP family across all
+        structures, keyed by master_index of the given tubulin family.
+
+        Keyed by BOTH families: the MAP family on the source entity and the tubulin
+        family on the contacted entity (alpha and beta have separate master
+        alignments, so a result is scoped to the tubulin numbering being painted).
+
+        Per-structure dedup: a master_index is counted once per structure regardless
+        of how many MAP instances/chains contact it, so frequency stays in [0, 1]
+        (the ligand aggregator counts per-record and can exceed 1.0; MAPs hit the
+        multi-instance case far more often, so this copy dedups by structure first).
+
+        Returns None below MIN_PARTNER_STRUCTURES contributing structures -- a single
+        observation is not a canonical site. Families are matched exactly (no .upper()).
+        """
+        query = """
+        MATCH (mi:PolypeptideInstance)-[:INSTANCE_OF]->(me:PolypeptideEntity {family: $map_family})
+        MATCH (mi)-[r:PARTNER_NEAR_POLYMER]->(pi:PolypeptideInstance)
+              -[:INSTANCE_OF]->(te:PolypeptideEntity {family: $tubulin_family})
+        RETURN r.residues_json AS residues_json,
+               mi.parent_rcsb_id AS rcsb_id
+        """
+
+        with self.adapter.driver.session() as session:
+
+            def run_query(tx: Transaction):
+                records = list(tx.run(query, {
+                    "map_family": map_family,
+                    "tubulin_family": tubulin_family,
+                }))
+
+                if not records:
+                    return None
+
+                # Group master indices by structure so each master_index is counted
+                # at most once per structure (true per-structure dedup).
+                indices_by_structure: Dict[str, set] = {}
+                for r in records:
+                    residues_json = r["residues_json"]
+                    if not residues_json:
+                        continue
+                    bucket = indices_by_structure.setdefault(r["rcsb_id"], set())
+                    for res in json.loads(residues_json):
+                        mi = res.get("master_index")
+                        if mi is not None:
+                            bucket.add(mi)
+
+                # Drop structures that contributed no master-mapped residues.
+                indices_by_structure = {
+                    k: v for k, v in indices_by_structure.items() if v
+                }
+                structure_count = len(indices_by_structure)
+                if structure_count < MIN_PARTNER_STRUCTURES:
+                    return None
+
+                master_index_counter: Counter = Counter()
+                for indices in indices_by_structure.values():
+                    for mi in indices:
+                        master_index_counter[mi] += 1
+
+                residues = [
+                    CanonicalBindingSiteResidue(
+                        master_index=mi,
+                        count=cnt,
+                        frequency=cnt / structure_count,
+                    )
+                    for mi, cnt in sorted(master_index_counter.items())
+                ]
+
+                return CanonicalPartnerSite(
+                    map_family=map_family,
+                    tubulin_family=tubulin_family,
                     structure_count=structure_count,
                     residues=residues,
                 )

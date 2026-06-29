@@ -19,6 +19,7 @@ from api.nl_translator.interface import ViewContext
 from api.nl_translator.global_actions import GlobalNLResponse, ActionCard
 from api.nl_translator.hydration import hydrate_response
 from api.nl_translator.resolve import resolve_response, resolve_card, resolve_representative
+from api.query_log import log_query
 
 
 router_nl_query = APIRouter()
@@ -44,6 +45,7 @@ class NLQueryResponse(BaseModel):
 )
 def nl_query_to_filters(req: NLQueryRequest) -> NLQueryResponse:
     """Translate a natural-language request into a filter object."""
+    log_query("nl_filters", req.text, {"target": req.target})
     try:
         translator = get_translator()
     except Exception as e:
@@ -133,6 +135,7 @@ def nl_query_to_viewer_actions(req: NLViewerRequest) -> NLViewerResponse:
     MolstarInstance. This route only validates arguments and never touches
     the viewer or the database.
     """
+    log_query("nl_viewer", req.text, req.view_context.model_dump())
     try:
         translator = get_translator()
     except Exception as e:
@@ -255,6 +258,7 @@ def nl_query_global(req: NLGlobalRequest) -> NLGlobalResponseBody:
     `queries[]` via the existing list endpoints and renders `cards[]` as
     clickable chips that route to the right page with state preloaded.
     """
+    log_query("nl_global", req.text, None)
     try:
         translator = get_translator()
     except Exception as e:

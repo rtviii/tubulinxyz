@@ -2,9 +2,29 @@
   "family": "tubulin_alpha",
   "reference": {
     "accession": "Q71U36",
-    "gene": "TUBA1A"
+    "gene": "TUBA1A",
+    "uniprot_id": "TBA1A_HUMAN",
+    "entry_version": 198,
+    "sequence_version": 1,
+    "last_annotation_update": "2026-06-10"
   },
   "master_length": 451,
+  "provenance": {
+    "region_source": "UniProt Knowledgebase (UniProtKB) curated sequence features",
+    "fetch": "https://rest.uniprot.org/uniprotkb/{accession}.json (cached: data/genenames/uniprot_features_<acc>.json)",
+    "master_mapping": "A UniProt feature residue number is the 1-based position in the human reference sequence (TUBB/P07437, TUBA1A/Q71U36), which is itself a row in the family master alignment (.afasta). residue -> master_index is read by walking the reference's aligned row: master_index = running count of non-all-gap alignment columns. No MUSCLE re-run, no hand alignment, no invented positions. Same coordinate space binding sites already use (lib/etl/augmentation.py).",
+    "eco_glossary": {
+      "ECO:0000269": "experimental evidence used in manual assertion",
+      "ECO:0000256": "sequence-model (computational) evidence, automatic assertion",
+      "ECO:0000250": "sequence-similarity evidence (propagated from a related entry)"
+    },
+    "citations": [
+      "The UniProt Consortium. UniProt: the Universal Protein Knowledgebase in 2025. Nucleic Acids Res.",
+      "MREI motif (beta-tubulin autoregulation): PubMed 31727855.",
+      "C-terminal disordered tail: MobiDB-lite (ECO:0000256) sequence-based disorder prediction.",
+      "GTP / Mg(2+) binding residues: by similarity (ECO:0000250) from related tubulin entries (e.g. Q13509, P68363)."
+    ]
+  },
   "regions": [
     {
       "label": "C-terminal tail",
@@ -12,6 +32,28 @@
       "source": "uniprot:REGION",
       "ref_span": [
         432,
+        451
+      ],
+      "ref_residues": [
+        432,
+        433,
+        434,
+        435,
+        436,
+        437,
+        438,
+        439,
+        440,
+        441,
+        442,
+        443,
+        444,
+        445,
+        446,
+        447,
+        448,
+        449,
+        450,
         451
       ],
       "master_indices": [
@@ -40,13 +82,34 @@
         432,
         451
       ],
-      "precedence": 30
+      "precedence": 30,
+      "evidence": [
+        {
+          "eco": "ECO:0000256",
+          "source": "SAM",
+          "id": "MobiDB-lite"
+        }
+      ]
     },
     {
       "label": "GTP/nucleotide-binding",
       "kind": "BINDING",
       "source": "uniprot:BINDING",
       "ref_span": null,
+      "ref_residues": [
+        11,
+        71,
+        140,
+        144,
+        145,
+        179,
+        206,
+        228
+      ],
+      "ligands": [
+        "GTP",
+        "Mg(2+)"
+      ],
       "master_indices": [
         11,
         71,
@@ -61,7 +124,14 @@
         11,
         228
       ],
-      "precedence": 25
+      "precedence": 25,
+      "evidence": [
+        {
+          "eco": "ECO:0000250",
+          "source": "UniProtKB",
+          "id": "P68363"
+        }
+      ]
     }
   ]
 }
