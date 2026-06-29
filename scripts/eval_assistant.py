@@ -178,6 +178,40 @@ CASES: List[Dict[str, Any]] = [
          query="show me human structures with taxol",
          expect=dict(kind="respond", tools=["find_structures"]),
          soft=dict(cards_action=["open_catalogue", "open_structure"])),
+
+    # --- MAP / partner-protein coverage (Tier 1) ---
+    # Regression guard for the "no structures contain MAP polymers" hallucination.
+    # MAPs ARE indexed (map_* families); the model must look them up via
+    # find_structures(has_any_map=true), not deny them.
+    dict(id="maps_in_catalogue", page="landing",
+         query="Show me some structures with MAPs",
+         expect=dict(kind="respond", tools=["find_structures"]),
+         soft=dict(number=True, cards_action=["open_catalogue"])),
+
+    # Common-name -> family enum mapping (EB1 -> map_eb_family) reaching a real,
+    # filterable per-family browse card.
+    dict(id="eb1_structures", page="catalogue",
+         query="How many structures have EB1 bound?",
+         expect=dict(kind="respond", tools=["find_structures"]),
+         soft=dict(query_has=["has_polymer_family"], cards_action=["open_catalogue"])),
+
+    # MAP-on-tubulin INTERFACE (Tier 2). The model must call get_partner_binding_site
+    # (NOT get_binding_site, which is ligand-only) to get the real tubulin interface
+    # residues. With data it answers with the footprint + a structure card; with no
+    # data (sparse family / pre-backfill) it falls back honestly to a browse card.
+    dict(id="eb1_binds_where_interface", page="structure",
+         query="Where would a MAP like EB1 bind to this structure?",
+         expect=dict(kind="respond", tools=["get_partner_binding_site"]),
+         soft=dict(cards_action=["open_catalogue", "open_structure"])),
+
+    # Landing positive: the partner interface should auto-ground onto the demo
+    # structure (residue_set, category 'interface') exactly like a ligand pocket,
+    # once the PARTNER_NEAR_POLYMER edges are populated. entity_kinds is soft so it
+    # warns (not fails) before the backfill exists.
+    dict(id="stathmin_interface_landing", page="landing",
+         query="Where does stathmin contact tubulin?",
+         expect=dict(kind="respond", tools=["get_partner_binding_site"]),
+         soft=dict(entity_kinds=["residue_set"])),
 ]
 
 
@@ -294,7 +328,7 @@ def landing_demo_honesty(result, demo_chain_ids: List[str]) -> List[str]:
         elif e.kind in ("residue_set", "region") and (e.auth_asym_id not in allowed or not e.positions):
             fails.append(f"{e.kind} {e.label or e.chemical_id!r} on {e.auth_asym_id!r} not grounded to a demo chain")
         # Harvested residues are tagged by source; the tint must be a known one.
-        if getattr(e, "category", None) and e.category not in ("binding", "modification", "variant"):
+        if getattr(e, "category", None) and e.category not in ("binding", "modification", "variant", "interface"):
             fails.append(f"entity {e.kind} carries unknown category {e.category!r}")
     for a in result.viewer_actions:
         if a.type not in _LANDING_SAFE:

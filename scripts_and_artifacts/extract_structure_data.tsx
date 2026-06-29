@@ -39,10 +39,22 @@ interface SimplifiedLigandNeighborhood {
     neighborhood_residues: NeighborhoodResidue[];
 }
 
+// One directed inter-chain protein contact. partner = the seed chain whose 5A
+// surroundings were computed; contacted = the neighbouring chain; contact_residues
+// are residues ON the contacted chain that fall within the partner's shell.
+// Classification (which side is a MAP, which is tubulin) is done downstream in the
+// Python collector, which is the only place that knows entity families.
+interface PartnerContact {
+    partner_auth_asym_id: string;
+    contacted_auth_asym_id: string;
+    contact_residues: NeighborhoodResidue[];
+}
+
 interface ExtractionResult {
     rcsb_id: string;
     sequences: ObservedSequenceData[];
     ligand_neighborhoods: SimplifiedLigandNeighborhood[];
+    partner_contacts: PartnerContact[];
 }
 
 // ============================================================
@@ -275,6 +287,88 @@ function extractLigandNeighborhood(
 }
 
 // ============================================================
+// Inter-chain Partner Contact Extraction
+// ============================================================
+
+// For each protein chain, compute its 5A surroundings and bucket the neighbouring
+// PROTEIN residues by their chain. Emits one PartnerContact per (seed chain ->
+// neighbour chain) pair. Both directions of a pair are emitted (once when each side
+// is the seed); the collector keeps only the MAP->tubulin direction. Seeding is
+// restricted to protein chains (the keys of the observed-sequence map) so ligand /
+// water "chains" are never seeded.
+function extractPartnerContacts(
+    structure: Structure,
+    proteinChainIds: string[]
+): PartnerContact[] {
+    const contacts: PartnerContact[] = [];
+
+    for (const chainId of proteinChainIds) {
+        try {
+            const chainQuery = MS.struct.generator.atomGroups({
+                'chain-test': MS.core.rel.eq([MS.ammp('auth_asym_id'), chainId])
+            });
+
+            const surroundingsExpr = MS.struct.modifier.includeSurroundings({
+                0: chainQuery,
+                radius: 5,
+                'as-whole-residues': true
+            });
+
+            const surroundingsQuery = compile(surroundingsExpr);
+            const surroundingsSelection = surroundingsQuery(new QueryContext(structure));
+            const neighborhoodStructure = StructureSelection.unionStructure(surroundingsSelection);
+
+            if (neighborhoodStructure.elementCount === 0) continue;
+
+            const byChain = new Map<string, NeighborhoodResidue[]>();
+            const seenRes = new Set<string>();
+
+            for (const unit of neighborhoodStructure.units) {
+                if (!Unit.isAtomic(unit)) continue;
+
+                const loc = StructureElement.Location.create(neighborhoodStructure, unit, unit.elements[0]);
+
+                for (let i = 0; i < unit.elements.length; i++) {
+                    loc.element = unit.elements[i];
+
+                    const authAsymId = StructureProperties.chain.auth_asym_id(loc);
+                    if (authAsymId === chainId) continue;
+
+                    const compId = StructureProperties.atom.auth_comp_id(loc);
+                    if (!isProteinResidue(compId)) continue;
+
+                    const authSeqId = StructureProperties.residue.auth_seq_id(loc);
+                    const key = `${authAsymId}:${authSeqId}`;
+                    if (seenRes.has(key)) continue;
+                    seenRes.add(key);
+
+                    if (!byChain.has(authAsymId)) byChain.set(authAsymId, []);
+                    byChain.get(authAsymId)!.push({
+                        auth_asym_id: authAsymId,
+                        auth_seq_id: authSeqId,
+                        comp_id: compId
+                    });
+                }
+            }
+
+            for (const [neighborChain, residues] of byChain.entries()) {
+                residues.sort((a, b) => a.auth_seq_id - b.auth_seq_id);
+                contacts.push({
+                    partner_auth_asym_id: chainId,
+                    contacted_auth_asym_id: neighborChain,
+                    contact_residues: residues
+                });
+            }
+
+        } catch (e) {
+            console.error(`Error extracting partner contacts for chain ${chainId}: ${e}`);
+        }
+    }
+
+    return contacts;
+}
+
+// ============================================================
 // Main
 // ============================================================
 
@@ -303,10 +397,16 @@ async function runExtraction(cifPath: string, rcsbId: string, outputPath: string
             }
         }
 
+        console.error(`Extracting inter-chain partner contacts...`);
+        const proteinChainIds = sequences.map(s => s.auth_asym_id);
+        const partnerContacts = extractPartnerContacts(structure, proteinChainIds);
+        console.error(`  Found ${partnerContacts.length} inter-chain contact pairs across ${proteinChainIds.length} protein chains`);
+
         const result: ExtractionResult = {
             rcsb_id: rcsbId.toUpperCase(),
             sequences,
-            ligand_neighborhoods: ligandNeighborhoods
+            ligand_neighborhoods: ligandNeighborhoods,
+            partner_contacts: partnerContacts
         };
 
         await fs.mkdir(path.dirname(outputPath), { recursive: true });

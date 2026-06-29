@@ -321,6 +321,31 @@ class FocusBindingSite(BaseModel):
         return _normalize_chem(v)
 
 
+class ShowChainInterface(BaseModel):
+    """Draw the REAL non-covalent contacts between a chain and the chains around
+    it, computed live from the loaded structure. Unlike AddAnnotationTrack this
+    needs NO MSA / master-index track, so it works in BOTH easy and expert mode.
+
+    Use for "where does <X> bind / show the interface / show the contacts" when
+    X is a chain that is ACTUALLY PRESENT in the loaded structure — most
+    importantly a MAP/partner protein (EB, stathmin, kinesin, a motor, etc.)
+    sitting on the tubulin lattice, but also a tubulin chain's contacts with its
+    neighbours. Find the chain with get_structure_chains first (match the
+    partner family), then pass its auth_asym_id. Optionally pass
+    partner_auth_asym_ids (the chains it contacts, e.g. the tubulin chains) to
+    scope the drawing; omit to use every other chain.
+
+    Do NOT use this for a small-molecule LIGAND — use FocusBindingSite for that.
+    If the partner is NOT in the loaded structure, do not fake it here; fall back
+    to a card / honest text.
+    """
+    auth_asym_id: str = Field(..., description="Chain whose interface to draw, e.g. the MAP/partner chain.")
+    partner_auth_asym_ids: Optional[List[str]] = Field(
+        default=None,
+        description="Restrict contacts to these chains (e.g. the tubulin chains). Omit = every other chain.",
+    )
+
+
 # ---------------------------------------------------------------------------
 # Clarification — no-op action, frontend renders the question.
 # ---------------------------------------------------------------------------
@@ -384,6 +409,7 @@ VIEWER_ACTION_MODELS: List[Type[BaseModel]] = [
     AddAnnotationTrack,
     RemoveAnnotationTrack,
     FocusBindingSite,
+    ShowChainInterface,
     MentionEntities,
     EmitNavigationCard,
     RequestClarification,

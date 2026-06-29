@@ -37,6 +37,7 @@ from neo4j_tubxz.node_structure import (
 )
 from neo4j_tubxz.node_variant import create_variants_for_entity
 from neo4j_tubxz.node_binding_site import process_all_binding_sites
+from neo4j_tubxz.node_partner_site import process_all_partner_sites
 
 sys.dont_write_bytecode = True
 
@@ -217,6 +218,17 @@ class Neo4jAdapter:
                 print(f"    Created {count} NEAR_POLYMER relationships")
             else:
                 print("  No ligand binding sites to ingest.")
+
+            # 5b. Process MAP -> tubulin partner contacts
+            if profile.partner_contacts:
+                print(
+                    f"  Processing {len(profile.partner_contacts)} MAP-tubulin partner contacts..."
+                )
+                tx_func = process_all_partner_sites(rcsb_id, profile.partner_contacts)
+                count = s.execute_write(tx_func)
+                print(f"    Created {count} PARTNER_NEAR_POLYMER relationships")
+            else:
+                print("  No MAP-tubulin partner contacts to ingest.")
 
         print(f"  Done: {rcsb_id}")
 

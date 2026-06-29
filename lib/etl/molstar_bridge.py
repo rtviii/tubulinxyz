@@ -15,6 +15,7 @@ from lib.types import (
     ObservedResidue,
     LigandBindingSite,
     BindingSiteResidue,
+    RawPartnerContact,
 )
 
 
@@ -158,10 +159,33 @@ def parse_extraction_result(output_path: Path) -> Optional[MolstarExtractionResu
                 )
             )
 
+        # Parse inter-chain partner contacts (family-blind; the collector classifies
+        # which side is a MAP and which is tubulin). Mirrors the ligand loop above.
+        partner_contacts = []
+        for pc in raw.get("partner_contacts", []):
+            residues = []
+            for r in pc.get("contact_residues", []):
+                seq_id = r.get("auth_seq_id", r.get("observed_index"))
+                residues.append(
+                    BindingSiteResidue(
+                        auth_asym_id=r["auth_asym_id"],
+                        auth_seq_id=seq_id,
+                        comp_id=r["comp_id"],
+                    )
+                )
+            partner_contacts.append(
+                RawPartnerContact(
+                    partner_auth_asym_id=pc["partner_auth_asym_id"],
+                    contacted_auth_asym_id=pc["contacted_auth_asym_id"],
+                    residues=residues,
+                )
+            )
+
         return MolstarExtractionResult(
             rcsb_id=raw["rcsb_id"],
             sequences=sequences,
             ligand_neighborhoods=binding_sites,
+            partner_contacts=partner_contacts,
         )
 
     except Exception as e:

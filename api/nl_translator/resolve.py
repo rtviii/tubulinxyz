@@ -117,6 +117,37 @@ def resolve_representative(
     return result
 
 
+# Which chain of a SPECIFIC structure contacts a given ligand. Same NEAR_POLYMER
+# traversal as _RESOLVE_CYPHER, but pinned to one rcsb_id — used to fill the
+# contacting chain on a binding-site card that already names its structure.
+_CONTACTING_CHAIN_CYPHER = """
+MATCH (pi:PolypeptideInstance {parent_rcsb_id: $rcsb})-[:INSTANCE_OF]->(e:PolypeptideEntity)
+WHERE ($family IS NULL OR e.family = $family)
+MATCH (ni:NonpolymerInstance)-[:NEAR_POLYMER]->(pi)
+MATCH (ni)-[:INSTANCE_OF]->(:NonpolymerEntity)-[:DEFINED_BY_CHEMICAL]->(c:Chemical {chemical_id: $lig})
+RETURN pi.auth_asym_id AS chain
+LIMIT 1
+"""
+
+
+def resolve_contacting_chain(
+    rcsb: str, ligand: str, family: Optional[str] = None
+) -> Optional[str]:
+    """auth_asym_id of a chain in `rcsb` that contacts `ligand` (optionally of
+    `family`), or None if the ligand isn't bound to such a chain in that structure."""
+    if not rcsb or not ligand:
+        return None
+    try:
+        with db_reader.adapter.driver.session() as session:
+            rec = session.run(
+                _CONTACTING_CHAIN_CYPHER,
+                rcsb=rcsb.upper(), lig=ligand.upper(), family=family or None,
+            ).single()
+    except Exception:
+        return None
+    return str(rec["chain"]) if rec and rec["chain"] else None
+
+
 # ---------------------------------------------------------------------------
 # Card-level resolution
 # ---------------------------------------------------------------------------
@@ -133,7 +164,17 @@ def _resolve_primary(card: ActionCard) -> bool:
     a = card.action
     org = card.primary_organism_id
     fam = card.family
-    lig = card.chemical_id if a == "inspect_ligand" else None
+    # Constrain resolution to a structure that actually BINDS the ligand whenever
+    # the card carries ligand intent — inspect_ligand via chemical_id, open_structure
+    # via focus_ligands. Without this, an open_structure ligand card resolves to the
+    # best-resolution representative of organism+family that may not bind the ligand
+    # at all (the "suggested a structure with no ligand" failure mode).
+    if a == "inspect_ligand":
+        lig = card.chemical_id
+    elif a == "open_structure" and card.focus_ligands:
+        lig = card.focus_ligands[0]
+    else:
+        lig = None
 
     needs_resolution = org is not None or (not card.rcsb_id and (bool(fam) or bool(lig)))
 
@@ -212,6 +253,7 @@ def resolve_response(resp: GlobalNLResponse) -> GlobalNLResponse:
 
 __all__ = [
     "resolve_representative",
+    "resolve_contacting_chain",
     "resolve_card",
     "resolve_response",
     "invalidate_resolve_cache",

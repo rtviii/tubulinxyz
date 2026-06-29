@@ -39,7 +39,7 @@ from lib.etl.sequence_alignment import (
     EntityAlignmentResult,
     ChainIndexMapping,
 )
-from lib.etl.augmentation import augment_binding_sites
+from lib.etl.augmentation import augment_binding_sites, augment_partner_contacts
 from lib.types import (
     TubulinStructure,
     PolypeptideEntity,
@@ -53,6 +53,10 @@ from lib.types import (
     PolymerClass,
     VariantsFile,
     LigandBindingSitesFile,
+    BindingSiteResidue,
+    RawPartnerContact,
+    PartnerContact,
+    PartnerContactsFile,
 )
 
 
@@ -106,6 +110,18 @@ class TubulinETLCollector:
             logger.warning(
                 "  Nonpolymer entities exist but instances are empty. "
                 "Likely NonpolymerEntitiesString query missing nonpolymer_entity_instances."
+            )
+
+        # Integrative/computational models (PDB-Dev style, e.g. the 9A** gammaTuSC /
+        # doublecortin series) have no experimental data: exptl is null, no resolution,
+        # and Molstar reads 0 polymer chains. They yield empty profiles and used to
+        # crash Phase 5 on entry_data["exptl"][0]. The RCSB search query already filters
+        # these out, so collect-missing won't list them; this guard protects manual
+        # collect-one calls with a clear message instead of a cryptic subscript error.
+        if not entry_data.get("exptl"):
+            raise ValueError(
+                f"{self.rcsb_id} is a non-experimental (integrative/computational) "
+                "model with no experimental data -- skipping."
             )
 
         logger.debug("  Running Molstar extraction...")
@@ -350,6 +366,32 @@ class TubulinETLCollector:
                 f.write(sites_file.model_dump_json(indent=2))
             logger.debug(f"  Wrote {len(augmented_binding_sites)} binding sites")
 
+        # MAP -> tubulin partner contacts: classify the raw inter-chain contacts
+        # (keep only the MAP-source / tubulin-target direction), then stamp master
+        # indices on the tubulin-side residues exactly like ligand binding sites.
+        partner_contacts = self._build_partner_contacts(
+            raw_contacts=molstar_result.partner_contacts,
+            chain_to_entity=chain_to_entity,
+            entity_families=entity_families,
+            chain_mappings=chain_mappings,
+        )
+        augmented_partner_contacts = augment_partner_contacts(
+            partner_contacts=partner_contacts,
+            chain_mappings=chain_mappings,
+        )
+
+        if augmented_partner_contacts:
+            partner_file = PartnerContactsFile(
+                rcsb_id=self.rcsb_id,
+                generated_at=datetime.now().isoformat(),
+                partner_contacts=augmented_partner_contacts,
+            )
+            with open(self.assets.paths.partner_contacts_file, "w") as f:
+                f.write(partner_file.model_dump_json(indent=2))
+            logger.debug(
+                f"  Wrote {len(augmented_partner_contacts)} MAP-tubulin partner contacts"
+            )
+
         # ========================================
         # Phase 5: Assemble and Persist
         # ========================================
@@ -391,6 +433,7 @@ class TubulinETLCollector:
             polynucleotides=polynucleotides,
             nonpolymers=nonpolymers,
             ligand_binding_sites=augmented_binding_sites,
+            partner_contacts=augmented_partner_contacts,
             assembly_map=self.asm_maps,
         )
 
@@ -690,6 +733,60 @@ class TubulinETLCollector:
             if entity_id and entity_id not in result:
                 result[entity_id] = seq
         return result
+
+    def _build_partner_contacts(
+        self,
+        raw_contacts: List[RawPartnerContact],
+        chain_to_entity: Dict[str, str],
+        entity_families: Dict[str, Optional[PolymerClass]],
+        chain_mappings: Dict[str, ChainIndexMapping],
+    ) -> List[PartnerContact]:
+        """Classify raw inter-chain contacts into MAP -> tubulin partner contacts.
+
+        Keeps only the direction where the seed chain is a MAP and the contacted
+        chain is a master-mapped tubulin chain; the contacted-side residues are the
+        tubulin residues we paint. One PartnerContact is produced per MAP chain,
+        unioning its tubulin contacts across all contacted tubulin chains.
+        """
+        by_map_chain: Dict[str, Dict[str, BindingSiteResidue]] = {}
+        family_for_chain: Dict[str, Optional[str]] = {}
+
+        for rc in raw_contacts:
+            partner_entity = chain_to_entity.get(rc.partner_auth_asym_id)
+            contacted_entity = chain_to_entity.get(rc.contacted_auth_asym_id)
+            if partner_entity is None or contacted_entity is None:
+                continue
+
+            partner_family = entity_families.get(partner_entity)
+            contacted_family = entity_families.get(contacted_entity)
+
+            if not is_map_family(partner_family):
+                continue
+            if not is_tubulin_family(contacted_family):
+                continue
+            if rc.contacted_auth_asym_id not in chain_mappings:
+                continue
+
+            bucket = by_map_chain.setdefault(rc.partner_auth_asym_id, {})
+            family_for_chain[rc.partner_auth_asym_id] = (
+                partner_family.value if partner_family else None
+            )
+            for res in rc.residues:
+                bucket[f"{res.auth_asym_id}:{res.auth_seq_id}"] = res
+
+        contacts: List[PartnerContact] = []
+        for map_chain, residue_map in by_map_chain.items():
+            residues = sorted(
+                residue_map.values(), key=lambda r: (r.auth_asym_id, r.auth_seq_id)
+            )
+            contacts.append(
+                PartnerContact(
+                    partner_auth_asym_id=map_chain,
+                    partner_family=family_for_chain.get(map_chain),
+                    residues=residues,
+                )
+            )
+        return contacts
 
     def _infer_organisms(self, entities) -> dict:
         all_src_ids, all_host_ids, all_src_names, all_host_names = [], [], [], []

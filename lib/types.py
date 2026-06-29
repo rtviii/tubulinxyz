@@ -283,6 +283,34 @@ class LigandBindingSite(BaseModel):
         return [r for r in self.residues if r.auth_asym_id == auth_asym_id]
 
 
+class RawPartnerContact(BaseModel):
+    """One directed inter-chain protein contact straight from Molstar extraction,
+    before MAP/tubulin classification. `residues` are the residues ON
+    `contacted_auth_asym_id` that fall within the partner chain's 5A shell."""
+
+    partner_auth_asym_id: str
+    contacted_auth_asym_id: str
+    residues: List[BindingSiteResidue] = []
+
+
+class PartnerContact(BaseModel):
+    """Tubulin-side residues contacted by a single MAP chain instance, after
+    classification + master-index augmentation. The analogue of LigandBindingSite,
+    but the 'source' is a MAP polymer chain instead of a ligand."""
+
+    partner_auth_asym_id: str            # the MAP chain (auth_asym_id)
+    partner_family: Optional[str] = None  # MAP family enum value, e.g. 'map_eb_family'
+    residues: List[BindingSiteResidue] = []  # tubulin-side residues, with master_index
+
+    @property
+    def residue_count(self) -> int:
+        return len(self.residues)
+
+    def residues_for_chain(self, auth_asym_id: str) -> List[BindingSiteResidue]:
+        """Get residues belonging to a specific tubulin chain."""
+        return [r for r in self.residues if r.auth_asym_id == auth_asym_id]
+
+
 # ============================================================
 # Modifications (PTMs)
 # ============================================================
@@ -512,6 +540,7 @@ class TubulinStructure(RCSBStructureMetadata):
 
     assembly_map: Optional[List[AssemblyInstancesMap]] = None
     ligand_binding_sites: List[LigandBindingSite] = []
+    partner_contacts: List[PartnerContact] = []
 
     polymerization_state: Optional[
         Literal["monomer", "dimer", "oligomer", "filament", "unknown"]
@@ -550,6 +579,7 @@ class MolstarExtractionResult(BaseModel):
     rcsb_id: str
     sequences: List[ObservedSequenceData]
     ligand_neighborhoods: List[LigandBindingSite]
+    partner_contacts: List[RawPartnerContact] = []
 
     def get_sequence_for_chain(
         self, auth_asym_id: str
@@ -603,3 +633,11 @@ class LigandBindingSitesFile(BaseModel):
     rcsb_id: str
     generated_at: str
     binding_sites: List[LigandBindingSite]
+
+
+class PartnerContactsFile(BaseModel):
+    """File: {RCSB_ID}_partner_contacts.json"""
+
+    rcsb_id: str
+    generated_at: str
+    partner_contacts: List[PartnerContact]

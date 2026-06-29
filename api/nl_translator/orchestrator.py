@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Set, Tuple, Type
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -36,14 +36,18 @@ from api.nl_translator.grounding import ground_master_positions
 from api.nl_translator.regions import assign_region
 from api.nl_translator.hydration import hydrate_response
 from api.nl_translator.interface import FacetContext
-from api.nl_translator.resolve import resolve_representative, resolve_response
+from api.nl_translator.resolve import (
+    resolve_representative,
+    resolve_contacting_chain,
+    resolve_response,
+)
 from api.nl_translator.retrieval import RETRIEVAL_TOOLS, run_retrieval_tool
 from api.nl_translator.viewer_actions import VIEWER_ACTION_MODELS
 
-_DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-_DEFAULT_MODEL = "anthropic/claude-haiku-4-5"
+_DEFAULT_BASE_URL   = "https://openrouter.ai/api/v1"
+_DEFAULT_MODEL      = "anthropic/claude-haiku-4-5"
 _DEFAULT_MAX_TOKENS = 1500
-_MAX_STEPS = 5  # model<->DB round trips before we force a terminal
+_MAX_STEPS          = 5                               # model<->DB round trips before we force a terminal
 
 _VIEWER_MODELS_BY_NAME: Dict[str, Type[BaseModel]] = {m.__name__: m for m in VIEWER_ACTION_MODELS}
 
@@ -56,12 +60,12 @@ class PageContext(BaseModel):
     """What the frontend tells us about where the user is and what's loaded."""
     page: str = Field("landing", description="'landing' | 'catalogue' | 'structure'")
     # structure-page viewer state (mirrors the old ViewContext)
-    rcsb_id: Optional[str] = None
-    chain_ids: List[str] = Field(default_factory=list)
-    ligand_keys: List[str] = Field(default_factory=list)
-    view_mode: Optional[str] = None  # 'structure' | 'monomer'
+    rcsb_id             : Optional[str] = None
+    chain_ids           : List[str]     = Field(default_factory=list)
+    ligand_keys         : List[str]     = Field(default_factory=list)
+    view_mode           : Optional[str] = None                         # 'structure' | 'monomer'
     active_monomer_chain: Optional[str] = None
-    active_family: Optional[str] = None
+    active_family       : Optional[str] = None
     # Labels of annotation tracks already loaded in the MSA, so the model can
     # avoid creating duplicates (or RemoveAnnotationTrack first).
     loaded_tracks: List[str] = Field(default_factory=list)
@@ -104,18 +108,18 @@ class AssistantResult(BaseModel):
     {'respond','clarify','cannot'}. A 'respond' may carry ANY combination of
     answer text, auto-applied viewer actions, offered suggested actions, routing
     cards, and entity pills — the frontend renders whatever is present."""
-    kind: str  # 'respond' | 'clarify' | 'cannot'
-    answer_markdown: Optional[str] = None
-    data: Optional[Dict[str, Any]] = None
-    summary: Optional[str] = None
-    clarification: Optional[str] = None
-    reason: Optional[str] = None
-    cards: List[ActionCard] = Field(default_factory=list)
-    queries: List[QuerySpec] = Field(default_factory=list)
-    entities: List[EntityRef] = Field(default_factory=list)
-    viewer_actions: List[ViewerActionCall] = Field(default_factory=list)
+    kind             : str                                                   # 'respond' | 'clarify' | 'cannot'
+    answer_markdown  : Optional[str] = None
+    data             : Optional[Dict[str, Any]] = None
+    summary          : Optional[str] = None
+    clarification    : Optional[str] = None
+    reason           : Optional[str] = None
+    cards            : List[ActionCard] = Field(default_factory=list)
+    queries          : List[QuerySpec] = Field(default_factory=list)
+    entities         : List[EntityRef] = Field(default_factory=list)
+    viewer_actions   : List[ViewerActionCall] = Field(default_factory=list)
     suggested_actions: List[SuggestedAction] = Field(default_factory=list)
-    dropped_actions: List[Dict[str, Any]] = Field(default_factory=list)
+    dropped_actions  : List[Dict[str, Any]] = Field(default_factory=list)
     # Per-card {ok, reason}, keyed by card.id — filled by hydrate_response. Mirrors
     # GlobalNLResponse.validation; the landing panel keys card dimming on it.
     validation: Dict[str, Dict[str, Any]] = Field(default_factory=dict)
@@ -138,14 +142,14 @@ class RespondArgs(BaseModel):
       - queries: filter specs the cards reference by id.
       - entities: chains/residues/ligands to surface as interactive pills.
     Every fact in answer_markdown MUST come from a read-tool result you received."""
-    answer_markdown: Optional[str] = Field(None, description="Grounded answer in light markdown.")
-    summary: Optional[str] = Field(None, description="One-line human readback (used when there's no answer text).")
-    data: Optional[Dict[str, Any]] = Field(None, description="Structured data backing the answer. For tabular results use {\"table\": {\"columns\": [...], \"rows\": [[...]]}} — NEVER put tables in answer_markdown.")
-    viewer_actions: Optional[List[ViewerActionCall]] = Field(None, description="Molstar actions to auto-apply (structure page).")
-    suggested_actions: Optional[List[SuggestedAction]] = Field(None, description="Molstar actions offered as clickable chips (structure page).")
-    cards: Optional[List[ActionCard]] = Field(None, description="Routing cards.")
-    queries: Optional[List[QuerySpec]] = Field(None, description="Filter specs referenced by open_catalogue cards via query_ref.")
-    entities: Optional[List[EntityRef]] = Field(None, description="Entities to surface as pills.")
+    answer_markdown  : Optional[str]                    = Field(None, description="Grounded answer in light markdown.")
+    summary          : Optional[str]                    = Field(None, description="One-line human readback (used when there's no answer text).")
+    data             : Optional[Dict[str, Any]]         = Field(None, description="Structured data backing the answer. For tabular results use {\"table\": {\"columns\": [...], \"rows\": [[...]]}} — NEVER put tables in answer_markdown.")
+    viewer_actions   : Optional[List[ViewerActionCall]] = Field(None, description="Molstar actions to auto-apply (structure page).")
+    suggested_actions: Optional[List[SuggestedAction]]  = Field(None, description="Molstar actions offered as clickable chips (structure page).")
+    cards            : Optional[List[ActionCard]]       = Field(None, description="Routing cards.")
+    queries          : Optional[List[QuerySpec]]        = Field(None, description="Filter specs referenced by open_catalogue cards via query_ref.")
+    entities         : Optional[List[EntityRef]]        = Field(None, description="Entities to surface as pills.")
 
 
 class ClarifyArgs(BaseModel):
@@ -157,15 +161,15 @@ class CannotAnswerArgs(BaseModel):
 
 
 _COMMIT_TOOLS: Dict[str, Type[BaseModel]] = {
-    "respond": RespondArgs,
+    "respond"              : RespondArgs,
     "request_clarification": ClarifyArgs,
-    "cannot_answer": CannotAnswerArgs,
+    "cannot_answer"        : CannotAnswerArgs,
 }
 
 _COMMIT_DESCRIPTIONS: Dict[str, str] = {
-    "respond": "Finish the turn. Combine answer_markdown + viewer_actions + suggested_actions + cards as appropriate. THE primary terminal.",
+    "respond"              : "Finish the turn. Combine answer_markdown + viewer_actions + suggested_actions + cards as appropriate. THE primary terminal.",
     "request_clarification": "Ask one clarifying question instead of acting, when intent is genuinely ambiguous.",
-    "cannot_answer": "Honestly decline when the data isn't there or the request is out of scope. Prefer this over guessing.",
+    "cannot_answer"        : "Honestly decline when the data isn't there or the request is out of scope. Prefer this over guessing.",
 }
 
 
@@ -179,10 +183,11 @@ def _model_to_tool(name: str, description: str, model: Type[BaseModel]) -> dict:
     return {"type": "function", "function": {"name": name, "description": description, "parameters": schema}}
 
 
-def _build_tools() -> List[dict]:
+def _build_tools(commit_only: bool = False) -> List[dict]:
     tools: List[dict] = []
-    for t in RETRIEVAL_TOOLS:
-        tools.append(_model_to_tool(t.name, t.description, t.args_model))
+    if not commit_only:
+        for t in RETRIEVAL_TOOLS:
+            tools.append(_model_to_tool(t.name, t.description, t.args_model))
     for name, model in _COMMIT_TOOLS.items():
         tools.append(_model_to_tool(name, _COMMIT_DESCRIPTIONS[name], model))
     return tools
@@ -208,6 +213,9 @@ def _organism_table(facets: FacetContext) -> str:
 _LANDING_SAFE_ACTION_TYPES = {
     "FocusChain", "HighlightChain", "SetChainVisibility", "IsolateChain",
     "ClearFocus", "ClearHighlight",
+    # Live-computed inter-chain contacts; no MSA needed, demo-safe (the auth_asym_id
+    # is checked against the demo's chains by _filter_landing_actions).
+    "ShowChainInterface",
 }
 
 _FAMILY_LABELS = {
@@ -293,13 +301,14 @@ def _ground_landing_entities(
 
 
 # Tools whose results carry master positions we can ground onto the demo.
-_HARVEST_TOOLS = {"get_binding_site", "get_binding_contacts", "count_modifications", "count_variants"}
+_HARVEST_TOOLS = {"get_binding_site", "get_partner_binding_site", "get_binding_contacts", "count_modifications", "count_variants"}
 _HARVEST_CAP = 40
 
 # The category a harvested residue belongs to, by the tool that surfaced it — so
-# the frontend can tint binding / PTM / variant residues distinctly.
+# the frontend can tint binding / PTM / variant / interface residues distinctly.
 _TOOL_CATEGORY = {
     "get_binding_site": "binding",
+    "get_partner_binding_site": "interface",
     "get_binding_contacts": "binding",
     "count_modifications": "modification",
     "count_variants": "variant",
@@ -406,6 +415,20 @@ def _harvest_demo_entities(
                 chemical_id=chem.upper(), positions=sorted(set(auth_positions)),
                 category="binding",
             ))
+
+        # 3b) For a MAP partner lookup, surface the whole TUBULIN interface as one
+        # residue_set keyed to the MAP family — hovering the MAP name lights up the
+        # full footprint at once. Mirrors the ligand pocket above, but category
+        # 'interface' and a map_family key (no chemical_id; fam is the tubulin side).
+        map_fam = _interface_partner(tool, tr.get("args") or {}, res)
+        if map_fam and auth_positions and (aid, map_fam) not in pocket_seen:
+            pocket_seen.add((aid, map_fam))
+            out.append(EntityRef(
+                kind="residue_set", auth_asym_id=aid, family=fam,
+                positions=sorted(set(auth_positions)),
+                category="interface",
+                label=map_fam.replace("map_", "").replace("_", " "),
+            ))
     return out
 
 
@@ -419,16 +442,263 @@ def _binding_chem(tool: str, args: Dict[str, Any], res: Dict[str, Any]) -> Optio
     return None
 
 
+def _interface_partner(tool: str, args: Dict[str, Any], res: Dict[str, Any]) -> Optional[str]:
+    """The MAP family a partner-interface lookup was about (map_* enum), or None."""
+    if tool == "get_partner_binding_site":
+        return args.get("map_family") or res.get("map_family")
+    return None
+
+
+def _focus_binding_site_args(chemical_id: str, chain: Optional[str]) -> Dict[str, Any]:
+    """Args for a FocusBindingSite viewer action. Omitting auth_asym_id lets the
+    frontend fall back to the active monomer chain."""
+    args: Dict[str, Any] = {"chemical_id": chemical_id.upper()}
+    if chain:
+        args["auth_asym_id"] = chain
+    return args
+
+
+# Color for the auto-painted binding-site MSA annotation row. Amber matches the
+# "pocket" accent used elsewhere in the assistant UI.
+_BINDING_TRACK_COLOR = "#F59E0B"
+
+
+def _binding_arrival_actions(
+    chem: str,
+    chain: Optional[str],
+    fam: Optional[str],
+    rcsb: Optional[str],
+    existing_types: Set[str],
+) -> List[Dict[str, Any]]:
+    """The arrival actions that make a binding-site card LAND fully visualized in
+    expert mode: paint the binding-contacts annotation row on the MSA + 3D chain
+    (pinned to THIS structure, not the family-wide union), then focus the pocket
+    in 3D. Skips any action type already present so we never double-up."""
+    out: List[Dict[str, Any]] = []
+    if fam and rcsb and "AddAnnotationTrack" not in existing_types:
+        out.append({
+            "type": "AddAnnotationTrack",
+            "args": {
+                "label": f"{chem.upper()} binding site",
+                "color": _BINDING_TRACK_COLOR,
+                "spec": {
+                    "kind": "binding_contacts",
+                    "family": fam,
+                    "chemical_ids": [chem.upper()],
+                    "structure_ids": [rcsb.upper()],
+                },
+            },
+        })
+    if "FocusBindingSite" not in existing_types:
+        out.append({"type": "FocusBindingSite", "args": _focus_binding_site_args(chem, chain)})
+    return out
+
+
 def _ligand_card(rcsb: str, chain: Optional[str], lig: str, fam: Optional[str]) -> ActionCard:
     rcsb = rcsb.upper()
     lig = lig.upper()
+    # inspect_ligand lands in expert (monomer) mode, where the pocket can
+    # actually be painted — open_structure (easy mode) has no paint pathway. Carry
+    # a FocusBindingSite arrival action so the card SHOWS the site on arrival
+    # instead of just loading the structure. `chain` here is the contacting chain
+    # resolved against the ligand (resolve_structure / resolve_representative), so
+    # the (structure, chain, ligand) triple is real by construction.
     return ActionCard(
-        action="open_structure", rcsb_id=rcsb,
-        focus_chains=[chain] if chain else None,
-        focus_ligands=[lig],
-        label=f"Open {rcsb} — {lig} bound",
-        description=f"See {lig} in a real {_family_label(fam)} structure ({rcsb}).",
+        action="inspect_ligand", rcsb_id=rcsb,
+        chemical_id=lig,
+        suggested_chain=chain,
+        label=f"{lig} binding site in {rcsb}",
+        description=f"Open {rcsb} in expert mode with the {lig} pocket highlighted.",
+        arrival_actions=[{"type": "FocusBindingSite", "args": _focus_binding_site_args(lig, chain)}],
     )
+
+
+def _binding_intent(tool_results: Optional[List[Dict[str, Any]]]) -> Tuple[Optional[str], Optional[str]]:
+    """The (chemical_id, family) a binding-site question was about, inferred from
+    the binding tools the model called this turn. Returns (None, None) if the turn
+    wasn't a binding-site lookup."""
+    for tr in (tool_results or []):
+        tool = tr.get("tool")
+        if tool in ("get_binding_site", "get_binding_contacts"):
+            args = tr.get("args") or {}
+            res = tr.get("result") or {}
+            chem = _binding_chem(tool, args, res)
+            if chem:
+                return chem.upper(), (args.get("family") or res.get("family"))
+        if tool == "resolve_structure":
+            args = tr.get("args") or {}
+            if args.get("ligand"):
+                return str(args["ligand"]).upper(), args.get("family")
+    return None, None
+
+
+def _ground_binding_card(c: ActionCard, chem: str, fam: Optional[str]) -> None:
+    """Rewrite a single-structure card into a grounded, expert-mode, pocket-focused
+    inspect_ligand card IN PLACE. The model frequently emits an open_structure /
+    open_expert card for "where does X bind" that names a structure but carries no
+    ligand id and no focus action (lands in easy mode showing nothing). This forces
+    it into expert mode with the real contacting chain + a FocusBindingSite that
+    actually fires. Family preference: the binding tool's family (what the data is
+    about) over the card's guessed family."""
+    fam = fam or c.family
+    chain = c.suggested_chain or c.primary_chain or (c.focus_chains[0] if c.focus_chains else None)
+    rcsb = c.rcsb_id.upper() if c.rcsb_id else None
+
+    # Verify the named structure actually binds the ligand on a chain of `fam`;
+    # if not, fall back to a representative bound structure (also fixes the
+    # "suggested a structure with no ligand" case for guessed ids).
+    if rcsb:
+        cc = resolve_contacting_chain(rcsb, chem, fam)
+        if cc:
+            chain = cc
+        else:
+            rcsb = None
+    if not rcsb:
+        rep = resolve_representative(family=fam, ligand=chem)
+        if not rep:
+            return  # nothing real to point at; leave the card for hydration to judge
+        rcsb, chain = rep[0], rep[1]
+
+    c.action = "inspect_ligand"
+    c.rcsb_id = rcsb
+    c.chemical_id = chem
+    c.suggested_chain = chain
+    c.family = fam
+    c.focus_chains = None
+    c.focus_ligands = None
+    c.primary_chain = None
+    c.aligned = None
+    c.primary_organism_id = None
+    c.aligned_organism_ids = None
+    existing = {d.get("type") for d in c.arrival_actions if isinstance(d, dict)}
+    c.arrival_actions = list(c.arrival_actions) + _binding_arrival_actions(chem, chain, fam, rcsb, existing)
+
+
+# --- Variant / PTM annotation cards (the same paint-on-arrival pattern as binding) -
+
+# Track colors match the inline residue tints the assistant UI uses for variants
+# (orange) and modifications (indigo), so the painted MSA/3D row agrees with the
+# prose accent.
+_VARIANT_TRACK_COLOR = "#F97316"
+_MODIFICATION_TRACK_COLOR = "#6366F1"
+
+# count_* tool args that carry over verbatim into the AddAnnotationTrack spec.
+_VARIANT_SPEC_FIELDS = (
+    "sources", "species_tax_ids", "species_names", "position_range",
+    "positions", "wild_type_aas", "observed_aas", "phenotype_contains",
+)
+_MODIFICATION_SPEC_FIELDS = (
+    "modification_types", "species_tax_ids", "species_names",
+    "position_range", "positions", "phenotype_contains",
+)
+_ANNOTATION_INTENT_TOOLS = {"count_variants": "variants", "count_modifications": "modifications"}
+
+
+def _annotation_intent(tool_results: Optional[List[Dict[str, Any]]]) -> Optional[Dict[str, Any]]:
+    """If this turn looked up VARIANTS or PTMs (count_variants / count_modifications)
+    AND found something, return the AddAnnotationTrack `spec` dict (kind + family +
+    the same scoping the model filtered by) so a card can LAND with that exact track
+    painted. The last non-empty count_* call wins (the model's most refined intent).
+    None if no such lookup, or the lookup found nothing (don't offer an empty track)."""
+    for tr in reversed(tool_results or []):
+        kind = _ANNOTATION_INTENT_TOOLS.get(tr.get("tool"))
+        if not kind:
+            continue
+        args = tr.get("args") or {}
+        res = tr.get("result") or {}
+        fam = args.get("family") or res.get("family")
+        if not fam or not res.get("distinct_positions"):
+            continue
+        fields = _VARIANT_SPEC_FIELDS if kind == "variants" else _MODIFICATION_SPEC_FIELDS
+        spec: Dict[str, Any] = {"kind": kind, "family": fam}
+        for k in fields:
+            v = args.get(k)
+            if v:
+                spec[k] = v
+        return spec
+    return None
+
+
+def _annotation_track_label(spec: Dict[str, Any]) -> str:
+    noun = "variants" if spec.get("kind") == "variants" else "PTMs"
+    qual = ""
+    if spec.get("phenotype_contains"):
+        qual = f" · {spec['phenotype_contains'][0]}"
+    elif spec.get("modification_types"):
+        qual = f" · {spec['modification_types'][0]}"
+    return f"{_family_label(spec.get('family'))} {noun}{qual}"
+
+
+def _annotation_arrival_actions(spec: Dict[str, Any], existing_types: Set[str]) -> List[Dict[str, Any]]:
+    """The single AddAnnotationTrack arrival action that makes a variant/PTM card
+    LAND with the track painted on the MSA + 3D chain. Skips if a track action is
+    already present so we never double-up."""
+    if "AddAnnotationTrack" in existing_types:
+        return []
+    color = _VARIANT_TRACK_COLOR if spec.get("kind") == "variants" else _MODIFICATION_TRACK_COLOR
+    return [{
+        "type": "AddAnnotationTrack",
+        "args": {"label": _annotation_track_label(spec), "color": color, "spec": dict(spec)},
+    }]
+
+
+def _resolve_annotation_structure(spec: Dict[str, Any]) -> Optional[Tuple[str, str]]:
+    """A real (rcsb_id, chain) of the spec's family to paint the track onto. Variant
+    /PTM tracks are master-indexed family annotations, so ANY structure with a chain
+    of the family displays them — prefer the scoped organism, fall back to any."""
+    fam = spec.get("family")
+    if not fam:
+        return None
+    org = (spec.get("species_tax_ids") or [None])[0]
+    return resolve_representative(family=fam, organism_id=org) or (
+        resolve_representative(family=fam) if org else None
+    )
+
+
+def _annotation_card(rcsb: str, chain: Optional[str], spec: Dict[str, Any]) -> ActionCard:
+    """A fresh open_expert card that lands in expert mode with the variant/PTM track
+    painted. open_expert (monomer) is the only mode with a paint pathway."""
+    rcsb = rcsb.upper()
+    fam = spec.get("family")
+    noun = "variants" if spec.get("kind") == "variants" else "PTMs"
+    return ActionCard(
+        action="open_expert", rcsb_id=rcsb, primary_chain=chain, family=fam,
+        label=f"{_family_label(fam)} {noun} in {rcsb}",
+        description=f"Open {rcsb} in expert mode with the {noun} track painted on {_family_label(fam)}.",
+        arrival_actions=_annotation_arrival_actions(spec, set()),
+    )
+
+
+def _ground_annotation_card(c: ActionCard, spec: Dict[str, Any]) -> None:
+    """Rewrite a single-structure card into a grounded, expert-mode open_expert card
+    that LANDS with the variant/PTM track painted — the annotation analogue of
+    _ground_binding_card. The model emits a bare "open a structure" card for "what
+    variants/PTMs in <family>" that lands in easy mode showing nothing; this forces
+    expert mode on a real chain of that family + an AddAnnotationTrack arrival action
+    that actually paints. Keeps the model's own (rcsb, chain) when it gave both
+    (a real structure it chose); else resolves a representative of the family."""
+    fam = spec.get("family")
+    rcsb = c.rcsb_id.upper() if c.rcsb_id else None
+    chain = c.primary_chain or (c.focus_chains[0] if c.focus_chains else None)
+    if not (rcsb and chain):
+        rep = _resolve_annotation_structure(spec)
+        if not rep:
+            return  # nothing real to point at; leave the card for hydration to judge
+        rcsb, chain = rep[0], rep[1]
+
+    c.action = "open_expert"
+    c.rcsb_id = rcsb
+    c.primary_chain = chain
+    c.family = fam
+    c.focus_chains = None
+    c.focus_ligands = None
+    c.chemical_id = None
+    c.suggested_chain = None
+    c.aligned = None
+    c.primary_organism_id = None
+    c.aligned_organism_ids = None
+    existing = {d.get("type") for d in c.arrival_actions if isinstance(d, dict)}
+    c.arrival_actions = list(c.arrival_actions) + _annotation_arrival_actions(spec, existing)
 
 
 def _harvest_demo_cards(
@@ -479,6 +749,15 @@ def _harvest_demo_cards(
         rep = resolve_representative(family=fam, ligand=str(chem))
         if rep:
             return [_ligand_card(rep[0], rep[1], str(chem), fam)]
+
+    # 3) A variant / PTM lookup -> open a real structure of that family in expert
+    #    mode with the track painted (the model often calls count_* but emits no
+    #    card; this gives the "what variants/PTMs..." answer a way to SEE them).
+    spec = _annotation_intent(tool_results)
+    if spec:
+        rep = _resolve_annotation_structure(spec)
+        if rep:
+            return [_annotation_card(rep[0], rep[1], spec)]
     return []
 
 
@@ -513,6 +792,7 @@ VIEWER ACTION VOCABULARY (fill viewer_actions as a list of {type, args}; structu
 - ClearFocus {} / ClearHighlight {}
 - SetChainVisibility {auth_asym_id, visible} / IsolateChain {auth_asym_id, keep_ligands}
 - FocusBindingSite {chemical_id, auth_asym_id?}  -- only for a ligand actually bound on that chain (check get_structure_chains first)
+- ShowChainInterface {auth_asym_id, partner_auth_asym_ids?}  -- draws the REAL contacts between a chain and its neighbours, computed live from the loaded structure. Works in BOTH easy and expert mode (no MSA needed). USE THIS for "where does <MAP/partner> bind / show the interface" when the partner chain IS present in the loaded structure (find it via get_structure_chains). NOT for small-molecule ligands (use FocusBindingSite).
 - AddAnnotationTrack {label, color (#RRGGBB), spec}  -- expert mode only. spec.family is REQUIRED. spec is one of:
     {kind:"binding_contacts", family, chemical_ids:[...], structure_ids?:[...]}   <- chemical_ids is a PLURAL list. Pin structure_ids=[one rcsb_id] to show ONE structure's real pocket instead of the diffuse family-wide union.
     {kind:"modifications", family, modification_types?:[...], species_tax_ids?:[...], position_range?:[min,max], positions?:[...]}
@@ -556,6 +836,9 @@ ARRIVAL ACTIONS (landing -> expert view) — make a comparison / binding-site ca
          {"type":"AddAnnotationTrack","args":{"label":"<organism> <ligand> site","color":"#E74C3C","spec":{"kind":"binding_contacts","family":"<family>","chemical_ids":["<chem id>"],"structure_ids":["<that organism's rcsb_id>"]}}}
      - then ONE FocusBindingSite: {"type":"FocusBindingSite","args":{"chemical_id":"<chem id>"}}  (no auth_asym_id -> focuses the primary chain's real pocket)
 - Use the SAME rcsb_id for the card and for that organism's track structure_ids, so the painted contacts match the loaded structures. Pick visually distinct colors per organism (e.g. #E74C3C vs #3498DB).
+- VARIANTS / PTMs ("what variants are in <family>", "show the PTMs on <family>"): same idea, with an AddAnnotationTrack carrying a variants/modifications spec instead of a binding site. After count_variants / count_modifications, emit ONE open_expert card (resolve_structure(family=<family>[, organism_id=<tax id>]) -> a real rcsb_id + primary_chain) and attach:
+    arrival_actions = [{"type":"AddAnnotationTrack","args":{"label":"<family> variants","color":"#F97316","spec":{"kind":"variants","family":"<family>", ...the SAME scoping you passed to count_variants (sources / species_tax_ids / position_range / phenotype_contains / wild_type_aas / observed_aas)...}}}]
+  (PTMs: spec kind "modifications", color "#6366F1", carry modification_types / species_tax_ids / phenotype_contains.) The track paints the matching MSA columns + 3D residues on arrival. Don't set focus_range. The backend grounds/repairs this automatically, but emit it shaped right.
 - arrival_actions run on the DESTINATION page only, never on landing. Still write a short grounded answer_markdown alongside the card.
 """
 
@@ -585,10 +868,12 @@ VISUALIZE, DON'T JUST DESCRIBE (this is the point of the app):
 {_ANSWER_FORMATTING}
 READ TOOLS: {", ".join(t.name for t in RETRIEVAL_TOOLS)}.
 - get_structure_chains: which chain is which family and which ligands actually contact it — call this before focusing/aligning a ligand.
-- get_binding_site / get_binding_contacts: real binding residues (master positions). Never recall these.
-- count_modifications / count_variants: real counts for 'how many ...' questions.
+- get_binding_site / get_binding_contacts: real LIGAND binding residues (master positions), keyed by chemical id. Never recall these.
+- get_partner_binding_site: real TUBULIN interface residues a MAP family contacts (master positions), keyed by (map_family, tubulin_family). The grounded source for "where does <MAP> bind on tubulin". Never recall these.
+- count_modifications / count_variants: counts AND a `records` sample of the ACTUAL annotations. Each record has master_index, the change (wild_type->observed + type for variants; modification_type + amino_acid for PTMs), source/database, and any `phenotype` text (curated disease / functional / confidence notes, e.g. "Lissencephaly, pathogenic"). USE these records — name specific variants/PTMs and quote their phenotype HONESTLY (only what a record carries; never invent one). Lead with the phenotyped ones; put several in a `data.table`. For disease/phenotype-specific queries, pass phenotype_contains=["lissencephaly", ...] (case-insensitive substring, OR'd). `records_truncated:true` means there are more than the sample shown.
 - resolve_structure: turn organism+family[+ligand] into a real (rcsb_id, chain) instead of guessing an id.
 - find_structures: catalogue counts + samples. get_facets: valid family/ligand/organism vocabulary.
+- All positions returned by tools are MASTER-alignment (MSA consensus) indices, not a structure's author numbering; the viewer grounds them onto each structure for you — use them as-is, don't translate.
 
 LIGAND NAMING: trivial names != PDB chem ids. taxol/paclitaxel=TA1, colchicine=LOC, vinblastine=VLB, GTP=GTP, GDP=GDP, maytansine=MYT. Use chem ids in tool args.
 DOMAIN: resolution in Angstroms, LOWER=better. Ranges inclusive. Tubulin heterodimer: alpha often chain A, beta often chain B — but VERIFY with get_structure_chains, don't assume.
@@ -597,6 +882,15 @@ KNOWN ORGANISMS (tax id -> name):
 {_organism_table(facets)}
 
 VALID FAMILIES: {facets.tubulin_families}
+
+POLYMER FAMILIES = TUBULINS (tubulin_alpha/beta/gamma/delta/epsilon) AND MAPs (microtubule-associated proteins), whose family enums are prefixed `map_`. MAPs ARE indexed in this catalogue — NEVER claim they're absent without a find_structures lookup first. Common name -> family enum:
+  EB1/EB3 -> map_eb_family | stathmin/RB3/Op18 -> map_stathmin | kinesin/MCAK -> map_kinesin13 | gamma-TuRC/GCP -> map_gcp2_3|map_gcp4|map_gcp5_6 | TTL/TTLL/(de)glutamylase -> map_ttll_glutamylase_short|map_ttll_glutamylase_long | doublecortin/DCX -> map_doublecortin | tau -> map_tau | MAP2/MAP4/MAP7 -> map_map2|map_map4|map_map7 | CAMSAP -> map_camsap1|2|3 | CLIP-170/115 -> map_clip170|map_clip115 | PRC1 -> map_prc1 | TPX2 -> map_tpx2 | NuMA -> map_numa | CKAP5/chTOG -> map_ckap5_chtog. If unsure of the exact enum, call get_facets.
+- "structures WITH MAPs / any MAP": call find_structures(has_any_map=true) for the honest DISTINCT count (+ a sample). Report the count, then offer an open_catalogue card whose query sets has_any_map=true (browse ALL MAP-containing structures — this filter IS applied by the catalogue). You MAY add 1-2 per-family cards (query has_polymer_family=['map_<ONE family>']) for prominent families. Do NOT pass several map_ families to one has_polymer_family (AND-combined = intersection), and never emit a browse card with no query filter at all.
+- "structures with <a specific MAP>" -> find_structures(has_polymer_family=['map_<x>']); the open_catalogue card for this DOES filter correctly.
+- MAP-on-tubulin interface ("where does <MAP> bind on tubulin / on this structure / show the interface"). TWO cases — check which one you're in:
+  - PARTNER PRESENT in the loaded structure (structure page): if get_structure_chains shows a chain of that MAP family is actually in the loaded structure (e.g. an EB / stathmin / kinesin / motor chain on a microtubule), the BEST answer is to draw its REAL contacts in 3D: viewer_actions=[ShowChainInterface(auth_asym_id=<the MAP chain>, partner_auth_asym_ids=[<the tubulin chains it sits on>])]. This works in EASY mode too — do NOT switch to expert / use AddAnnotationTrack for this. Emit exactly ONE ShowChainInterface: if the MAP appears as several copies (e.g. chains S and T), pick ONE representative copy (a second call would replace the first, not add to it). Still write a short grounded answer.
+  - PARTNER ABSENT (landing demo, or a structure without that MAP): call get_partner_binding_site(map_family=<map_*>, tubulin_family=<tubulin_alpha|tubulin_beta|tubulin_gamma>) for the canonical cross-structure TUBULIN interface residues (master positions + frequency). NEVER recall these. Pick tubulin_family by partner: gamma-TuRC GCPs (map_gcp2_3/map_gcp4/map_gcp5_6) contact tubulin_gamma; EB/stathmin/kinesin/TTLL/doublecortin/tau etc. contact tubulin_beta and/or tubulin_alpha (try beta, then alpha). On the landing page these auto-ground onto the demo like a ligand site. Pair with an open_structure card (resolve_structure) so the user can open a real structure WITH the MAP, where ShowChainInterface then shows the real interface.
+  If get_partner_binding_site returns found:false, say so honestly and offer to browse structures with that MAP (find_structures + open_catalogue) — do NOT fabricate residues. The chemical-id binding tools (get_binding_site/get_binding_contacts) are LIGAND-only — never pass a MAP family to them; ShowChainInterface is for protein partners, FocusBindingSite is for small-molecule ligands.
 """
 
     if page == "structure":
@@ -645,7 +939,7 @@ LIVE DEMO VIEWER (beside the chat): currently showing {demo}. Its chains are {de
 - AUTOMATIC RESIDUE HIGHLIGHTS: every master position you LOOK UP for a family the demo shows ({demo_fams}) — via get_binding_site / get_binding_contacts / count_modifications / count_variants — is automatically grounded onto the demo and made hover-interactive in your answer text. So you do NOT emit residue entities or residue actions yourself; just look the positions up (always do) and write them in your prose. They become interactive for free.
 - ALWAYS GIVE A WAY TO GO DEEPER (this is the point of the app — never answer a structural question with prose alone): for "where does <ligand> bind", "what residues / variants / PTMs...", or anything about a specific structure, you MUST also offer an open_expert (or open_structure) card so the user can open a REAL structure where it's bound/visible. Use resolve_structure to get a real (rcsb_id, chain) — never guess an id. For "compare ... across organisms", attach arrival_actions (see ARRIVAL ACTIONS).
 - EXPLICIT CHAIN REQUESTS ("highlight the beta chain"): offer suggested_actions=[{{"label":"Highlight β-tubulin (chain B)","action":{{"type":"HighlightChain","args":{{"auth_asym_id":"B"}}}}}}] and/or a chain entity {{"kind":"chain","auth_asym_id":"B"}}.
-- Demo actions are whole-chain ONLY (FocusChain, HighlightChain, SetChainVisibility, IsolateChain). NEVER emit AddAnnotationTrack / AlignChain / FocusBindingSite on landing — those are expert-mode only; residue highlighting is already automatic.
+- Demo actions are whole-chain ops (FocusChain, HighlightChain, SetChainVisibility, IsolateChain) PLUS ShowChainInterface(auth_asym_id=<a demo chain>) for "show the interface / contacts between the demo's chains" (it draws real contacts live, no MSA needed). NEVER emit AddAnnotationTrack / AlignChain / FocusBindingSite on landing — those are expert-mode only; residue highlighting is already automatic.
 - HONESTY: only the demo's chains ({demo_chain_ids}) are shown here; for a DIFFERENT structure/family, don't fake it on the demo — answer in text and offer a card.
 """
         view = f"""
@@ -803,6 +1097,7 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
     system_prompt = _build_system_prompt(ctx, facets)
     client, model, max_tokens = _make_client()
     tools = _build_tools()
+    commit_tools = _build_tools(commit_only=True)
 
     messages: List[Dict[str, Any]] = [
         {"role": "system", "content": system_prompt},
@@ -815,8 +1110,11 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
 
     for step in range(_MAX_STEPS):
         force_terminal = step == _MAX_STEPS - 1
-        kwargs: Dict[str, Any] = dict(model=model, max_tokens=max_tokens, tools=tools, messages=messages)
-        # On the last allowed step, require a tool call so we don't end empty.
+        # On the last allowed step, offer ONLY the commit tools and require a call,
+        # so the model can't burn the final step on another read and fall through
+        # to "Ran out of steps" (it would otherwise still see all read tools).
+        step_tools = commit_tools if force_terminal else tools
+        kwargs: Dict[str, Any] = dict(model=model, max_tokens=max_tokens, tools=step_tools, messages=messages)
         kwargs["tool_choice"] = "required" if force_terminal else "auto"
         if force_terminal:
             messages.append({
@@ -935,8 +1233,21 @@ def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext
         if not raw_cards:
             raw_cards = _harvest_demo_cards(tool_results or [], ctx)
 
-    cards, validation, card_drops = _finalize_cards(raw_cards, facets)
+    cards, validation, card_drops = _finalize_cards(raw_cards, facets, tool_results)
     dropped.extend(card_drops)
+
+    # Post-finalize safety net: a landing answer that LOOKED SOMETHING UP must
+    # always offer a way in, not just prose. If the model's own card(s) all failed
+    # resolution (so the pre-finalize harvest above was skipped because raw_cards
+    # was non-empty), or it offered to visualize in prose instead of emitting a
+    # card, fall back to a harvested card now. Honest: _harvest_demo_cards only
+    # resolves a REAL bound structure; it returns nothing if none exists.
+    if not cards and (ctx.page or "landing") == "landing":
+        fb_raw = _harvest_demo_cards(tool_results or [], ctx)
+        if fb_raw:
+            cards, fb_val, fb_drop = _finalize_cards(fb_raw, facets, tool_results)
+            validation.update(fb_val)
+            dropped.extend(fb_drop)
 
     # Sanitize text on EVERY respond terminal (not just the bare-text fallback): a
     # successful respond can still carry a tool-call leak or literal \n escapes in
@@ -979,6 +1290,7 @@ def _build_terminal_result(commit, trace: List[TraceEntry], facets: FacetContext
 def _finalize_cards(
     raw_cards: Optional[List[ActionCard]],
     facets: FacetContext,
+    tool_results: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[List[ActionCard], Dict[str, Dict[str, Any]], List[Dict[str, Any]]]:
     """Resolve organism selectors -> real (rcsb_id, chain), existence-check, and
     validate per-card arrival_actions. Returns (cards, validation, dropped).
@@ -994,6 +1306,31 @@ def _finalize_cards(
     # GlobalNLResponse enforces max_length on cards; cap defensively so an
     # over-eager model can't turn a respond into a hard validation error.
     resp = GlobalNLResponse(cards=list(raw_cards or [])[:MAX_CARDS])
+
+    # Binding-site grounding: if this turn was a "where does <ligand> bind"
+    # lookup, force the single-structure card(s) into an expert-mode inspect_ligand
+    # that ACTUALLY focuses the pocket — regardless of whether the model emitted
+    # open_structure / open_expert / inspect_ligand, and regardless of whether it
+    # bothered to attach a ligand id or action. Compare cards (open_expert with an
+    # aligned side) and browse cards (open_catalogue) are left alone.
+    binding_chem, binding_fam = _binding_intent(tool_results)
+    # Variant/PTM grounding: the annotation analogue of binding grounding. Force a
+    # single-structure card for a "what variants/PTMs in <family>" turn into an
+    # open_expert card that LANDS with the track painted. Binding takes precedence
+    # (more specific) when a turn somehow did both.
+    anno_spec = None if binding_chem else _annotation_intent(tool_results)
+    if binding_chem or anno_spec:
+        for c in resp.cards:
+            is_single_structure = c.action in ("open_structure", "inspect_ligand") or (
+                c.action == "open_expert" and not c.aligned and not c.aligned_organism_ids
+            )
+            if not is_single_structure:
+                continue
+            if binding_chem:
+                _ground_binding_card(c, binding_chem, binding_fam)
+            else:
+                _ground_annotation_card(c, anno_spec)
+
     resolve_response(resp)
     hydrate_response(resp, known_families=facets.tubulin_families)
 
@@ -1013,6 +1350,21 @@ def _finalize_cards(
         cards.append(c)
 
     validation = {c.id: resp.validation.get(c.id, {"ok": True}) for c in cards if c.id}
+
+    # Deterministic floor: an inspect_ligand card MUST arrive with the pocket
+    # shown, regardless of whether the model emitted the action. If it didn't
+    # already attach a FocusBindingSite, synthesize one from the resolved
+    # (chemical_id, suggested_chain). This makes the card's "show the site"
+    # promise executable by construction, not model-/prompt-dependent.
+    for c in cards:
+        if c.action != "inspect_ligand" or not c.chemical_id or not c.rcsb_id:
+            continue
+        existing = {d.get("type") for d in c.arrival_actions if isinstance(d, dict)}
+        extra = _binding_arrival_actions(
+            c.chemical_id, c.suggested_chain, c.family, c.rcsb_id, existing
+        )
+        if extra:
+            c.arrival_actions = list(c.arrival_actions) + extra
 
     # Validate each card's arrival_actions through the viewer-action gate. Drop
     # invalid ones (surfaced in dropped_actions) and re-serialize from the kept
