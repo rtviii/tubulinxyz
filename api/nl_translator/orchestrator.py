@@ -1117,8 +1117,13 @@ def run_assistant(text: str, page_context: Optional[Dict[str, Any]] = None) -> A
         kwargs: Dict[str, Any] = dict(model=model, max_tokens=max_tokens, tools=step_tools, messages=messages)
         kwargs["tool_choice"] = "required" if force_terminal else "auto"
         if force_terminal:
+            # Delivered as a `user` turn, NOT `system`: stricter OpenAI-compatible
+            # servers (vLLM/litellm builds) reject a system message that isn't at the
+            # very start of the conversation ("System message must be at the
+            # beginning"). A trailing user turn is accepted everywhere and steers the
+            # model just as well.
             messages.append({
-                "role": "system",
+                "role": "user",
                 "content": "You have used all lookups. Finish now with `respond` (include any visualization in viewer_actions/suggested_actions) or `cannot_answer`, based only on results you already have.",
             })
 

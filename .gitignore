@@ -43,6 +43,10 @@ notes/**
 TUBETL_DATA/**
 TUBETL_DATA
 
+# api/query_log.py falls back to ./query_log.jsonl when TUBETL_DATA is unset,
+# so local runs drop it in the repo root.
+query_log.jsonl
+
 ingestion_logs/*
 
 
