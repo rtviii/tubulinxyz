@@ -15,6 +15,22 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # Same edition the deploy runs. The schema smoke test below initializes it
+    # with the freshly built image, so an image whose constraints need
+    # Enterprise (or otherwise fail) never gets pushed.
+    services:
+      neo4j:
+        image: neo4j:5.26-community
+        env:
+          NEO4J_AUTH: neo4j/ci-password-123
+        ports:
+          - 7687:7687
+        options: >-
+          --health-cmd "wget -q --spider http://localhost:7474 || exit 1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+          --health-start-period 20s
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,6 +56,28 @@ jobs:
             type=semver,pattern={{major}}
             type=raw,value=latest
 
+      - name: Build image for testing
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: tubulinxyz:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Schema smoke test against Neo4j Community
+        run: |
+          docker run --rm --network host \
+            -e NEO4J_URI=bolt://localhost:7687 \
+            -e NEO4J_USER=neo4j \
+            -e NEO4J_PASSWORD=ci-password-123 \
+            -e NEO4J_CURRENTDB=neo4j \
+            -e TUBXZ_ROOT=/app \
+            -e TUBETL_DATA=/tmp \
+            tubulinxyz:ci python cli.py init-db --skip-phylogeny
+
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
@@ -49,4 +87,3 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
-          cache-to: type=gha,mode=max

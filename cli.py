@@ -415,81 +415,33 @@ def get_db_adapter() -> Neo4jAdapter:
 
 @app.command(name="init-db")
 def init_db(
-    db_name: Annotated[str, typer.Option("--name", "-n", help="Name for new database (default: use NEO4J_CURRENTDB from constants)")] = "",
     skip_phylogeny: Annotated[bool, typer.Option("--skip-phylogeny", help="Skip phylogeny seeding (faster, but no taxonomy filtering)")] = False,
-    create: Annotated[bool, typer.Option("--create", "-c", help="Create the database if it doesn't exist")] = False,
 ):
     """
-    Initialize a Neo4j database with constraints and phylogeny tree.
-    
-    Use --create to create a new database first (requires Enterprise/Aura).
+    Initialize the Neo4j database (NEO4J_CURRENTDB) with constraints and phylogeny tree.
+
+    Targets Neo4j Community: a single user database, no CREATE DATABASE.
+    Exits non-zero if any constraint/index statement fails.
     """
-    from neo4j import GraphDatabase
-    
-    target_db = db_name if db_name else NEO4J_CURRENTDB
-    
-    console.print(f"Target database: [bold]{target_db}[/bold] at [bold]{NEO4J_URI}[/bold]", style="cyan")
-    
+    console.print(f"Target database: [bold]{NEO4J_CURRENTDB}[/bold] at [bold]{NEO4J_URI}[/bold]", style="cyan")
+
     try:
-        # If --create flag, create the database first via system db
-        if create:
-            console.print(f"Creating database [bold]{target_db}[/bold]...")
-            
-            # Connect to system database to create new db
-            system_driver = GraphDatabase.driver(
-                NEO4J_URI, 
-                auth=(NEO4J_USER, NEO4J_PASSWORD), 
-                database="system"
-            )
-            
-            with system_driver.session() as session:
-                # Check if database already exists
-                result = session.run("SHOW DATABASES YIELD name")
-                existing_dbs = [r["name"] for r in result]
-                
-                if target_db in existing_dbs:
-                    console.print(f"[yellow]Database '{target_db}' already exists.[/yellow]")
-                else:
-                    session.run(f"CREATE DATABASE {target_db}")
-                    console.print(f"[green]Created database '{target_db}'.[/green]")
-                    
-                    # Wait for database to come online
-                    console.print("Waiting for database to start...")
-                    import time
-                    for _ in range(30):  # Wait up to 30 seconds
-                        result = session.run(
-                            "SHOW DATABASE $name YIELD currentStatus", 
-                            {"name": target_db}
-                        ).single()
-                        if result and result["currentStatus"] == "online":
-                            break
-                        time.sleep(1)
-                    else:
-                        console.print("[yellow]Warning: Database may still be starting up.[/yellow]")
-            
-            system_driver.close()
-        
-        # Now connect to the target database and initialize
-        adapter = Neo4jAdapter(NEO4J_URI, NEO4J_USER, target_db, NEO4J_PASSWORD)
-        
+        adapter = Neo4jAdapter(NEO4J_URI, NEO4J_USER, NEO4J_CURRENTDB, NEO4J_PASSWORD)
+
         console.print("Creating constraints and indexes...")
         adapter.init_constraints()
         console.print("[green]Constraints created.[/green]")
-        
+
         if not skip_phylogeny:
             console.print("Seeding phylogeny tree (this may take a minute)...")
             adapter.init_phylogenies()
             console.print("[green]Phylogeny tree seeded.[/green]")
         else:
             console.print("[yellow]Skipped phylogeny seeding.[/yellow]")
-        
+
         adapter.close()
-        console.print(f"[bold green]Database '{target_db}' initialized successfully![/bold green]")
-        
-        # Remind user to update constants if they used a custom name
-        if db_name and db_name != NEO4J_CURRENTDB:
-            console.print(f"\n[yellow]Note: Update NEO4J_CURRENTDB in lib/etl/constants.py to '{db_name}' to use this database by default.[/yellow]")
-        
+        console.print(f"[bold green]Database '{NEO4J_CURRENTDB}' initialized successfully![/bold green]")
+
     except Exception as e:
         console.print(f"[bold red]Error:[/bold red] {e}")
         import traceback

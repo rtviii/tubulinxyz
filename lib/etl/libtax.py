@@ -12,11 +12,36 @@ from lib.etl.constants import NCBI_TAXA_SQLITE
 
 
 _thread_local = threading.local()
+_ncbi_init_lock = threading.Lock()
+
+
+def taxa_db_path() -> str:
+    """NCBI_TAXA_SQLITE if set (with ~ expanded), else ete3's standard location."""
+    return os.path.expanduser(NCBI_TAXA_SQLITE or "~/.etetoolkit/taxa.sqlite")
+
 
 def get_ncbi():
-    """Get a thread-local NCBITaxa instance"""
+    """Get a thread-local NCBITaxa instance.
+
+    If the taxonomy sqlite doesn't exist yet, ete3 downloads NCBI's taxdump
+    (~70MB, into the CWD) and builds it -- a few minutes, once per machine.
+    The Docker image ships it prebuilt at /app/.etetoolkit/taxa.sqlite.
+    """
     if not hasattr(_thread_local, 'ncbi'):
-        _thread_local.ncbi = NCBITaxa(dbfile=NCBI_TAXA_SQLITE)
+        dbfile = taxa_db_path()
+        # Lock so parallel upload workers don't all build the DB at once.
+        with _ncbi_init_lock:
+            if not os.path.exists(dbfile):
+                os.makedirs(os.path.dirname(dbfile), exist_ok=True)
+            ncbi = NCBITaxa(dbfile=dbfile)
+            # ete3 creates the tables before filling them, so an interrupted
+            # build leaves a valid but empty sqlite that it opens without
+            # complaint -- and every lookup then misses. Rebuild in that case.
+            if not ncbi.get_taxid_translator([1]):
+                print(f"Taxonomy DB {dbfile} is empty; rebuilding from NCBI taxdump...")
+                ncbi.update_taxonomy_database()
+                ncbi = NCBITaxa(dbfile=dbfile)
+            _thread_local.ncbi = ncbi
     return _thread_local.ncbi
 
 TAXID_BACTERIA = 2

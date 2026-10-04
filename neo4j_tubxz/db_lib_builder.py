@@ -46,9 +46,11 @@ NODE_CONSTRAINTS = [
     # Structure
     "CREATE CONSTRAINT rcsb_id_unique IF NOT EXISTS FOR (s:Structure) REQUIRE s.rcsb_id IS UNIQUE;",
     # Entity (unique per structure)
-    "CREATE CONSTRAINT entity_unique IF NOT EXISTS FOR (e:Entity) REQUIRE (e.parent_rcsb_id, e.entity_id) IS NODE KEY;",
+    # Composite IS UNIQUE rather than IS NODE KEY: node keys are Enterprise-only,
+    # and the deploy runs neo4j:5 Community.
+    "CREATE CONSTRAINT entity_unique IF NOT EXISTS FOR (e:Entity) REQUIRE (e.parent_rcsb_id, e.entity_id) IS UNIQUE;",
     # Instance (unique per structure by asym_id)
-    "CREATE CONSTRAINT instance_unique IF NOT EXISTS FOR (i:Instance) REQUIRE (i.parent_rcsb_id, i.asym_id) IS NODE KEY;",
+    "CREATE CONSTRAINT instance_unique IF NOT EXISTS FOR (i:Instance) REQUIRE (i.parent_rcsb_id, i.asym_id) IS UNIQUE;",
     # Chemical (global)
     "CREATE CONSTRAINT chemical_unique IF NOT EXISTS FOR (c:Chemical) REQUIRE c.chemical_id IS UNIQUE;",
     # Phylogeny
@@ -106,13 +108,21 @@ class Neo4jAdapter:
         self.init_phylogenies()
 
     def init_constraints(self) -> None:
+        # Every statement is IF NOT EXISTS, so an existing constraint/index is a
+        # no-op and any exception is a real failure. Raise instead of skipping:
+        # silently skipped constraints are how the Enterprise-only NODE KEYs
+        # went unnoticed on Community deploys.
+        failed = []
         with self.driver.session() as session:
             for constraint in NODE_CONSTRAINTS:
                 try:
                     session.execute_write(lambda tx, c=constraint: tx.run(c))
                     print(f"Applied: {constraint[:60]}...")
                 except Exception as e:
-                    print(f"Skipped (may exist): {constraint[:40]}... ({e})")
+                    print(f"FAILED: {constraint[:60]}... ({e})")
+                    failed.append(constraint)
+        if failed:
+            raise RuntimeError(f"{len(failed)} constraint/index statement(s) failed")
 
     def init_phylogenies(self):
         """Seed phylogeny tree from all profiles on disk."""

@@ -100,7 +100,7 @@ def node__nonpolymer_instance(instance: Nonpolymer):
     def _(tx: Transaction | ManagedTransaction):
         return tx.run(
             """
-            // 1. Merge the instance using the Node Key (rcsb_id + asym_id)
+            // 1. Merge the instance on its unique key (parent_rcsb_id + asym_id)
             MERGE (i:Instance:NonpolymerInstance {
                 parent_rcsb_id: $rcsb_id, 
                 asym_id: $asym_id

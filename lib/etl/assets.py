@@ -5,7 +5,7 @@ import requests
 from typing import Any
 
 from lib.etl.constants import TUBETL_DATA
-from lib.etl.libtax import PhylogenyNode, Taxid
+from lib.etl.libtax import PhylogenyNode, Taxid, get_ncbi
 from lib.types import TubulinStructure
 
 import os
@@ -498,6 +498,11 @@ class GlobalOps:
         Scans all local profiles and collects all unique organism taxIDs
         to seed the phylogeny tree.
         """
+        # Open (or build) the taxonomy DB up front, outside the per-taxid
+        # try/except below: a missing/broken DB must fail loudly, not turn
+        # every lookup into a "skipped" taxid and seed an empty tree.
+        get_ncbi()
+
         _ = set()
         print(f"Collecting taxa from {len(GlobalOps.list_profiles())} profiles...")
 

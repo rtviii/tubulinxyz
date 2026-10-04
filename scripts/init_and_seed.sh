@@ -26,7 +26,14 @@ write_status "starting" "Initializing database..." 0 0 0 0 false
 # Step 1: Initialize DB constraints and phylogeny tree (idempotent)
 echo "=== TubXYZ Bootstrap: $(date -Iseconds) ==="
 echo "Initializing database constraints and phylogeny..."
-python cli.py init-db
+# FATAL on failure: a missing constraint means no backing index on MERGE keys
+# (slow ingest) and no uniqueness guarantee. Previously these failures were
+# swallowed, which hid Enterprise-only constraints on Community deploys.
+python cli.py init-db || {
+    write_status "error" "Database schema init failed" 0 0 0 1 false
+    echo "FATAL: init-db failed -- aborting bootstrap. See constraint errors above."
+    exit 1
+}
 write_status "init_db" "Database initialized. Loading literature data..." 0 0 0 0 false
 
 # Step 1.5: Ingest Morisette literature data (mutations + post-translational
@@ -118,13 +125,15 @@ write_status "collecting" "Collecting structures from PDB..." 0 0 809 0 false
 # single-threaded, so this stays strictly sequential with step 3 below -- the
 # two never run a Neo4j writer concurrently.
 UPLOADED=0
+FAILED=0
 python cli.py collect-missing --upload 2>&1 | while IFS= read -r line; do
     echo "$line"
     case "$line" in
         *"Uploaded "*" to Neo4j"*) UPLOADED=$((UPLOADED + 1)) ;;
+        *"Failed to collect "*) FAILED=$((FAILED + 1)) ;;
     esac
     COUNT=$(find /mnt/tubetl_data -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)
-    write_status "collecting" "Collecting structures and filling the catalogue..." "$COUNT" "$UPLOADED" 809 0 false
+    write_status "collecting" "Collecting structures and filling the catalogue..." "$COUNT" "$UPLOADED" 809 "$FAILED" false
 done
 
 # Step 3: Catch any profiles that are on disk but still missing from Neo4j --

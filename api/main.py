@@ -18,7 +18,7 @@ from api.routers.router_assistant import router_assistant
 from api.routers.router_partners import router_partners
 app = FastAPI(
     title="TubXYZ API",
-    version="0.2.0",
+    version="0.2.1",
     description="API for tubulin structure data, spatial grids, and MSA alignment.",
 )
 
@@ -60,11 +60,11 @@ def health():
         with driver.session(database=neo4j_db) as session:
             session.run("RETURN 1").single()
         driver.close()
-        return {"status": "ok", "neo4j": "connected", "version": "0.2.0"}
+        return {"status": "ok", "neo4j": "connected", "version": "0.2.1"}
     except Exception as e:
         return JSONResponse(
             status_code=503,
-            content={"status": "degraded", "neo4j": str(e), "version": "0.2.0"},
+            content={"status": "degraded", "neo4j": str(e), "version": "0.2.1"},
         )
 
 
